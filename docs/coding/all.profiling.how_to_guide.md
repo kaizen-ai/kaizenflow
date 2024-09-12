@@ -1,5 +1,7 @@
 # Profiling
 
+## Profiling
+
 <!-- toc -->
 
 - [Profiling end-to-end a command line](#profiling-end-to-end-a-command-line)
@@ -20,7 +22,7 @@
 
 <!-- tocstop -->
 
-# Profiling end-to-end a command line
+## Profiling end-to-end a command line
 
 - You can use the time-tested Linux `time` command to profile both time and
   memory
@@ -54,7 +56,6 @@
   ```
 
 - Information about the spent time are:
-
   ```
   User time (seconds): 187.70
   System time (seconds): 16.27
@@ -63,13 +64,13 @@
   ```
 
 - The relevant part is the following line representing the amount of resident
-  memory (which is ~13GB) ` Maximum resident set size (kbytes): 13083892 `
+  memory (which is ~13GB) `Maximum resident set size (kbytes): 13083892`
 
-# Profiling Python code from command line
+## Profiling Python code from command line
 
-## cProfile
+### cProfile
 
-### Install in a Docker container
+#### Install in a Docker container
 
 - From `devops/docker_build/install_cprofile.sh`
   ```bash
@@ -79,11 +80,11 @@
   > pip install gprof2dot
   ```
 
-### How to use with workflow
+#### How to use with workflow
 
 - There is a script that runs the flow `amp/dev_scripts/run_profiling.sh`
 
-### How to use manually
+#### How to use manually
 
 - You need to run the code first with profiling enabled to collect the profiling
   data in a binary file (often called `prof.bin`).
@@ -92,6 +93,7 @@
   > python -m cProfile -o prof.bin ${CMD}
   ```
 - To profile a unit test you can run:
+
   ```bash
   # Profile a unit test.
   > python -m cProfile -o profile edgar/forms8/test/test_edgar_utils.py
@@ -106,9 +108,11 @@
   > gprof2dot -n 10 -f pstats profile -l
   "*extract_tables_from_forms*" | dot -Tpng -o output.png
   ```
-How to read a graph: https://nesi.github.io/perf-training/python-scatter/profiling-cprofile
 
-- gprof2dot has lots of interesting options to tweak the output, e.g.,
+  How to read a graph:
+  https://nesi.github.io/perf-training/python-scatter/profiling-cprofile
+
+- Gprof2dot has lots of interesting options to tweak the output, e.g.,
   ```bash
   > gprof2dot -h
   ...
@@ -137,19 +141,16 @@ How to read a graph: https://nesi.github.io/perf-training/python-scatter/profili
   ...
   ```
 
-### process_prof.py
+#### process_prof.py
 
 - You can use the script `dev_scripts/process_prof.py` to automate some tasks:
+  - Top-level statistics
+  - Plotting the call-graph
+  - Custom statics
 
-  - top-level statistics
+### line_profiler
 
-  - plotting the call-graph
-
-  - custom statics
-
-## line_profiler
-
-- cProfile allows to break down the execution time into function calls, while
+- CProfile allows to break down the execution time into function calls, while
   kernprof allows to profile a function line by line.
 
 - GitHub: [<span
@@ -160,7 +161,7 @@ How to read a graph: https://nesi.github.io/perf-training/python-scatter/profili
   > pip install line_profiler
   ```
 
-### How to use
+#### How to use
 
 - Instrument the code to profile:
 
@@ -172,7 +173,7 @@ How to read a graph: https://nesi.github.io/perf-training/python-scatter/profili
   import atexit
 
   def exit_handler():
-  	profiler.print_stats()
+      profiler.print_stats()
 
   atexit.register(exit_handler)
 
@@ -189,7 +190,7 @@ How to read a graph: https://nesi.github.io/perf-training/python-scatter/profili
   Wrote profile results to run_process_forecasts.py.lprof
   ```
 
-## pytest-profiling
+### pytest-profiling
 
 - Webpage: [<span
   class="underline">https://pypi.org/project/pytest-profiling</span>](https://pypi.org/project/pytest-profiling)
@@ -199,19 +200,19 @@ How to read a graph: https://nesi.github.io/perf-training/python-scatter/profili
   > pip install pytest-profiling
   ```
 
-### How to use
+#### How to use
 
-   ```bash
-    > pytest --profile ./amp/core/dataflow_model/test/test_pnl_simulator.py::TestPnlSimulator2::test_perf1 -s
-   ```
+```bash
+ > pytest --profile ./amp/core/dataflow_model/test/test_pnl_simulator.py::TestPnlSimulator2::test_perf1 -s
+```
 
-# Profiling in a Jupyter notebook
+## Profiling in a Jupyter notebook
 
 - You can find all of the examples below in action in the
   `amp/core/notebooks/time_memory_profiling_example.ipynb` [<span
-  class="underline">link</span>](https://github.com/sorrentum/sorrentum/blob/master/core/notebooks/time_memory_profiling_example.ipynb).
+  class="underline">link</span>](https://github.com/kaizen-ai/kaizenflow/blob/master/core/notebooks/time_memory_profiling_example.ipynb).
 
-## Time profilers
+### Time profilers
 
 - In a notebook, execute cell with `%time` cell-magic:
   ```python
@@ -219,12 +220,13 @@ How to read a graph: https://nesi.github.io/perf-training/python-scatter/profili
   func()
   ```
 
-## By function
+### By function
 
 - We prefer cProfile for profiling and gprof2dot for visualization.
 
 - The documentation does not state this, but `%prun` magic uses cProfile under
   the hood, so we can use it in the notebook instead
+
   ```python
   # We can suppress output to the notebook by specifying "-q".
   %%prun -D tmp.pstats func() !gprof2dot -f pstats tmp.pstats | dot -Tpng -o output.png
@@ -237,7 +239,7 @@ How to read a graph: https://nesi.github.io/perf-training/python-scatter/profili
 - If you open the output image in the new tab, you can zoom in and look at the
   graph in detail.
 
-- gprof2dot supports thresholds that make output more readable:
+- Gprof2dot supports thresholds that make output more readable:
 
   ```python
   !gprof2dot -n 5 -e 5 -f pstats tmp.pstats | dot -Tpng -o output.png
@@ -247,7 +249,7 @@ How to read a graph: https://nesi.github.io/perf-training/python-scatter/profili
 - This will filter the output into something like this:
   <img src="figs/profiling/image2.png" style="width:6.5in;height:5.45833in" />
 
-# Memory profilers
+## Memory profilers
 
 - We prefer using [<span
   class="underline">memory-profiler</span>](https://github.com/pythonprofilers/memory_profiler).

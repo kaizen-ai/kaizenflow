@@ -1,3 +1,4 @@
+# Development Documents
 
 <!-- toc -->
 
@@ -12,29 +13,29 @@
 
 <img width="100" alt="image" src="https://user-images.githubusercontent.com/33238329/216777823-851b28ed-7d7a-4b52-9d71-ab38d146edc3.png">
 
-# On-boarding
+## On-boarding
 
-- [Signing up for Sorrentum](/docs/onboarding/sorrentum.signing_up.how_to_guide.md)
+- [Signing up for KaizenFlow](/docs/onboarding/kaizenflow.signing_up.how_to_guide.md)
 
-# How to start developing
+## How to start developing
 
 This contains the absolute minimal amount of info to start developing
 
 - [General Rules of Collaboration](/docs/work_organization/all.team_collaboration.how_to_guide.md)
 
-- [Quick start for developing](/docs/onboarding/sorrentum.set_up_development_environment.how_to_guide.md)
+- [Quick start for developing](/docs/onboarding/kaizenflow.set_up_development_environment.how_to_guide.md)
 
-- [How to organize your work](/docs/work_organization/sorrentum.organize_your_work.how_to_guide.md)
+- [How to organize your work](/docs/work_organization/kaizenflow.organize_your_work.how_to_guide.md)
 
 - [First Review Process](/docs/coding/all.submit_code_for_review.how_to_guide.md)
 
-- [Sorrentum Python coding style guide](/docs/coding/all.coding_style.how_to_guide.md)
+- [KaizenFlow Python coding style guide](/docs/coding/all.coding_style.how_to_guide.md)
 
 - [Jupyter notebook best practices](/docs/coding/all.jupyter_notebook.how_to_guide.md)
 
 - [Unit tests](/docs/coding/all.write_unit_tests.how_to_guide.md)
 
-# Project management
+## Project management
 
 - [Contributor Scoring](/docs/work_organization/all.contributor_scoring.how_to_guide.md)
   - How we give feedback to contributors
@@ -62,7 +63,7 @@ This contains the absolute minimal amount of info to start developing
 - [How to integrate repos](/docs/coding/all.integrate_repos.how_to_guide.md)
   - Detailed instruction on how to integrate repos
 
-# Learn how to become efficient at developing
+## Learn how to become efficient at developing
 
 This contains a set of resources that over time will make 10x more productive
 
@@ -76,9 +77,9 @@ This contains a set of resources that over time will make 10x more productive
 
 - [Scrum Methodology](/docs/work_organization/all.scrum.explanation.md)
 
-# In-depth docs
+## In-depth docs
 
-- [Code organization](/docs/kaizenflow/all.amp_code_organization.reference.md)
+- [Code organization](/docs/all.code_organization.reference.md)
 
 - [Buildmeister process](/docs/work_organization/all.buildmeister.how_to_guide.md)
 
@@ -98,7 +99,7 @@ This contains a set of resources that over time will make 10x more productive
 
 - [PyCharm](/docs/work_tools/all.pycharm.how_to_guide.md)
 
-# DeFi
+## DeFi
 
 - [DeFi README](/defi/README.md)
 

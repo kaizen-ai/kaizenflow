@@ -1,4 +1,4 @@
-
+# Run Mock2 In Batch Mode
 
 <!-- toc -->
 
@@ -14,7 +14,7 @@ The goal is to run a simple system (Mock2) end-to-end in batch mode and compute
 PnL. This is the typical flow that Quants run to estimate performance of a
 model.
 
-# Description of the forecast system
+## Description of the forecast system
 
 - A notebook running the forecast system interactively is
   [/docs/kaizenflow/all.run_Mock2_pipeline_in_notebook.how_to_guide.ipynb](/docs/kaizenflow/all.run_Mock2_pipeline_in_notebook.how_to_guide.ipynb)
@@ -35,7 +35,7 @@ model.
 
 - Finally the entire `DAG` is run
 
-# Description of the System
+## Description of the System
 
 - The same `System` can be built using various utilities from
   dataflow/system/system.py
@@ -49,7 +49,7 @@ model.
 - Concrete fully-configured `System`s are built in
   [/dataflow_amp/system/mock2/mock2_forecast_system_example.py](/dataflow_amp/system/mock2/mock2_forecast_system_example.py)
 
-# Run a backtest
+## Run a backtest
 
 Pull the latest `master`
 ```
@@ -66,7 +66,7 @@ Pull the latest `master`
 - The script runs a backtest for a simple dummy "strategy" using equities data
   for 1 month (2023-08) and 1 asset (MSFT). Trading frequency is 5 minutes.
 
-## Explanation of the backtesting script
+### Explanation of the backtesting script
 
 - Inside `docker_bash`
 
@@ -96,7 +96,7 @@ Pull the latest `master`
   [/docs/dataflow/ck.run_backtest.how_to_guide.md](/docs/dataflow/ck.run_backtest.how_to_guide.md)
   for more details
 
-# Analyze the results
+## Analyze the results
 
 - ```
   > i docker_jupyter

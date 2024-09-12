@@ -1,10 +1,9 @@
-
+# Chatgpt Api
 
 <!-- toc -->
 
 - [OpenAI Assistant Runner & Manager](#openai-assistant-runner--manager)
   * [What is OpenAI Assistant](#what-is-openai-assistant)
-  * [Why using Assistant](#why-using-assistant)
   * [General pattern](#general-pattern)
   * [Code organization](#code-organization)
   * [How to use](#how-to-use)
@@ -12,48 +11,46 @@
     + [Running Assistant](#running-assistant)
 - [API library](#api-library)
   * [Usage](#usage)
-    + [File Structure](#file-structure)
-    + [Uploading and Retrieving Files](#uploading-and-retrieving-files)
+    + [File structure](#file-structure)
+    + [Uploading and retrieving Files](#uploading-and-retrieving-files)
     + [Managing Assistants](#managing-assistants)
-    + [ChatGPT Communication](#chatgpt-communication)
-    + [E2E Assistant Runner](#e2e-assistant-runner)
+    + [ChatGPT communication](#chatgpt-communication)
+    + [E2E assistant runner](#e2e-assistant-runner)
 
 <!-- tocstop -->
 
-# OpenAI Assistant Runner & Manager
+## OpenAI Assistant Runner & Manager
 
-## What is OpenAI Assistant
+### What is OpenAI Assistant
 
-- An assistant is pretty much similar to a modified GPT that has mastered some
-  knowledge and will always be able to use them
+- An assistant is similar to a modified GPT that has mastered some knowledge and
+  is able to use that knowledge for future tasks
 - The official OpenAI documentation is at
   https://platform.openai.com/docs/assistants/overview
 
-## Why using Assistant
-
 - Normally you "chat" with ChatGPT, that means anything you send to it is
   treated as input
-- But GPT forget things really fast: it will forget what you previously said or
-  files uploaded, as the total length of the conversation grows
+- GPT will forget what you previously said or files uploaded as the total length
+  of the conversation grows
 - By creating an Assistant, you build a new "instance" of ChatGPT and can give
   it some knowledge to learn
-- These knowledge can be with many formats, and up to 20 files (512MB each) at a
+- This knowledge can be in many formats and up to 20 files (512MB each) at a
   time
 - With an instruction string, you define its behavior about how it should make
   use of those knowledge
 - When talking to an assistant, you can still add files in the message
 - These files does not count towards its 20 files' knowledge limit, as they are
-  considered as input, and will be forgotten eventually
+  considered as input and will be forgotten eventually
 
-## General pattern
+### General pattern
 
 - Creation:
-  - Send some `guideline or example files` for one type of task to the Assistant
+  - Send some guideline or example files for one type of task to the Assistant
     itself as knowledge
   - Send an instruction about how it should deal with tasks using those
     knowledge
 - Running:
-  - Whenever a specific task comes, send `the task and its data files` in the
+  - Whenever a specific task comes, send the task and its data files in the
     message as input
   - Let the assistant solve the task based on the knowledge it learned
   - It will forget everything in this task, and be ready for the next task like
@@ -63,7 +60,7 @@
   - Chatting is not yet implemented in our code, since command line scripts
     cannot save conversations.
 
-## Code organization
+### Code organization
 
 - Libraries are under `helpers`, e.g.,
   - `helpers/hchatgpt.py`
@@ -73,23 +70,19 @@
   - `dev_scripts/chatgpt/manage_chatgpt_assistant.py`
   - `dev_scripts/chatgpt/run_chatgpt.py`
 
-- Documentaiton is
-  - `docs/work_tools/all.chatgpt_api.how_to_guide.md`
+### How to use
 
-## How to use
-```
-> export OPENAI_API_KEY=<your secret key>
-```
-
-- Each API key can be bound to an OpenAI Organization. A key belongs to our Org
-  is needed to start
+- Add the API KEY
+  ```bash
+  > export OPENAI_API_KEY=<your secret key>
+  ```
+- Each API key can be bound to an OpenAI Organization
 - Assistants are organization-wide, an assistant created under our Org can be
   accessed by any API key that belongs to our Org
-- Play safely: do not call update/delete methods if it's not necessary
 
-### Assistant Manager
+#### Assistant Manager
 
-- To get help
+- The interface is like:
 
   ```bash
   > manage_chatgpt_assistant.py -h
@@ -132,11 +125,11 @@
       --retrieval_tool --code_tool
   ```
 
-### Running Assistant
+#### Running Assistant
 
-- The script `dev_scripts/chatgpt/run_chatgpt.py -h` runs an assistant
+- The script `dev_scripts/chatgpt/run_chatgpt.py` runs an assistant
 
-- To get help:
+- The interface is like:
 
   ```bash
   > run_chatgpt.py -h
@@ -164,17 +157,17 @@
 - Refer to `helpers/hchatgpt_instructions.py` to see how they are instructed
 
   ```bash
-  python dev_scripts/chatgpt/run_chatgpt.py \
+  > python dev_scripts/chatgpt/run_chatgpt.py \
     -n MarkdownLinter \ # Use the assistant "MarkdownLinter"
     -f dev_scripts/chatgpt/example_data/corrupted_dropcontact.how_to_guide.md \ # Give this corrupted markdown file
     -o dev_scripts/chatgpt/example_data/gpt_linted_dropcontact.how_to_guide.md # Redirect its output to this file
   ```
 
-# API library
+## API library
 
-- `helpers/hchatgpt.py` provides methods that wrap and interact with OpenAI API.
+- `helpers/hchatgpt.py` provides methods that wrap and interact with OpenAI API
 - By using these methods, you can easily build an assistant and chat to it with
-  our files.
+  our files
 
 - Key functionalities include:
   - Uploading and removing files from OpenAI
@@ -183,11 +176,11 @@
   - Running threads with certain assistants
   - End-to-end communication method between users and the assistant
 
-## Usage
+### Usage
 
 The following snippets provide a basic overview of the code usage.
 
-### File Structure
+#### File structure
 
 - Since OpenAI File manager does not hold folder structure, you use a cache
   dictionary to save the relation between our file (with folder) and OpenAI File
@@ -197,7 +190,7 @@ The following snippets provide a basic overview of the code usage.
 - If you find anything buggy, try deleting this cache file and rerun the code so
   that it can be regenerated from scratch
 
-### Uploading and Retrieving Files
+#### Uploading and retrieving Files
 
 - To upload a file to OpenAI, which you can later attach to messages/assistants:
 
@@ -215,7 +208,7 @@ The following snippets provide a basic overview of the code usage.
   file_object = get_gpt_file_from_id(file_id)
   ```
 
-### Managing Assistants
+#### Managing Assistants
 
 You can specify files an assistant should constantly use (like guidelines):
 
@@ -230,13 +223,15 @@ add_files_to_assistant_by_name('assistant_name', ['new_file_path'])
 delete_file_from_assistant_by_name('assistant_name', 'file_path_to_remove')
 ```
 
-### ChatGPT Communication
+#### ChatGPT communication
 
 - Create a thread and send a message, with or without attaching files:
 
   ```python
   thread_id = create_thread()
-  message_id = create_message_on_thread_with_file_names(thread_id, 'Your message content', ['file_name_1'])
+  message_id = create_message_on_thread_with_file_names(thread_id,
+    'Your message content',
+    ['file_name_1'])
   ```
 
 - Run a thread on an assistant to get the Assistant's response:
@@ -245,14 +240,17 @@ delete_file_from_assistant_by_name('assistant_name', 'file_path_to_remove')
   response_messages = wait_for_run_result(thread_id, run_id)
   ```
 
-### E2E Assistant Runner
+#### E2E assistant runner
 
 - Interact with an assistant conveniently with the `e2e_assistant_runner`
   function
 - This function can take user input, send it to the assistant, and manage file
   attachments in one call:
   ```python
-  response = e2e_assistant_runner('assistant_name', 'Your question or statement here', input_file_names=['file_name_1'])
+  response = e2e_assistant_runner(
+      'assistant_name',
+      'Your question or statement here',
+      input_file_names=['file_name_1'])
   # Outputs the assistant's response.
   print(response)
   ```

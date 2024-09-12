@@ -1,5 +1,7 @@
 # Visual Studio Code
 
+## Visual Studio Code
+
 <!-- toc -->
 
 - [Connecting via VNC](#connecting-via-vnc)
@@ -10,23 +12,22 @@
   * [Prerequisites](#prerequisites)
   * [Tips](#tips)
   * [Steps](#steps)
+- [How to access the Jupyter server running on the remote server through your local machine](#how-to-access-the-jupyter-server-running-on-the-remote-server-through-your-local-machine)
 
 <!-- tocstop -->
 
-# Connecting via VNC
+## Connecting via VNC
 
 - Make sure you have a VPN connection.
 
-## Installing VNC
+### Installing VNC
 
 - Install VNC using this link: [<span
   class="underline">https://www.realvnc.com/en/connect/download/viewer/windows/</span>](https://www.realvnc.com/en/connect/download/viewer/windows/)
 - Sysadmin has sent you:
-
   - `os_password.txt`
-  - your username `$USER`
-  - a key `crypto.pub` that looks like:
-
+  - Your username `$USER`
+  - A key `crypto.pub` that looks like:
     ```
     -----BEGIN OPENSSH PRIVATE KEY-----
     b3BlbnNzaC1rZXktdjEAAAAABG5vbmUAAAAEbm9uZQAAAAAAAAABAAABlwAAAAdzc2gtcn
@@ -37,17 +38,15 @@
     ```
 
 - Let's say you are connected via VNC.
-
   - Login into the OS.
   - Run `pycharm.sh` using terminal (should be there):
-
     ```
     > bash /opt/pycharm-community-2021.2.3/bin/pycharm.sh
     ```
 
-# Installation of VS Code
+## Installation of VS Code
 
-## Windows, Linux, Mac
+### Windows, Linux, Mac
 
 - Download the installer using this link:
   [<span class="underline">Download Visual Studio Code - Mac, Linux, Windows</span>](https://code.visualstudio.com/download).
@@ -79,33 +78,27 @@
   - Choose the desired repo directory from the drop-down menu, e.g., `cmamp1`:
     <img src="figs/visual_studio_code/image5.png" style="width:2.5in;height:1.44792in" />
 
-# How to run a VSCode debugger within a remote container
+## How to run a VSCode debugger within a remote container
 
 The goal is to successfully run a Visual Studio Code (VSCode) debugger on code
 that runs within a docker container located on a remote server.
 
-## Prerequisites
+### Prerequisites
 
 - Mac OS or Linux-based OS
 
 - Visual Studio Code installed on the local machine you are working from
 
 - VSCode extensions installed:
-
   - [<span
     class="underline">Python</span>](https://marketplace.visualstudio.com/items?itemName=ms-python.python)
     (Installed on the remote machine)
-
     - VS Code installs some files inside `.vscode-*` directories on the remote
       host to ensure full functionality of the extensions
-
   - [<span class="underline">Remote SSH</span>](https://marketplace.visualstudio.com/items?itemName=ms-vscode-remote.remote-ssh)
-
   - [<span class="underline">Remote Explorer</span>](https://marketplace.visualstudio.com/items?itemName=ms-vscode.remote-explorer)
-
   - [<span class="underline">Remote Development</span>](https://marketplace.visualstudio.com/items?itemName=ms-vscode-remote.vscode-remote-extensionpack)
     (Installed on the remote machine)
-
   - [<span class="underline">Dev Containers</span>](https://marketplace.visualstudio.com/items?itemName=ms-vscode-remote.remote-containers)
 
 - Ability to access the remote server where the container will be located using
@@ -117,11 +110,11 @@ that runs within a docker container located on a remote server.
 - A running Kaizen dev docker container created on the remote machine using
   `invoke docker_bash`
 
-## Tips
+### Tips
 
 - To open the command palette in VSCode use a keyboard shortcut Cmd + Shift + P
 
-## Steps
+### Steps
 
 1.  Open the command palette and search for `Remote-SSH: Connect to host` action
 
@@ -152,7 +145,6 @@ that runs within a docker container located on a remote server.
 <img src="figs/visual_studio_code/image11.png" style="width:6.5in;height:2.36111in" />
 
 8. Paste the following JSON into the file and save it.
-
 ```
 {
     // Use IntelliSense to learn about possible attributes.
@@ -189,7 +181,6 @@ that runs within a docker container located on a remote server.
     `"args"` key to the launch.json file (the location should be
     `.vscode/launch.json`). The value is a list of command line arguments and
     values. Example below:
-
 ```
 "args": [
     "--file",
@@ -198,3 +189,19 @@ that runs within a docker container located on a remote server.
     "convert"
 ]
 ```
+
+## How to access the Jupyter server running on the remote server through your local machine
+
+1.`i docker_jupyter`
+
+```sh
+###> devops/docker_run/run_jupyter_server.sh
+> cmd=jupyter notebook --ip=* --port=10421 --allow-root --NotebookApp.token=''
+...
+```
+
+2. In VSCode, add port forwarding from port `10421` on the server to the same
+   port on your local machine. You can then access the Jupyter notebook running
+   on the remote machine through `http://localhost:10421` on your local machine.
+
+<img src="figs/visual_studio_code/port_fowarding.png" style="width:6.5in;" />

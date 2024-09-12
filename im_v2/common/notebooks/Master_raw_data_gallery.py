@@ -12,11 +12,10 @@
 #     name: python3
 # ---
 
-# %% [markdown] heading_collapsed=true
-# # Description
-#
+# %% [markdown]
+# # Master raw data gallery
 
-# %% [markdown] hidden=true
+# %% [markdown]
 # This notebook showcases locations and basic structure of raw data from:
 #
 # - S3 (parquet datasets)
@@ -40,7 +39,7 @@
 #
 # The gallery should match 1-to-1 with the dataset matrix
 #
-# https://docs.google.com/spreadsheets/d/1aN2TBTtDqX5itnlG70lS2otkKCHKPN2yE_Hu3JPhPVo/edit#gid=0
+# https://docs.google.com/spreadsheets/d/13Vyrxs9Eg-C6y91XIogLHi4A1_AFK7_KCF2KEnnxYv0/edit#gid=521856766
 
 # %% [markdown]
 # # Imports
@@ -68,57 +67,280 @@ _LOG.info("%s", henv.get_system_signature()[0])
 hprint.config_notebook()
 
 # %% [markdown]
-# # Realtime (the DB data)
+# # Active datasets
 
 # %% [markdown]
-# ## realtime.airflow.resampled_1min.postgres.bid_ask.futures.v7.ccxt.binance.v1_0_0
+# ## realtime.airflow.resampled_1min.postgres.bid_ask.futures.v8.ccxt.binance.v1_0_0
 
 # %%
-signature = "realtime.airflow.resampled_1min.postgres.bid_ask.futures.v7.ccxt.binance.v1_0_0"
-reader = imvcdcimrdc.RawDataReader(signature)
+signature = "realtime.airflow.resampled_1min.postgres.bid_ask.futures.v8.ccxt.binance.v1_0_0"
+reader = imvcdcimrdc.RawDataReader(signature, stage="preprod")
 data = reader.read_data_head()
 _LOG.log(log_level, hpandas.df_to_str(data, log_level=log_level))
 
 # %% [markdown]
-# ## realtime.airflow.downloaded_200ms.postgres.bid_ask.futures.v7.ccxt.binance.v1_0_0
+# ## realtime.airflow.downloaded_200ms.postgres.bid_ask.futures.v8.ccxt.binance.v1_0_0
 
 # %%
-signature = "realtime.airflow.downloaded_200ms.postgres.bid_ask.futures.v7.ccxt.binance.v1_0_0"
-reader = imvcdcimrdc.RawDataReader(signature)
+signature = "realtime.airflow.downloaded_200ms.postgres.bid_ask.futures.v8.ccxt.binance.v1_0_0"
+reader = imvcdcimrdc.RawDataReader(signature, stage="preprod")
 data = reader.read_data_head()
 _LOG.log(log_level, hpandas.df_to_str(data, log_level=log_level))
 
 # %% [markdown]
-# ## realtime.airflow.downloaded_200ms.postgres.bid_ask.futures.v7_6.ccxt.okx.v1_0_0
+# ## realtime.airflow.downloaded_200ms.postgres.bid_ask.futures.v8.binance.binance.v1_0_0
 
 # %%
-# This works with stage 'preprod'
-signature = "realtime.airflow.downloaded_200ms.postgres.bid_ask.futures.v7_6.ccxt.okx.v1_0_0"
-reader = imvcdcimrdc.RawDataReader(signature)
+signature = "realtime.airflow.downloaded_200ms.postgres.bid_ask.futures.v8.binance.binance.v1_0_0"
+reader = imvcdcimrdc.RawDataReader(signature, stage="preprod")
 data = reader.read_data_head()
 _LOG.log(log_level, hpandas.df_to_str(data, log_level=log_level))
 
 # %% [markdown]
-# ## realtime.airflow.downloaded_1min.postgres.ohlcv.futures.v7.ccxt.binance.v1_0_0
+# ## realtime.airflow.resampled_1min.postgres.bid_ask.futures.v8.binance.binance.v1_0_0
 
 # %%
-signature = "realtime.airflow.downloaded_1min.postgres.ohlcv.futures.v7.ccxt.binance.v1_0_0"
-reader = imvcdcimrdc.RawDataReader(signature)
+signature = "realtime.airflow.resampled_1min.postgres.bid_ask.futures.v8.binance.binance.v1_0_0"
+reader = imvcdcimrdc.RawDataReader(signature, stage="preprod")
 data = reader.read_data_head()
 _LOG.log(log_level, hpandas.df_to_str(data, log_level=log_level))
 
 # %% [markdown]
-# ## realtime.airflow.downloaded_1min.postgres.ohlcv.futures.v7_6.ccxt.okx.v1_0_0
+# ## periodic_daily.airflow.archived_200ms.parquet.bid_ask.futures.v8.ccxt.binance.v1_0_0
 
 # %%
-# This works with stage 'preprod'
-signature = "realtime.airflow.downloaded_1min.postgres.ohlcv.futures.v7_6.ccxt.okx.v1_0_0"
-reader = imvcdcimrdc.RawDataReader(signature)
+# TODO(Juraj): #CmTask8309
+
+# %% [markdown]
+# ## periodic_daily.airflow.resampled_1min.parquet.bid_ask.futures.v8.ccxt.binance.v1_0_0
+
+# %%
+# TODO(Juraj): #CmTask8309
+
+# %% [markdown]
+# ## periodic_daily.airflow.archived_200ms.parquet.bid_ask.futures.v8.binance.binance.v1_0_0
+
+# %%
+signature = "periodic_daily.airflow.archived_200ms.parquet.bid_ask.futures.v8.binance.binance.v1_0_0"
+reader = imvcdcimrdc.RawDataReader(signature, stage="preprod")
+start_timestamp = pd.Timestamp("2024-05-16T00:00:00+00:00")
+end_timestamp = start_timestamp + pd.Timedelta(minutes=2)
+data = reader.read_data(
+    start_timestamp, end_timestamp, currency_pairs=["BTC_USDT", "ETH_USDT"]
+)
+_LOG.log(log_level, hpandas.df_to_str(data, log_level=log_level))
+
+# %% [markdown]
+# ## realtime.airflow.downloaded_1min.postgres.ohlcv.futures.v8.ccxt.binance.v1_0_0
+
+# %%
+signature = "realtime.airflow.downloaded_1min.postgres.ohlcv.futures.v8.ccxt.binance.v1_0_0"
+reader = imvcdcimrdc.RawDataReader(signature, stage="preprod")
+data = reader.read_data_head()
+_LOG.log(log_level, hpandas.df_to_str(data, log_level=log_level))
+
+# %% [markdown] run_control={"marked": false}
+# ## periodic_daily.airflow.downloaded_all.parquet.trades.futures.v8.binance.binance.v2_0_0
+
+# %%
+signature = "periodic_daily.airflow.downloaded_all.parquet.trades.futures.v8.binance.binance.v2_0_0"
+reader = imvcdcimrdc.RawDataReader(signature, stage="preprod")
+start_timestamp = pd.Timestamp("2024-01-01T00:00:00+00:00")
+end_timestamp = start_timestamp + pd.Timedelta(minutes=2)
+data = reader.read_data(
+    start_timestamp, end_timestamp, currency_pairs=["BTC_USDT"]
+)
+_LOG.log(log_level, hpandas.df_to_str(data, log_level=log_level))
+
+# %%
+## TODO(Sonaal): Add info about bid/ask historical data
+
+# %% [markdown]
+# ## realtime.airflow.downloaded_200ms.postgres.bid_ask.spot.v7_3.ccxt.binance.v1_0_0
+
+# %%
+signature = "realtime.airflow.downloaded_200ms.postgres.bid_ask.spot.v7_3.ccxt.binance.v1_0_0"
+reader = imvcdcimrdc.RawDataReader(signature, stage="preprod")
 data = reader.read_data_head()
 _LOG.log(log_level, hpandas.df_to_str(data, log_level=log_level))
 
 # %% [markdown]
-# # Historical (data updated daily)
+# ## periodic_daily.airflow.archived_200ms.postgres.bid_ask.spot.v7.ccxt.binance.v1_0_0
+
+# %%
+signature = "periodic_daily.airflow.archived_200ms.postgres.bid_ask.spot.v7.ccxt.binance.v1_0_0"
+reader = imvcdcimrdc.RawDataReader(signature, stage="preprod")
+data = reader.read_data_head()
+_LOG.log(log_level, hpandas.df_to_str(data, log_level=log_level))
+
+# %% [markdown]
+# ## realtime.airflow.downloaded_200ms.postgres.bid_ask.spot.v7_3.ccxt.okx.v1_0_0
+
+# %%
+signature = (
+    "realtime.airflow.downloaded_200ms.postgres.bid_ask.spot.v7_3.ccxt.okx.v1_0_0"
+)
+reader = imvcdcimrdc.RawDataReader(signature, stage="preprod")
+data = reader.read_data_head()
+_LOG.log(log_level, hpandas.df_to_str(data, log_level=log_level))
+
+# %% [markdown]
+# ## periodic_daily.airflow.archived_200ms.postgres.bid_ask.spot.v7_3.ccxt.okx.v1_0_0
+
+# %%
+signature = "periodic_daily.airflow.archived_200ms.postgres.bid_ask.spot.v7_3.ccxt.okx.v1_0_0"
+reader = imvcdcimrdc.RawDataReader(signature, stage="preprod")
+data = reader.read_data_head()
+_LOG.log(log_level, hpandas.df_to_str(data, log_level=log_level))
+
+# %% [markdown]
+# ## realtime.airflow.downloaded_200ms.postgres.bid_ask.futures.v7_4.ccxt.cryptocom.v1_0_0
+
+# %%
+signature = "realtime.airflow.downloaded_200ms.postgres.bid_ask.futures.v7_4.ccxt.cryptocom.v1_0_0"
+reader = imvcdcimrdc.RawDataReader(signature, stage="preprod")
+data = reader.read_data_head()
+_LOG.log(log_level, hpandas.df_to_str(data, log_level=log_level))
+
+# %% [markdown]
+# ## periodic_daily.airflow.archived_200ms.postgres.bid_ask.futures.v7_4.ccxt.cryptocom.v1_0_0
+
+# %%
+signature = "periodic_daily.airflow.archived_200ms.postgres.bid_ask.futures.v7_4.ccxt.cryptocom.v1_0_0"
+reader = imvcdcimrdc.RawDataReader(signature, stage="preprod")
+data = reader.read_data_head()
+_LOG.log(log_level, hpandas.df_to_str(data, log_level=log_level))
+
+# %% [markdown]
+# ## periodic_daily.airflow.downloaded_1min.parquet.ohlcv.spot.v7_3.ccxt.binance.v1_0_0
+
+# %%
+signature = "periodic_daily.airflow.downloaded_1min.parquet.ohlcv.spot.v7_3.ccxt.binance.v1_0_0"
+reader = imvcdcimrdc.RawDataReader(signature, stage="preprod")
+data = reader.read_data_head()
+_LOG.log(log_level, hpandas.df_to_str(data, log_level=log_level))
+
+# %% [markdown]
+# ## periodic_daily.airflow.downloaded_1min.parquet.ohlcv.futures.v7_3.ccxt.binance.v1_0_0
+
+# %%
+signature = "periodic_daily.airflow.downloaded_1min.parquet.ohlcv.spot.v7_3.ccxt.binance.v1_0_0"
+reader = imvcdcimrdc.RawDataReader(signature, stage="preprod")
+data = reader.read_data_head()
+_LOG.log(log_level, hpandas.df_to_str(data, log_level=log_level))
+
+# %% [markdown]
+# ## periodic_daily.airflow.downloaded_1min.parquet.ohlcv.futures.v8.ccxt.binance.v1_0_0
+
+# %%
+signature = "periodic_daily.airflow.downloaded_1min.parquet.ohlcv.futures.v8.ccxt.binance.v1_0_0"
+reader = imvcdcimrdc.RawDataReader(signature, stage="preprod")
+start_timestamp = pd.Timestamp("2024-01-01T00:00:00+00:00")
+end_timestamp = start_timestamp + pd.Timedelta(minutes=5)
+data = reader.read_data(
+    start_timestamp, end_timestamp, currency_pairs=["BTC_USDT", "ETH_USDT"]
+)
+_LOG.log(log_level, hpandas.df_to_str(data, log_level=log_level))
+
+# %% [markdown]
+# ## periodic_daily.airflow.downloaded_1min.parquet.ohlcv.futures.v7_4.ccxt.cryptocom.v1_0_0
+
+# %%
+signature = "periodic_daily.airflow.downloaded_1min.parquet.ohlcv.futures.v7_4.ccxt.cryptocom.v1_0_0"
+reader = imvcdcimrdc.RawDataReader(signature, stage="preprod")
+data = reader.read_data_head()
+_LOG.log(log_level, hpandas.df_to_str(data, log_level=log_level))
+
+# %% [markdown]
+# ## periodic_daily.airflow.downloaded_1min.parquet.ohlcv.futures.v8.ccxt.okx.v1_0_0
+
+# %%
+signature = "periodic_daily.airflow.downloaded_1min.parquet.ohlcv.futures.v8.ccxt.okx.v1_0_0"
+reader = imvcdcimrdc.RawDataReader(signature, stage="preprod")
+start_timestamp = pd.Timestamp("2024-01-01T00:00:00+00:00")
+end_timestamp = start_timestamp + pd.Timedelta(minutes=5)
+data = reader.read_data(
+    start_timestamp, end_timestamp, currency_pairs=["BTC_USDT", "ETH_USDT"]
+)
+_LOG.log(log_level, hpandas.df_to_str(data, log_level=log_level))
+
+# %% [markdown]
+# ## periodic_daily.airflow.resampled_1min.parquet.bid_ask.futures.v8.ccxt.binance.v2_0_0
+
+# %%
+signature = "periodic_daily.airflow.resampled_1min.parquet.bid_ask.futures.v8.ccxt.binance.v2_0_0"
+reader = imvcdcimrdc.RawDataReader(signature, stage="preprod", add_suffix="tokyo")
+start_timestamp = pd.Timestamp("2024-06-11T00:00:00+00:00")
+end_timestamp = start_timestamp + pd.Timedelta(minutes=5)
+data = reader.read_data(
+    start_timestamp, end_timestamp, currency_pairs=["XMR_USDT"]
+)
+_LOG.log(log_level, hpandas.df_to_str(data, log_level=log_level))
+
+# %%
+# ## periodic_daily.airflow.downloaded_200ms.postgres.bid_ask.futures.v7_5.ccxt.cryptocom.v1_0_0
+# TODO(Juraj): The downloader for this dataset runs in Tokyo, we do not have cross-region RDS access available, should
+# it be added?
+
+# %% [markdown]
+# ## periodic_daily.airflow.archived_200ms.parquet.bid_ask.futures.v7_5.ccxt.cryptocom.v1_0_0
+
+# %%
+signature = "periodic_daily.airflow.archived_200ms.parquet.bid_ask.futures.v7_5.ccxt.cryptocom.v1_0_0"
+reader = imvcdcimrdc.RawDataReader(signature, stage="preprod", add_suffix="tokyo")
+start_timestamp = pd.Timestamp("2024-07-09T06:00:00+00:00")
+end_timestamp = start_timestamp + pd.Timedelta(minutes=1)
+data = reader.read_data(
+    start_timestamp, end_timestamp
+)
+_LOG.log(log_level, hpandas.df_to_str(data, log_level=log_level))
+
+# %% [markdown]
+# ## periodic_daily.airflow.resampled_1min.parquet.bid_ask.futures.v7_5.ccxt.cryptocom.v2_0_0
+
+# %%
+signature = "periodic_daily.airflow.resampled_1min.parquet.bid_ask.futures.v7_5.ccxt.cryptocom.v2_0_0"
+reader = imvcdcimrdc.RawDataReader(signature, stage="preprod", add_suffix="tokyo")
+start_timestamp = pd.Timestamp("2024-07-08T20:00:00+00:00")
+end_timestamp = start_timestamp + pd.Timedelta(minutes=5)
+data = reader.read_data(
+    start_timestamp, end_timestamp
+)
+_LOG.log(log_level, hpandas.df_to_str(data, log_level=log_level))
+
+# %% [markdown]
+# # Semi-Active datasets
+#
+#  - not currently downloaded but could be revived
+
+# %% [markdown]
+# ## periodic_daily.airflow.archived_200ms.parquet.bid_ask.spot.v7_4.ccxt.kraken.v1_0_0
+
+# %%
+signature = "periodic_daily.airflow.archived_200ms.parquet.bid_ask.spot.v7_4.ccxt.kraken.v1_0_0"
+reader = imvcdcimrdc.RawDataReader(signature, stage="preprod")
+start_timestamp = pd.Timestamp("2024-01-01T00:00:00+00:00")
+end_timestamp = start_timestamp + pd.Timedelta(minutes=1)
+data = reader.read_data(
+    start_timestamp, end_timestamp, currency_pairs=["BTC_USDT", "ETH_USDT"]
+)
+_LOG.log(log_level, hpandas.df_to_str(data, log_level=log_level))
+
+# %% [markdown]
+# ## periodic_daily.airflow.downloaded_all.parquet.trades.spot.v7_4.ccxt.kraken.v1_0_0
+
+# %%
+signature = "periodic_daily.airflow.downloaded_all.parquet.trades.spot.v7_4.ccxt.kraken.v1_0_0"
+reader = imvcdcimrdc.RawDataReader(signature, stage="preprod")
+start_timestamp = pd.Timestamp("2024-01-01T00:00:00+00:00")
+end_timestamp = start_timestamp + pd.Timedelta(minutes=1)
+data = reader.read_data(
+    start_timestamp, end_timestamp, currency_pairs=["BTC_USDT", "ETH_USDT"]
+)
+_LOG.log(log_level, hpandas.df_to_str(data, log_level=log_level))
+
+# %% [markdown]
+# # Legacy datasets - datasets not actively maintained
 
 # %% [markdown]
 # ## periodic_daily.airflow.downloaded_1min.csv.ohlcv.futures.v7.ccxt.binance.v1_0_0
@@ -245,22 +467,17 @@ _LOG.log(log_level, hpandas.df_to_str(data, log_level=log_level))
 # _This dataset is in the test stage only_
 
 # %%
-signature = "bulk.airflow.downloaded_1min.parquet.ohlcv.futures.v7_5.ccxt.binance.v1_0_0"
+signature = (
+    "bulk.airflow.downloaded_1min.parquet.ohlcv.futures.v7_5.ccxt.binance.v1_0_0"
+)
 reader = imvcdcimrdc.RawDataReader(signature, stage="test")
 # 4 months of data is available.
 start_timestamp = pd.Timestamp("2023-02-01T00:00:00+00:00")
 end_timestamp = pd.Timestamp("2023-06-01T00:00:00+00:00")
 binance_ohlcv_data = reader.read_data(start_timestamp, end_timestamp)
-_LOG.log(log_level, hpandas.df_to_str(binance_ohlcv_data.head(), log_level=log_level))
-
-# %% [markdown]
-# # Archived data (data transferred from IM DB to postgres)
-#
-# TODO(Juraj): #CmTask3376 Update once the support for archive data has been added to the `RawDataReader`
-#
-# - So far only single dataset stored in s3://cryptokaizen-data/db_archive/prod/ccxt_bid_ask_futures_raw/timestamp/
-#    - can be retrieved using `hparquet.from_parquet`
-#    - be aware of the large footprint of the dataset
+_LOG.log(
+    log_level, hpandas.df_to_str(binance_ohlcv_data.head(), log_level=log_level)
+)
 
 # %% [markdown]
 # # RawDataReader Guide
@@ -292,7 +509,7 @@ start_timestamp = pd.Timestamp(
 )
 end_timestamp = start_timestamp + datetime.timedelta(minutes=10)
 currency_pairs = ["BTC_USDT", "ETH_USDT"]
-reader = imvcdcimrdc.RawDataReader(signature, stage='preprod')
+reader = imvcdcimrdc.RawDataReader(signature, stage="preprod")
 data = reader.read_data(
     start_timestamp, end_timestamp, currency_pairs=currency_pairs
 )

@@ -76,9 +76,29 @@ class Test_get_universe(hunitest.TestCase):
 
     def test6(self) -> None:
         """
+        Test for one symbol universe.
+        """
+        universe_str = "ccxt_btc-top1"
+        expected = r"""
+        ['binance::BTC_USDT']
+        """
+        self.check_output(universe_str, expected)
+
+    def test7(self) -> None:
+        """
+        Test for one symbol universe.
+        """
+        universe_str = "binance_eth-all"
+        expected = r"""
+        ['binance::ETH_USDT']
+        """
+        self.check_output(universe_str, expected)
+
+    def test8(self) -> None:
+        """
         Test when `universe_str` is invalid.
         """
-        universe_str = "invalid_string-all"
+        universe_str = "invalid.string-all"
         with self.assertRaises(AssertionError) as e:
             _ = dtfuniver.get_universe(universe_str)
         actual = str(e.exception)
@@ -87,7 +107,7 @@ class Test_get_universe(hunitest.TestCase):
         * Failed assertion *
         'None' is not 'None'
         The vendor and universe version are not found in
-        `universe_str = invalid_string-all`.
+        `universe_str = invalid.string-all`.
         ################################################################################
         """
         self.assert_equal(actual, expected, fuzzy_match=True)

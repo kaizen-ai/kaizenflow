@@ -1,4 +1,6 @@
-# How to integrate repos
+# Integrate Repos
+
+## How to integrate repos
 
 <!-- toc -->
 
@@ -12,7 +14,7 @@
 
 <!-- tocstop -->
 
-# Concepts
+## Concepts
 
 - We have two dirs storing two forks of the same repo
   - Files are touched (e.g., added, modified, deleted) in each forks
@@ -21,26 +23,26 @@
     in the other fork
 - Often we can integrate "by directory", i.e., finding entire directories that
   were touched in one branch but not in the other
-  - In this case we can simply copy the entire dir from one dir to the other
-- Other times we need to integrate "by file"
+  - In this case we can simply copy the entire dir from one repo to the other
+- Other times we need to integrate each file
 
 - There are various interesting Git reference points:
   1. The branch point for each fork, at which the integration branch was started
   2. The last integration point for each fork, at which the repos are the same,
      or at least aligned
 
-# Invariants for the integration workflows
+## Invariants for the integration workflows
 
 - The user runs commands in an abs dir, e.g., `/Users/saggese/src/{amp1,cmamp1}`
 - The user refers in the command line to `dir_basename`, which is the basename
-  of the integration directories (e.g., `amp1`, `cmamp1`, `sorrentum1`)
+  of the integration directories (e.g., `amp1`, `cmamp1`, `kaizenflow1`)
   - The `src_dir_basename` is the one where the command is issued
   - The `dst_dir_basename` is assumed to be parallel to the `src_dir_basename`
 - The dirs are then transformed in absolute dirs `abs_src_dir`
 
-# Integration process
+## Integration process
 
-## Preparation
+### Preparation
 
 - Pull master
 
@@ -50,9 +52,9 @@
   > cd cmamp1
   > git checkout master
   > i integrate_create_branch --dir-basename cmamp1
-  > cd sorrentum1
+  > cd kaizenflow1
   > git checkout master
-  > i integrate_create_branch --dir-basename sorrentum1
+  > i integrate_create_branch --dir-basename kaizenflow1
   ```
 
 - In one line
@@ -61,9 +63,9 @@
   cd $HOME/cmamp1 && \
     git checkout master && \
     i integrate_create_branch --dir-basename cmamp1 && \
-    cd $HOME/sorrentum1 && \
+    cd $HOME/kaizenflow1 && \
     git checkout master && \
-    i integrate_create_branch --dir-basename sorrentum1
+    i integrate_create_branch --dir-basename kaizenflow1
   ```
 
 - Remove white spaces from both source and destination repos:
@@ -89,7 +91,7 @@
 - Align `lib_tasks.py`:
 
   ```bash
-  > vimdiff ~/src/{cmamp1, sorrentum1}/tasks.py; diff_to_vimdiff.py --dir1 ~/src/cmamp1 --dir2 ~/src/sorrentum1 --subdir helpers
+  > vimdiff ~/src/{cmamp1, kaizenflow1}/tasks.py; diff_to_vimdiff.py --dir1 ~/src/cmamp1 --dir2 ~/src/kaizenflow1 --subdir helpers
   ```
 
 - Lint both dirs:
@@ -116,14 +118,14 @@
   > vimdiff ~/src/{amp1,cmamp1}/tasks.py; diff_to_vimdiff.py --dir1 ~/src/amp1 --dir2 ~/src/cmamp1 --subdir helpers
   ```
 
-## Integration
+### Integration
 
 - Create the integration branches:
 
   ```bash
   > cd amp1
   > i integrate_create_branch --dir-basename amp1
-  > i integrate_create_branch --dir-basename sorrentum1
+  > i integrate_create_branch --dir-basename kaizenflow1
   > cd cmamp1
   > i integrate_create_branch --dir-basename cmamp1
   ```
@@ -132,7 +134,7 @@
 
   ```bash
   > i integrate_files --file-direction common_files
-  > i integrate_files --file-direction common_files --src-dir-basename cmamp1 --dst-dir-basename sorrentum1
+  > i integrate_files --file-direction common_files --src-dir-basename cmamp1 --dst-dir-basename kaizenflow1
 
   > i integrate_files --file-direction only_files_in_src
   > i integrate_files --file-direction only_files_in_dst
@@ -199,7 +201,7 @@
   > rsync --delete -a -r {src_dir}/ {dst_dir}/
   ```
 
-## Double-check the integration
+### Double-check the integration
 
 - Check that the regressions are passing on GH
 
@@ -234,7 +236,7 @@
   > i git_branch_diff_with -t base
   ```
 
-## Run tests
+### Run tests
 
 - Check `amp` / `cmamp` using GH actions:
 

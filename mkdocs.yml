@@ -1,0 +1,20 @@
+site_name: KaizenAI Documentation
+theme:
+  name: material
+  palette:
+    primary: black
+    accent: cyan
+  logo: mkdocs/assets/logo.png
+  favicon: mkdocs/assets/favicon.ico
+# Helps render images and other assets correctly.
+use_directory_urls: false
+# The search plugin is enabled by default
+# but if we specify plugins, we need to include it
+# explicitly.
+plugins:
+  - search
+  # Used for filtering the explicit table of contents
+  # because MkDocs generates its own one
+  - mkdocs-toc-tag-filter
+extra_css:
+  - mkdocs/styles/styles.css

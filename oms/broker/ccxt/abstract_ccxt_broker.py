@@ -73,6 +73,7 @@ class AbstractCcxtBroker(obrobrok.Broker):
         #  separately.
         bid_ask_im_client: Optional[icdc.ImClient] = None,
         max_order_submit_retries: Optional[int] = _MAX_EXCHANGE_REQUEST_RETRIES,
+        max_order_cancel_retries: int = 2,
         bid_ask_raw_data_reader: Optional[imvcdcimrdc.RawDataReader] = None,
         bid_ask_lookback: str = "60S",
         sanity_check_cached_open_positions: bool = False,
@@ -110,6 +111,7 @@ class AbstractCcxtBroker(obrobrok.Broker):
         global _MAX_EXCHANGE_REQUEST_RETRIES
         _MAX_EXCHANGE_REQUEST_RETRIES = max_order_submit_retries
         self._max_exchange_request_retries = max_order_submit_retries
+        self._max_order_cancel_retries = max_order_cancel_retries
         self._exchange_id = exchange_id
         #
         hdbg.dassert_in(account_type, ["trading", "sandbox"])
@@ -172,8 +174,6 @@ class AbstractCcxtBroker(obrobrok.Broker):
                     are supported."
             )
         self.bid_ask_lookback = bid_ask_lookback
-        leverage = 1
-        self._set_leverage_for_all_symbols(leverage)
 
     # ////////////////////////////////////////////////////////////////////////
 
@@ -272,7 +272,10 @@ class AbstractCcxtBroker(obrobrok.Broker):
         )
         self._logger.log_bid_ask_data(self._get_wall_clock_time, bid_ask_data)
         # Drop duplicates from the bid/ask data.
-        bid_ask_data, _ = obccccut.drop_bid_ask_duplicates(bid_ask_data)
+        # TODO(Grisha): pass `max_num_dups` via SystemConfig["broker_config"].
+        bid_ask_data, _ = obccccut.drop_bid_ask_duplicates(
+            bid_ask_data, max_num_dups=10
+        )
         # Filter loaded data to only the broker's universe symbols.
         # Convert currency pairs to full CCXT symbol format, e.g. 'BTC_USDT' ->
         # 'BTC/USDT:USDT'
@@ -345,8 +348,12 @@ class AbstractCcxtBroker(obrobrok.Broker):
         # parent order symbol using CCXT `fetch_orders()`.
         # TODO(Danya): There is a problem if we submit more than 500 child
         #  orders in a single interval. Think about how to remove this limitation.
+        # TODO(Juraj): design a solution without using if/else
+        # Crypto.com allows max 100 orders https://exchange-docs.crypto.com/exchange/v1/rest-ws/index.html#private-get-order-history
+        # Crypto.com also can fetch for all symbols simultaneously.
+        n_last_orders = 100 if self._exchange_id == "cryptocom" else 500
         child_orders = await self._async_exchange.fetch_orders(
-            symbol=symbol, limit=500
+            symbol=symbol, limit=n_last_orders
         )
         # Filter child orders corresponding to this parent order.
         child_orders = [
@@ -372,8 +379,15 @@ class AbstractCcxtBroker(obrobrok.Broker):
         # `updateTime` in CCXT data structure is the time of the latest trade
         # for the given order, or the datetime of order submission if no
         # trades were conducted.
+        # TODO(Juraj): design a solution without using if/else.
+        # In this case it might be possible to use "order" field from the response
+        # Confirm if the value is equal to orderID in Binance.
+        order_id_field_name = (
+            "update_time" if self._exchange_id == "cryptocom" else "updateTime"
+        )
         fill_timestamp = max(
-            int(child_order["info"]["updateTime"]) for child_order in child_orders
+            int(child_order["info"][order_id_field_name])
+            for child_order in child_orders
         )
         fill_timestamp = hdateti.convert_unix_epoch_to_timestamp(fill_timestamp)
         # Create a `oms.Fill` object.
@@ -530,23 +544,17 @@ class AbstractCcxtBroker(obrobrok.Broker):
         _LOG.info(hprint.to_str("open_positions"))
         return open_positions
 
-    @hretry.async_retry(
-        num_attempts=_MAX_EXCHANGE_REQUEST_RETRIES,
-        exceptions=(ccxt.NetworkError, ccxt.RequestTimeout),
-        retry_delay_in_sec=_REQUEST_RETRY_SLEEP_TIME_IN_SEC,
-    )
     async def cancel_open_orders_for_symbols(
         self, currency_pairs: List[str]
     ) -> None:
         """
         Cancel all open orders for a given list of symbols.
 
-        :param: currency_pairs: pairs to cancer all orders for
+        :param: currency_pairs: pairs to cancel all orders for
         """
         # Binance does not allow cancelling open orders for all symbols in one API call.
         tasks = [
-            self._async_exchange.cancel_all_orders(pair)
-            for pair in currency_pairs
+            self._cancel_order_with_exception(pair) for pair in currency_pairs
         ]
         await asyncio.gather(*tasks)
 
@@ -711,6 +719,109 @@ class AbstractCcxtBroker(obrobrok.Broker):
         is_correct = child_order_diff_num_shares == 0
         return is_correct
 
+    # TODO(Samarth): Add unit tests.
+    # TODO(Juraj, Samarth): #Cmtask9327 avoid code repetition.
+    def _cancel_all_open_orders_with_exception(self) -> None:
+        """
+        Cancel all open orders with fault tolerance.
+
+        This method is implemented specifically for crypto.com.
+        The approach of sending cancel request per each symbol
+        results in:
+        ccxt.base.errors.BadRequest: cryptocom {
+        "id" : 1721839379803,
+        "code" : 40006,
+        "message" : "Duplicate request"
+        }
+        """
+        for attempt in range(1, self._max_order_cancel_retries + 1):
+            try:
+                self._sync_exchange.cancel_all_orders()
+                _LOG.info(
+                    "Successfully cancelled all orders on attempt %d",
+                    attempt,
+                )
+                # Cancelling the order didn't raise an exception, so we can
+                # exit.
+                break
+            except (ccxt.NetworkError, ccxt.RequestTimeout) as error:
+                _LOG.warning(
+                    "Connectivity error on attempt %d:\n%s\nRetrying ...",
+                    attempt,
+                    str(error),
+                )
+                # For specific exceptions, we retry unless we are at the last
+                # attempt in which case we raise.
+                if attempt == self._max_order_cancel_retries:
+                    _LOG.error("Max retries reached. Unable to cancel orders.")
+                    raise error
+            except ccxt.OrderNotFound:
+                # TODO(Samarth): Do we check on exchange if the order was
+                # executed or cancelled or just logging is enough?
+                _LOG.info(
+                    "No orders found to cancel. The order was cancelled on the previous attempts or executed."
+                )
+                # In this case we can exit.
+                break
+            except Exception as error:
+                _LOG.error(
+                    "Unexpected error on attempt %d: %s.", attempt, str(error)
+                )
+                # There was an unexpected error, so we re-raise it and stop.
+                raise error
+
+    # TODO(Samarth): Add unit tests.
+    async def _cancel_order_with_exception(self, currency_pair: str) -> None:
+        """
+        Cancel order for single pair. Retry if certain exception is raised.
+
+        :param currency_pair: pair to cancel all orders for
+        """
+        for attempt in range(1, self._max_order_cancel_retries + 1):
+            try:
+                await self._async_exchange.cancel_all_orders(currency_pair)
+                _LOG.info(
+                    "Successfully cancelled orders for %s on attempt %d",
+                    currency_pair,
+                    attempt,
+                )
+                # Cancelling the order didn't raise an exception, so we can
+                # exit.
+                break
+            except (ccxt.NetworkError, ccxt.RequestTimeout) as error:
+                _LOG.warning(
+                    "Connectivity error on attempt %d for %s:\n%s\nRetrying ...",
+                    attempt,
+                    currency_pair,
+                    str(error),
+                )
+                # For specific exceptions, we retry unless we are at the last
+                # attempt in which case we raise.
+                if attempt == self._max_order_cancel_retries:
+                    _LOG.error(
+                        "Max retries reached for %s. Unable to cancel orders.",
+                        currency_pair,
+                    )
+                    raise error
+            except ccxt.OrderNotFound:
+                # TODO(Samarth): Do we check on exchange if the order was
+                # executed or cancelled or just logging is enough?
+                _LOG.info(
+                    "No orders found for %s to cancel. The order was cancelled on the previous attempts or executed.",
+                    currency_pair,
+                )
+                # In this case we can exit.
+                break
+            except Exception as error:
+                _LOG.error(
+                    "Unexpected error on attempt %d for %s: %s.",
+                    attempt,
+                    currency_pair,
+                    str(error),
+                )
+                # There was an unexpected error, so we re-raise it and stop.
+                raise error
+
     def _get_open_positions_from_exchange(self):
         """
         Load open positions from the exchange and return as dict.
@@ -813,6 +924,9 @@ class AbstractCcxtBroker(obrobrok.Broker):
             vendor, mode, version=self._universe_version, as_full_symbol=True
         )
         # Filter symbols of the exchange corresponding to this instance.
+        # TODO(Juraj): This should assert if there is no universe/empty
+        # universe, since it doesn't make logical sense for a broker to exist
+        # if no assets can be accessed.
         exchange_symbol_universe = [
             s for s in full_symbol_universe if s.startswith(self._exchange_id)
         ]
@@ -1109,6 +1223,7 @@ class AbstractCcxtBroker(obrobrok.Broker):
         # Get conducted trades for that symbol.
         #
         # Example of output of `fetchMyTrades()`
+        # Binance:
         # ```
         # {'info': {'symbol': 'ETHUSDT',
         #           'id': '2271885264',
@@ -1139,9 +1254,54 @@ class AbstractCcxtBroker(obrobrok.Broker):
         #  'fee': {'cost': 0.00808755, 'currency': 'USDT'},
         #  'fees': [{'currency': 'USDT', 'cost': 0.00808755}]}
         # ```
+        # Crypto.com:
+        # {
+        #     'info': {
+        #         'account_id': '780cbc31-e427-5969-b3e6-635694755089',
+        #         'event_date': '2024-07-11',
+        #         'journal_type': 'TRADING',
+        #         'side': 'SELL',
+        #         'instrument_name': 'ETHUSD-PERP',
+        #         'fees': '-0.0096893676',
+        #         'trade_id': '5755600460104016595',
+        #         'trade_match_id': '4611686018585151779',
+        #         'create_time': '1720707312689',
+        #         'traded_price': '3166.46',
+        #         'traded_quantity': '0.0153',
+        #         'fee_instrument_name': 'USD',
+        #         'client_oid': '3',
+        #         'taker_side': 'MAKER',
+        #         'order_id': '5755600392969248155',
+        #         'create_time_ns': '1720707312689507779'
+        #     },
+        #     'id': '5755600460104016595',
+        #     'timestamp': 1720707312689,
+        #     'datetime': '2024-07-11T14:15:12.689Z',
+        #     'symbol': 'ETH/USD:USD',
+        #     'order': '5755600392969248155',
+        #     'side': 'sell',
+        #     'takerOrMaker': 'maker',
+        #     'price': 3166.46,
+        #     'amount': 0.0153,
+        #     'cost': 48.446838,
+        #     'type': None,
+        #     'fee': {
+        #         'currency': 'USD',
+        #         'cost': 0.0096893676
+        #     },
+        #     'fees': [
+        #         {
+        #             'currency': 'USD',
+        #             'cost': 0.0096893676
+        #         }
+        #     ]
+        # }
         symbol_trades = {}
+        # TODO(Juraj): design a solution without using if/else
+        # Crypto.com allows max 100 trades https://exchange-docs.crypto.com/exchange/v1/rest-ws/index.html#private-get-trades.
+        n_last_trades = 100 if self._exchange_id == "cryptocom" else 1000
         symbol_trades = await self._async_exchange.fetchMyTrades(
-            symbol, limit=1000
+            symbol, limit=n_last_trades
         )
         # Map from symbol t
         # Filter the trades based on CCXT order IDs.
@@ -1152,8 +1312,14 @@ class AbstractCcxtBroker(obrobrok.Broker):
         # filtered out by order ID. It is assumed that the input CCXT orders
         # are already closed orders for the given Broker iteration.
         ccxt_order_ids = set([ccxt_order["id"] for ccxt_order in ccxt_orders])
+        # TODO(Juraj): design a solution without using if/else
+        # In this case it might be possible to use "order" field from the response
+        # Confirm if the value is equal to orderID in Binace.
+        order_id_field_name = (
+            "order_id" if self._exchange_id == "cryptocom" else "orderId"
+        )
         symbol_trades = filter(
-            lambda trade: trade["info"]["orderId"] in ccxt_order_ids,
+            lambda trade: trade["info"][order_id_field_name] in ccxt_order_ids,
             symbol_trades,
         )
         # Add the asset ids to each fill.
@@ -1324,13 +1490,28 @@ class AbstractCcxtBroker(obrobrok.Broker):
         ccxt_order_response: CcxtData = {}
         params = {
             "portfolio_id": self._portfolio_id,
-            "client_oid": submitted_order.order_id,
+            # TODO(Juraj): check if it's possible to just use string
+            # for Binance as well.
+            # Crypto.com accepts a string type of client_oid.
+            "client_oid": submitted_order.order_id
+            if self._exchange_id == "binance"
+            else str(submitted_order.order_id),
         }
         try:
             # Create a reduce-only order.
             # Such an order can only reduce the current open position
             # and will never go over the current position size.
-            if submitted_order.extra_params.get("reduce_only", False):
+            # Note(Juraj): CCXT does not have reduce-only implemented for
+            # crypto.com: `cryptocomcreateReduceOnlyOrder() is not supported yet`.
+            # because it uses endpoint which is a superset of all APIs. See
+            # https://exchange-docs.crypto.com/exchange/v1/rest-ws/index.html?python#introduction
+            # Using `REDUCE_ONLY` value suggested in derivatives API https://exchange-docs.crypto.com/derivatives/index.html#user-order-instrument_name
+            # results in "Invalid exec_inst" error. This is not blocking,
+            # REDUCE_ONLY is "just" a "safety measure".
+            if (
+                submitted_order.extra_params.get("reduce_only", False)
+                and self._exchange_id != "cryptocom"
+            ):
                 # Reduce-only order can be placed as a market order,
                 # but since we only use it for quick liquidation,
                 # keeping this assertion here.
@@ -1338,6 +1519,7 @@ class AbstractCcxtBroker(obrobrok.Broker):
                 _LOG.info("Creating reduceOnly order: %s", str(submitted_order))
                 # TODO(Danya): Not sure if async-supported, but probably irrelevant,
                 # since it is only used to flatten accounts.
+
                 ccxt_order_response = (
                     await self._async_exchange.createReduceOnlyOrder(
                         symbol=symbol,
@@ -1509,23 +1691,37 @@ class AbstractCcxtBroker(obrobrok.Broker):
 
     def _calculate_num_twap_child_order_waves(
         self,
+        parent_order_execution_start_timestamp: pd.Timestamp,
         parent_order_execution_end_timestamp: pd.Timestamp,
         execution_freq: pd.Timedelta,
     ) -> int:
         """
-        Calculate number of child waves to run based on the current time and
-        execution end timestamp of the parent order, given an execution
-        frequency:
+        Calculate number of child waves to run based on the execution start
+        timestamp and execution end timestamp of the parent order, given an
+        execution frequency:
 
-        :param parent_order_execution_end_timestamp
+        :param parent_order_execution_start_timestamp: start timestamp of the
+            parent order
+        :param parent_order_execution_end_timestamp: end timestamp of the parent
+            order which is same as the end timestamp of a trading period
         :execution_freq: frequency of order submission
         :return: number of child order waves
         """
+        # Round down parent order start timestamp to nearest min to get the
+        # actual start timestamp of trading period.
+        # The assumption is start timestamp of trading period will always be
+        # multiple of a min and parent order start time is always less than 1T.
+        # For instance, an order is generated at 10:00:07 which means that it
+        # took 7 seconds to compute forecasts. Bar timestamp in this case is 10:00:00.
+        # TODO(Samarth): Remove the hack and work on more efficient approach.
+        trade_period_start_timestamp = (
+            parent_order_execution_start_timestamp.floor("1T")
+        )
         num_waves = int(
             np.ceil(
                 (
                     parent_order_execution_end_timestamp
-                    - self._get_wall_clock_time()
+                    - trade_period_start_timestamp
                 )
                 / execution_freq
             )

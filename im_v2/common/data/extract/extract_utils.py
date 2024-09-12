@@ -16,12 +16,14 @@ from copy import deepcopy
 from datetime import datetime, timedelta
 from typing import Any, Dict, Iterator, List, Optional, Union
 
+import ccxt
 import pandas as pd
 
 import data_schema.dataset_schema_utils as dsdascut
 import helpers.hasyncio as hasynci
 import helpers.hdatetime as hdateti
 import helpers.hdbg as hdbg
+import helpers.hpandas as hpandas
 import helpers.hparquet as hparque
 import helpers.hs3 as hs3
 import helpers.htimer as htimer
@@ -280,6 +282,13 @@ DATASET_SCHEMA = {
         "vwap": "float64",
         "year": "int32",
         "day": "int32",
+        "trans_id": "int64",
+        "first_update_id": "int64",
+        "last_update_id": "int64",
+        "side": "object",
+        "update_type": "object",
+        "price": "float64",
+        "qty": "float64",
     },
     "ohlcv": {
         "ask_price": "float64",
@@ -413,11 +422,44 @@ def _download_exchange_data_to_db_with_timeout(
     download_exchange_data_to_db(args, exchange_class)
 
 
+def _should_add_timestamp(
+    timestamp: int, currency_pair: str, timestamps_dict: Dict[str, Any]
+) -> bool:
+    """
+    Determine if a timestamp should be added to the timestamps dictionary.
+
+    :param timestamp: Timestamp of the OHLCV data point
+    :param currency_pair: Currency pair of the data_point
+    :param timestamps_dict: Dictionary to store the latest_downloaded
+        timestamp for the currency_pair.
+    :return: True if timestamp is new or missed before, False otherwise.
+    """
+    # Backfill timestamps which got missed due to delay from Binance.
+    is_missed_timestamp = (
+        timestamp
+        not in timestamps_dict[currency_pair]["all_downloaded_timestamp"]
+        and timestamp
+        < timestamps_dict[currency_pair]["latest_downloaded_timestamp"]
+    )
+    if is_missed_timestamp:
+        _LOG.info(
+            "Backfilling Missing timestamp=%s for currency_pair=%s",
+            timestamp,
+            currency_pair,
+        )
+    # The timestamp is added if it is missed or it is the latest timestamp.
+    return (
+        is_missed_timestamp
+        or timestamps_dict[currency_pair]["latest_downloaded_timestamp"]
+        < timestamp
+    )
+
+
 def _is_fresh_data_point(
     currency_pair: str,
     data_point: Dict[Any, Any],
     data_type: str,
-    timestamps_dict: Dict[str, str],
+    timestamps_dict: Dict[str, Any],
     start_time_unix_epoch: int,
 ) -> Union[bool, Dict]:
     """
@@ -477,16 +519,39 @@ def _is_fresh_data_point(
         end_download_timestamp_unix = hdateti.convert_timestamp_to_unix_epoch(
             end_download_timestamp
         )
-        for ohlcv_data in data_point["ohlcv"]:
+        # Set the limit for the number of data points to ingest.
+        ingestion_limit = 10
+        # Initialize `timestamps_dict`.
+        if currency_pair not in timestamps_dict:
+            timestamps_dict[currency_pair] = {}
+            timestamps_dict[currency_pair]["latest_downloaded_timestamp"] = -1
+            timestamps_dict[currency_pair]["all_downloaded_timestamp"] = []
+        for ohlcv_data in data_point["ohlcv"][-ingestion_limit:]:
             timestamp = ohlcv_data[0]
             # Check download timestamp greater than 1 minute (60000ms) than the timestamp.
             if timestamp + 60000 <= end_download_timestamp_unix:
-                if (
-                    currency_pair not in timestamps_dict
-                    or timestamps_dict[currency_pair] < timestamp
+                if _should_add_timestamp(
+                    timestamp, currency_pair, timestamps_dict
                 ):
                     new_data_point["ohlcv"].append(ohlcv_data)
-                    timestamps_dict[currency_pair] = timestamp
+                    timestamps_dict[currency_pair][
+                        "latest_downloaded_timestamp"
+                    ] = timestamp
+                    timestamps_dict[currency_pair][
+                        "all_downloaded_timestamp"
+                    ].append(timestamp)
+                    if (
+                        len(
+                            timestamps_dict[currency_pair][
+                                "all_downloaded_timestamp"
+                            ]
+                        )
+                        > ingestion_limit
+                    ):
+                        # Remove older timestamps to preserve the length.
+                        timestamps_dict[currency_pair][
+                            "all_downloaded_timestamp"
+                        ].pop(0)
         if len(new_data_point["ohlcv"]) > 0:
             return True, timestamps_dict, new_data_point
     elif data_type == "ohlcv_from_trades":
@@ -724,23 +789,9 @@ async def _download_websocket_realtime_for_one_exchange_periodically(
             hdbg.dassert_set_eq(
                 currency_pairs, downloaded_currency_pairs, only_warning=True
             )
-            # TODO(Juraj): experimental feature, the problem is speed for now.
-            # data_buffer_to_resample.append(df)
             imvcddbut.save_data_to_db(
                 df, data_type, db_connection, db_table, str(tz)
             )
-            # TODO(Juraj): experimental feature, the problem is speed for now.
-            # if args.resample_bid_ask_data_to_1min and pd.Timestamp.now(tz) > next_bid_ask_resampling_threshold:
-            #    with htimer.TimedScope(logging.DEBUG, "# Resample 1-minute of raw data"):
-            #        df_resampled = imvcdttrut.transform_and_resample_rt_bid_ask_data(
-            #            pd.concat(data_buffer_to_resample)
-            #        )
-            # imvcddbut.save_data_to_db(
-            #    df_resampled, data_type, db_connection, db_resampled_table, str(tz), add_knowledge_timestamp=False
-            # )
-            # Reset resampling variables to start over.
-            # data_buffer_to_resample = []
-            # next_bid_ask_resampling_threshold += pd.Timedelta(minutes=1)
             # Empty buffer after persisting the data.
             data_buffer = []
         # Determine actual sleep time needed based on the difference
@@ -1160,10 +1211,15 @@ def download_historical_data(
         #     hs3.dassert_path_not_exists(path_to_dataset, args["aws_profile"])
     # Load currency pairs.
     mode = "download"
-    universe = ivcu.get_vendor_universe(
-        exchange.vendor, mode, version=args["universe"]
-    )
-    currency_pairs = universe[args["exchange_id"]]
+    if args["universe"] == "all":
+        currency_pairs = fetch_all_active_symbols(
+            args["exchange_id"], args["contract_type"]
+        )
+    else:
+        universe = ivcu.get_vendor_universe(
+            exchange.vendor, mode, version=args["universe"]
+        )
+        currency_pairs = universe[args["exchange_id"]]
     if args.get("universe_part"):
         currency_pairs = _split_universe(
             currency_pairs, args["universe_part"][0], args["universe_part"][1]
@@ -1257,8 +1313,11 @@ def resample_rt_bid_ask_data_periodically(
     src_table: str,
     dst_table: str,
     exchange_id: str,
+    freq: str,
     start_ts: pd.Timestamp,
     end_ts: pd.Timestamp,
+    *,
+    currency_pairs: List[str] = None,
 ) -> None:
     """
     Load raw bid/ask data from specified DB table every minute, resample to 1
@@ -1268,6 +1327,8 @@ def resample_rt_bid_ask_data_periodically(
     :param src_table: Source table to get raw data from
     :param dst_table: Destination table to insert resampled data into
     :param exchange_id: which exchange to use data from
+    :param freq: frequency that want we to resample our data, e.g.,
+        "10S", "1T"
     :param start_ts: start of the time interval
     :param end_ts: end of the time interval
     """
@@ -1289,8 +1350,13 @@ def resample_rt_bid_ask_data_periodically(
         with htimer.TimedScope(logging.INFO, "# Load last minute of raw data"):
             # TODO(Juraj): the function uses `bid_ask_levels` internally,
             # expose `bid_ask_levels` as a cmdline parameter.
-            df_raw = imvcddbut.fetch_last_minute_bid_ask_rt_db_data(
-                db_connection, src_table, str(tz), exchange_id
+            df_raw = imvcddbut.fetch_last_bid_ask_rt_db_data(
+                db_connection,
+                src_table,
+                str(tz),
+                exchange_id,
+                milliseconds=imvcdttrut.FFILL_LIMIT
+                * imvcdttrut.TIME_RESOLUTION_MS,
             )
         if df_raw.empty:
             _LOG.warning("Empty Dataframe, nothing to resample")
@@ -1299,10 +1365,18 @@ def resample_rt_bid_ask_data_periodically(
                 logging.INFO, "# Resample last minute of raw data"
             ):
                 df_resampled = imvcdttrut.transform_and_resample_rt_bid_ask_data(
-                    df_raw
+                    df_raw,
+                    freq,
+                    currency_pairs=currency_pairs,
                 )
+                # Get the latest timestamp for each group (currency_pair, level) and filter.
+                df_resampled = df_resampled[
+                    df_resampled["timestamp"] == df_resampled["timestamp"].max()
+                ]
             with htimer.TimedScope(logging.INFO, "# Save resampled data to DB"):
-                df_resampled["end_download_timestamp"] = pd.Timestamp.now(tz)
+                df_resampled = hpandas.add_end_download_timestamp(
+                    df_resampled, timezone=str(tz)
+                )
                 imvcddbut.save_data_to_db(
                     df_resampled,
                     "bid_ask",
@@ -1332,3 +1406,61 @@ def get_CcxtExtractor(exchange_id: str, contract_type: str) -> ivcdexex.Extracto
     else:
         exchange = imvcdexex.CcxtExtractor(exchange_id, contract_type)
     return exchange
+
+
+def fetch_all_active_symbols(exchange_id: str, contract_type: str) -> List[str]:
+    """
+    Fetch all symbols currently trading on the specified exchange using CCXT.
+
+    E.g market info from ccxt
+    ```
+    {'id': 'BTCUSDT',
+    'lowercaseId': 'btcusdt',
+    # base/quote:settle
+    'symbol': 'BTC/USDT:USDT',
+    'base': 'BTC',
+    'quote': 'USDT',
+    'settle': 'USDT',
+    'baseId': 'BTC',
+    'quoteId': 'USDT',
+    # Currency it will be settled in.
+    'settleId': 'USDT',
+    'type': 'swap',
+    'spot': False,
+    'margin': False,
+    'swap': True,
+    'future': False,
+    'option': False,
+    'index': None,
+    # If the symbol is actively trading on the exchange.
+    'active': True,
+    'contract': True,
+    'linear': True,
+    'inverse': False,
+    'subType': 'linear',
+    'taker': 0.0004,
+    'maker': 0.0002,
+    'contractSize': 1.0,
+    'expiry': None,
+    'expiryDatetime': None,
+    'strike': None,
+    ...
+    ```
+    """
+    hdbg.dassert_eq(
+        contract_type,
+        "futures",
+        msg=f"Currently contract_type=futures is supported, got {contract_type}",
+    )
+    exchange_class = getattr(ccxt, exchange_id)
+    symbols = [
+        "_".join([market["base"], market["quote"]])
+        for symbol, market in exchange_class().load_markets().items()
+        # Contract type `futures` is what ccxt calls `swap`.
+        # Currently interesed in only `futures` with symbols that settles in `USDT`
+        if market["active"]
+        and (market["type"] == "swap")
+        and (market["settleId"] == "USDT")
+    ]
+    _LOG.info("Successfully loaded %s symbols : %s", len(symbols), symbols)
+    return symbols

@@ -1,4 +1,7 @@
-# Code review
+# Code Review
+
+## Code review
+
 <!-- toc -->
 
 - [General rules about code review](#general-rules-about-code-review)
@@ -34,9 +37,9 @@
 
 <!-- tocstop -->
 
-# General rules about code review
+## General rules about code review
 
-## Read the Google code review best practices
+### Read the Google code review best practices
 
 - From the
   [developer\'s perspective](https://google.github.io/eng-practices/review/developer)
@@ -52,9 +55,9 @@
 
 - Understand the rationale
 
-# Code review workflows
+## Code review workflows
 
-## Pull request
+### Pull request
 
 - Our usual review process is to work in a branch and create a pull request
   - See the
@@ -63,16 +66,16 @@
   - The name of the pull request is generated with ghi_show.py and looks like
     PTask2704 make exchange contracts get contracts applicable to series
 
-# From the code author point of view
+## From the code author point of view
 
-## Why we review code
+### Why we review code
 
 - We spend time reviewing each other code so that we can:
   - Build a better product, by letting other people look for bugs
   - Propagate knowledge of the code base through the team
   - Learn from each other
 
-## PR checklist
+### PR checklist
 
 - From
   [Google reviewer checklist](https://google.github.io/eng-practices/review/reviewer/looking-for.html):
@@ -90,7 +93,7 @@
   - Code is appropriately documented.
   - The code conforms to our style guides.
 
-## The golden rule of code review
+### The golden rule of code review
 
 - Make life easy for the reviewers
   - Aka "Do not upset the reviewers, otherwise they won't let you merge your
@@ -102,7 +105,7 @@
 - If you are in doubt "it's probably clear, although I am not 100% sure", err on
   giving more information and answer potential questions
 
-## Be clear in the PR request about what you want
+### Be clear in the PR request about what you want
 
 - Summarize what was done in the PR
   - Refer to the GH task, but the task alone might not be sufficient
@@ -110,7 +113,8 @@
     - Which part is it implementing?
     - Why is it doing it in a certain way?
 
-- If the code is not ready for merge, but you want a "pre-review" convert PR to a draft
+- If the code is not ready for merge, but you want a "pre-review" convert PR to
+  a draft
   - E.g., ask for an architectural review
   - Draft PRs can not be merged
 
@@ -120,7 +124,7 @@
     carefully
   - If it\'s blocking a ping on IM is a good idea
 
-## Do not mix changes and refactoring / shuffling code
+### Do not mix changes and refactoring / shuffling code
 
 - The job of the reviewers become frustrating when the author mixes:
   - Refactoring / moving code; and
@@ -151,14 +155,14 @@
   - Merge `TaskXYZ_do_this_and_that` to master
   - Merge `master` back into `gp_scratch` and keep moving
 
-## Double check before sending a PR
+### Double check before sending a PR
 
 - After creating a PR take a look at it to make sure things look good, e.g.,
   - Are there merge problems?
   - Did you forget some file?
   - Skim through the PR to make sure that people can understand what you changed
 
-## Reviewing other people's code is usually not fun
+### Reviewing other people's code is usually not fun
 
 - Reviewing code is time-consuming and tedious
   - So do everything you can to make the reviewer's job easier
@@ -170,7 +174,7 @@
   - Readability is paramount
   - You should abhor write-only code
 
-## The first reviews are painful
+### The first reviews are painful
 
 - One needs to work on the same code over and over
   - Just think about the fact that the reviewer is also reading (still crappy)
@@ -179,13 +183,14 @@
 - Unfortunately it is needed pain to get to the quality of code we need to make
   progress as a team
 
-## Apply review comments everywhere
+### Apply review comments everywhere
 
 - Apply a review comment everywhere, not just where the reviewer pointed out the
   issue
 
 - E.g., reviewer says:
-  - "Please replace `_LOG.warning("Hello %s".format(name))` with `_LOG.warning("Hello %s", name)`"
+  - "Please replace `_LOG.warning("Hello %s".format(name))` with
+    `_LOG.warning("Hello %s", name)`"
 - You are expected to do this replacement:
   - In the current review
   - In all future code you write
@@ -193,11 +198,11 @@
     - Of course don't start modifying the old code in this review, but open a
       clean-up bug, if you need a reminder
 
-## Look at the code top-to-bottom
+### Look at the code top-to-bottom
 
 - E.g., if you do a search & replace, make sure everything is fine
 
-## Answering comments after a review
+### Answering comments after a review
 
 - It's better to answer comments in chunks so we don't get an email per comment
   - Use "start a review" (not in conversation)
@@ -205,7 +210,7 @@
   send it as single comment
 - When you answer a comment, mark it as resolved
 
-## Apply changes to a review quickly
+### Apply changes to a review quickly
 
 - In the same way the reviewers are expected to review PRs within 24 hours, the
   author of a PR is expected to apply the requested changes quickly, ideally in
@@ -223,37 +228,39 @@
     fix the problems and then open a PR with new code
   - Other people that rely on your code are blocked
 
-## Ask for another review
+### Ask for another review
 
 - Once you are done with resolving all the comments ask for another review
 
-## Workflow of a review in terms of GH labels
+### Workflow of a review in terms of GH labels
 
 - The current meaning of the labels are:
-  - See GitHub ZenHub workflows [doc](https://github.com/cryptokaizen/cmamp/blob/master/docs/work_organization/all.use_github_and_zenhub.how_to_guide.md#pr-labels)
+  - See GitHub ZenHub workflows
+    [doc](https://github.com/cryptokaizen/cmamp/blob/master/docs/work_organization/all.use_github_and_zenhub.how_to_guide.md#pr-labels)
 
-## Link PR to GH issue
+### Link PR to GH issue
 
 - Mention the corresponding issue in the PR description to ease the navigation
-E.g., see an [example](https://github.com/sorrentum/sorrentum/pull/288#issue-1729654983)
+  E.g., see an
+  [example](https://github.com/kaizen-ai/kaizenflow/pull/288#issue-1729654983)
 
-## Fix later
+### Fix later
 
 - It's ok for an author to file a follow up Issue (e.g., with a clean up), by
   pointing the new Issue to the comments to address, and move on with merge
 
 - The Issue needs to be addressed immediately after
 
-# From the code reviewer point of view
+## From the code reviewer point of view
 
-## Post-commit review
+### Post-commit review
 
 - You can comment on a PR already merged
 
 - You can comment on the relevant lines in a commit straight to `master` (this
   is the exception)
 
-## Code walk-through
+### Code walk-through
 
 - It is best to create a branch with the files you want to review
   - Add TODOs in the code (so that the PR will pick up those sections)
@@ -262,21 +269,21 @@ E.g., see an [example](https://github.com/sorrentum/sorrentum/pull/288#issue-172
 - Try to get a top to bottom review of a component once every N weeks (N = 2, 3)
   - Sometimes the structure of the
 
-## Close the PR and delete the branch
+### Close the PR and delete the branch
 
 - When code is merged into master by one of the reviewers through the UI one can
   select the delete branch option
 
-- Otherwise you can delete the branch using the procedure in 
-[Git](https://docs.google.com/document/u/0/d/1zahC8uDnFGYRSgkBrQRgg3W3ZmDjZZJj6yln6YeuHq4/edit)
+- Otherwise you can delete the branch using the procedure in
+  [Git](https://docs.google.com/document/u/0/d/1zahC8uDnFGYRSgkBrQRgg3W3ZmDjZZJj6yln6YeuHq4/edit)
 
-## Give priority to code review
+### Give priority to code review
 
 - We target to give feedback on a PR within 24hr so that the author is not
   blocked for too long
   - Usually we respond in few hours
 
-## Multiple reviewers problem
+### Multiple reviewers problem
 
 - When there are multiple reviewers for the same PR there can be some problem
 
@@ -287,11 +294,11 @@ E.g., see an [example](https://github.com/sorrentum/sorrentum/pull/288#issue-172
   - The other can catch up with post-commit review
   - A good approach is to monitor recently merged PRs in GH to catch up
 
-## Remember "small steps ahead"
+### Remember "small steps ahead"
 
 - Follow the Google approach of merging a PR that is a strict improvement.
 
-## Nothing is too small
+### Nothing is too small
 
 - Each reviewer reviews the code pointing out everything that can be a problem
 
@@ -302,7 +309,7 @@ E.g., see an [example](https://github.com/sorrentum/sorrentum/pull/288#issue-172
   their own stylistic preference, this should not be pointed, unless it's a
   matter of consistency or leave the choice to the author
 
-## Final GH comment
+### Final GH comment
 
 - Once you are done with the detailed review of the code, you need to
   - Write a short comment

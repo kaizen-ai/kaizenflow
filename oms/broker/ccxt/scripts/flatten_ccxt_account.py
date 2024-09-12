@@ -11,9 +11,9 @@ Example use:
     --exchange 'binance' \
     --contract_type 'futures' \
     --stage 'preprod' \
-    --secret_id 4 \
+    --secret_id 3 \
     --universe "v7.4" \
-    --assert_on_non_zero
+    --assert_on_non_zero_positions
 """
 import argparse
 import logging
@@ -49,7 +49,7 @@ def _main(parser: argparse.ArgumentParser) -> None:
     args = vars(args)
     hdbg.init_logger(verbosity=args["log_level"], use_exec_path=True)
     exchange = args["exchange"]
-    args["contract_type"]
+    contract_type = args["contract_type"]
     stage = args["stage"]
     log_dir = args["log_dir"]
     secret_id = args["secret_id"]
@@ -59,7 +59,7 @@ def _main(parser: argparse.ArgumentParser) -> None:
         exchange, stage, "trading", secret_id
     )
     broker = obccbrin.get_CcxtBroker_exchange_only_instance1(
-        universe_version, secret_identifier, log_dir,
+        universe_version, secret_identifier, log_dir, contract_type
     )
     obccbrut.flatten_ccxt_account(
         broker,

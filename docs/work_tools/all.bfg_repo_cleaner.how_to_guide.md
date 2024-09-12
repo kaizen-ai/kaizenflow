@@ -1,3 +1,13 @@
+
+
+<!-- toc -->
+
+- [BFG Repo-Cleaner](#bfg-repo-cleaner)
+  * [Build](#build)
+  * [Usage](#usage)
+
+<!-- tocstop -->
+
 # BFG Repo-Cleaner
 
 [BFG](https://rtyley.github.io/bfg-repo-cleaner/) dockerized.
@@ -19,9 +29,10 @@ docker run -it --rm \
   --delete-files id_rsa
 ```
 
-You could make this command more easily accessible by putting it in an executable,
-and make sure that it is available in your `$PATH`. Alternatively, you could create
-wrapper functions for your `docker run` commands ([example](https://github.com/jessfraz/dotfiles/blob/master/.dockerfunc)).
+You could make this command more easily accessible by putting it in an
+executable, and make sure that it is available in your `$PATH`. Alternatively,
+you could create wrapper functions for your `docker run` commands
+([example](https://github.com/jessfraz/dotfiles/blob/master/.dockerfunc)).
 
 ```bash
 bfg() {

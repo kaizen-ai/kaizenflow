@@ -1,9 +1,18 @@
-## Sandbox
+
+
+<!-- toc -->
+
+- [DataPull sandbox](#datapull-sandbox)
+
+<!-- tocstop -->
+
+# DataPull sandbox
 
 This paragraph describes an example of infrastructure that implements the
 `DataPull` protocol.
 
 It is implemented as a Docker Container containing the following services:
+
 - Airflow
 - Jupyter notebook
 - Postgres

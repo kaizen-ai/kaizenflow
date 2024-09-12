@@ -34,6 +34,29 @@ class CcxtImClient(icdc.ImClient):
     Implement behaviors specific of CCXT.
     """
 
+    def _should_adjust_timestamp_args(self, exchange_id: str) -> bool:
+        """
+        Decide if timestamp adjustment should be performed.
+
+        In some CCXT datasets it is required to account for the fact that OHLCV
+        `timestamp` refers to the start of the sampling interval. E.g., to get
+        data for [17:00, 17:02] (end of sampling interval) one needs to query for
+        [16:59, 17:01] (start of sampling interval).
+
+        For details refer to
+        docs/datapull/ck.ccxt_exchange_timestamp_interpretation.reference.md
+
+        :param exchange_id: exchange the data is coming from
+        :return: True if the timestamp args and index should be adjusted, False otherwise
+        """
+        exchange_cond = exchange_id in ["binance", "cryptocom"]
+        # For Parquet readers use `_dataset` attribute to get dataset type.
+        ohlcv_pq_cond = getattr(self, "_dataset", "") == "ohlcv"
+        # For DB readers use table name to get dataset type, e.g., `ccxt_ohlcv_futures`.
+        ohlcv_db_cond = "ohlcv" in getattr(self, "_table_name", "")
+        # The assumption is that the reader is either Parquet or DB one.
+        return exchange_cond and (ohlcv_pq_cond or ohlcv_db_cond)
+
     def _read_data(
         self,
         full_symbols: List[ivcu.FullSymbol],
@@ -55,49 +78,37 @@ class CcxtImClient(icdc.ImClient):
         # Collect exchange-specific dataframes.
         exchange_dfs = []
         for exchange, full_symbols in exchange_to_full_symbols_unique.items():
-            binance_cond = exchange == "binance"
-            # For Parquet readers use `_dataset` attribute to get dataset type.
-            ohlcv_pq_cond = getattr(self, "_dataset", "") == "ohlcv"
-            # For DB readers use table name to get dataset type, e.g., `ccxt_ohlcv_futures`.
-            ohlcv_db_cond = "ohlcv" in getattr(self, "_table_name", "")
-            # The assumption is that the reader is either Parquet or DB one.
-            ohlcv_cond = ohlcv_pq_cond or ohlcv_db_cond
-            if binance_cond and ohlcv_cond:
-                # Account for the fact that for CCXT OHLCV Binance `timestamp` is the start of the
-                # sampling interval. E.g., to get data for [17:00, 17:02] (end of sampling
-                # interval) one needs to query for [16:59, 17:01] (start of sampling interval).
+            should_adjust_timestamp_args = self._should_adjust_timestamp_args(
+                exchange
+            )
+            if should_adjust_timestamp_args:
                 # TODO(Grisha): the assumption is that data resolution is 1 minute, is it
                 # always true?
                 _LOG.debug(
-                    "Adjusting Binance timestamps to the DataFlow time semantic..."
+                    "Adjusting timestamps to the DataFlow time semantic..."
                 )
                 if start_ts is not None:
                     start_ts = start_ts - pd.Timedelta(minutes=1)
                 if end_ts is not None:
                     end_ts = end_ts - pd.Timedelta(minutes=1)
                 _LOG.debug(hprint.to_str("start_ts end_ts"))
-                df = super()._read_data(
-                    full_symbols,
-                    start_ts,
-                    end_ts,
-                    columns,
-                    full_symbol_col_name=full_symbol_col_name,
-                    **kwargs,
-                )
-                # TODO(Grisha): is `timestamp` always an index?
-                # Add 1 minute back to convert `timestamp` to the end of sampling interval.
-                df.index = df.index + pd.Timedelta(minutes=1)
-                exchange_dfs.append(df)
-            else:
-                df = super()._read_data(
-                    full_symbols,
-                    start_ts,
-                    end_ts,
-                    columns,
-                    full_symbol_col_name=full_symbol_col_name,
-                    **kwargs,
-                )
-                exchange_dfs.append(df)
+            df = super()._read_data(
+                full_symbols,
+                start_ts,
+                end_ts,
+                columns,
+                full_symbol_col_name=full_symbol_col_name,
+                **kwargs,
+            )
+            # TODO(Grisha): is `timestamp` always an index?
+            # Add 1 minute back to convert `timestamp` to the end of sampling interval
+            # if timestamp adjustment was performed.
+            df.index = (
+                df.index + pd.Timedelta(minutes=1)
+                if should_adjust_timestamp_args
+                else df.index
+            )
+            exchange_dfs.append(df)
         # Combine exchange specific dfs.
         df = pd.concat(exchange_dfs)
         return df

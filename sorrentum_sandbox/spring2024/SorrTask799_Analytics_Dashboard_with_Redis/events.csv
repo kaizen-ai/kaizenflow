@@ -1,0 +1,11 @@
+Unnamed: 0,id,user_id,sequence_number,session_id,created_at,ip_address,city,state,postal_code,browser,traffic_source,uri,event_type,time_period,year
+954596,1061857,81155.0,1,d0196d09-2a88-425f-b69d-0af810477d67,2023-04-04 10:43:28+00:00,99.132.189.212,Shenzhen,Guangdong,510540,Chrome,Email,/department/women/category/tops&tees/brand/patty,department,Morning,2023
+902469,841497,64316.0,4,93790510-ca59-4951-b249-5073c91dd1ef,2021-08-09 07:24:15+00:00,116.144.128.101,Indiana,Pennsylvania,15701,Firefox,Email,/department/women/category/intimates/brand/jemshape,department,Morning,2021
+691315,762805,58403.0,5,7bc1e85f-5d12-49f4-9040-13aa672c911d,2022-09-13 02:57:10+00:00,89.9.199.236,Manaus,Amazonas,69075-005,Chrome,Email,/product/8265,product,Night,2022
+2301909,846792,64718.0,3,d8ad0edf-779e-4eec-abc5-3f380149d030,2023-05-18 06:53:12+00:00,13.161.134.182,Indianapolis,Indiana,46256,Chrome,YouTube,/product/13474,product,Morning,2023
+489921,2165782,,1,a6f70eff-2d06-46aa-bfb9-bd1d431f6adb,2021-10-05 08:30:00+00:00,161.152.127.91,Shenzhen,Hubei,430074,Chrome,Email,/product/28444,product,Morning,2021
+2218514,370781,28339.0,7,5915daf5-9133-4775-a622-b9e7766f97a8,2023-10-24 06:34:17+00:00,218.252.170.249,Paracatu,Minas Gerais,38600-000,Chrome,Email,/department/men/category/outerwear&coats/brand/alki'i,department,Morning,2023
+2046936,88416,6870.0,1,b7e1fc5e-4d89-43e4-bede-8476d8573adc,2022-05-02 08:57:56+00:00,30.221.95.113,Campénéac,Bretagne,56800,Firefox,Facebook,/department/men/category/pants/brand/dickies,department,Morning,2022
+1021547,2106701,,3,be6eb1bb-a7dd-4c00-8215-e28841d5289a,2022-10-19 18:35:00+00:00,45.204.144.151,Antequera,Andalucía,29200,Safari,Facebook,/cart,cart,Evening,2022
+273162,1421461,,3,6220892b-fdfd-4b01-a911-6534b6f9b94c,2020-05-08 16:55:00+00:00,104.167.200.220,Aurora,Illinois,60504,Safari,Adwords,/cancel,cancel,Afternoon,2020
+2096716,2245994,,1,f011d9db-3d7a-42c6-b510-b2b3ea6bd3da,2021-04-10 03:43:00+00:00,89.61.140.18,São Félix do Xingu,Pará,68380-000,Firefox,Email,/department/men/category/socks/brand/wigwam,department,Night,2021

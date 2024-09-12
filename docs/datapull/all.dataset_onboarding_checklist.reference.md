@@ -5,8 +5,13 @@
 - [Dataset onboarding checklist](#dataset-onboarding-checklist)
   * [Preparation and exploratory analysis](#preparation-and-exploratory-analysis)
   * [Implement historical downloader](#implement-historical-downloader)
-  * [Automatic downloader](#automatic-downloader)
-  * [QA historical downloader](#qa-historical-downloader)
+  * [Automated AKA Scheduled downloader](#automated-aka-scheduled-downloader)
+  * [Quality Assurance](#quality-assurance)
+    + [1. Check for Existing QA DAGs](#1-check-for-existing-qa-dags)
+    + [2. Create a New QA DAG (if necessary)](#2-create-a-new-qa-dag-if-necessary)
+      - [2.1. Create and Test QA Notebook](#21-create-and-test-qa-notebook)
+      - [2.2. Run QA Notebook via Invoke Command](#22-run-qa-notebook-via-invoke-command)
+    + [2.3. Create a New DAG File](#23-create-a-new-dag-file)
 
 <!-- tocstop -->
 
@@ -20,6 +25,8 @@ a markdown checklist.
 
 ## Preparation and exploratory analysis
 
+From `docs/datapull/all.dataset_onboarding_checklist.reference.md`
+
 - [ ] Decide on the timeline
   - E.g., is this a high-priority dataset or a nice-to-have?
 - [ ] Decide on the course of action
@@ -27,7 +34,7 @@ a markdown checklist.
     real-time downloader?
 - [ ] Review existing code
   - Is there any downloader that is similar to the new one, in terms of
-    interface, frequency, etc?
+    interface, frequency, etc.?
   - What code already existing can be generalized to accomplish the task at
     hand?
   - What needs to be implemented from scratch?
@@ -36,10 +43,10 @@ a markdown checklist.
     certain data type
   - Example code to obtain a snippet of historical/real-time data
   - If we are interested in historical data, e.g.,
-    - How far in the past the data source goes?
     - How far in the past we need the data to be?
+    - How far in the past the data source goes?
 - [ ] Create example code to obtain data in realtime
-  - Is there any already clear issue with the realtime data?
+  - Is there any issue with the realtime data?
     - E.g., throttling, issues with APIs, unreliability
 - [ ] Perform initial QA on the data sample, e.g.,
   - Compute some statistics in terms of missing data, outliers
@@ -48,21 +55,21 @@ a markdown checklist.
 
 ## Implement historical downloader
 
-- [ ] Decide what's the name of the data set according to `dataset_schema/`
+- [ ] Decide what's the name of the data set according to `dataset_schema`
       conventions
 - [ ] Implement the code to perform the historical downloader
   - TODO(Juraj): Add a pointer to examples and docs
 - [ ] Test the flow to download a snippet of data locally in the test stage
   - Apply QA to confirm data is being downloaded correctly
 - [ ] Perform a bulk download for historical datasets
-  - Manually via executing a script, if the history is short or the volume of
-    data is low
+  - Manually, i.e., via executing a script, if the history is short or the
+    volume of data is low
   - Via an Airflow DAG if the volume of the data is too large for downloading
     manually
     - E.g.,
       `im_v2/airflow/dags/test.download_bulk_data_fargate_example_guide.py`
 
-## Automatic downloader
+## Automated AKA Scheduled downloader
 
 - [ ] Setup automatic download of data in pre-production:
   - Since pre-prod runs with code from the master branch (updated twice a day
@@ -77,24 +84,47 @@ a markdown checklist.
   - For real-time datasets:
     - Add a real-time download Airflow task to get data continuously 24/7
 
-12. [ ] For some real-time datasets, an archival flow needs to be added in order
-        not to overwhelm the storage
-    - Consult with the team leader if it's needed for a particular dataset
-    - Example Airflow DAG is
-      `amp/im_v2/airflow/dags/preprod.postgres_data_archival_to_s3_fargate_new.py`
+- [ ] For some real-time datasets, an archival flow needs to be added in order
+      not to overwhelm the storage
+  - Consult with the team leader if it's needed for a particular dataset
+  - Example Airflow DAG is
+    [preprod.europe.postgres_data_archival_to_s3.py](/im_v2/airflow/dags/datapull/preprod.europe.postgres_data_archival_to_s3.py)
 
 - [ ] Add an entry into the
-  - [Monster dataset matrix](https://docs.google.com/spreadsheets/d/13Vyrxs9Eg-C6y91XIogLHi4A1_AFK7_KCF2KEnnxYv0/edit#gid=1908921737)
-  - TODO(Juraj): Is this updated? Is there a new flow?
-- Once the download is enabled in production, update the
-  [Master_raw_data_gallery](https://github.com/cryptokaizen/cmamp/blob/master/im_v2/common/notebooks/Master_raw_data_gallery.ipynb)
+  - [Monster dataset matrix](https://docs.google.com/spreadsheets/d/13Vyrxs9Eg-C6y91XIogLHi4A1_AFK7_KCF2KEnnxYv0)
+- [ ] Once the download is enabled in production, update the
+      [Master_raw_data_gallery](https://github.com/cryptokaizen/cmamp/blob/master/im_v2/common/notebooks/Master_raw_data_gallery.ipynb)
 
-## QA historical downloader
+## Quality Assurance
 
-- [ ] If a QA flow for a similar data type exists, evaluate if it is sufficient
-      and, in that case, re-use it in later steps. If it's insufficient, file an
-      issue to add a new QA flow (using a Jupyter Notebook)
-- [ ] Schedule the QA flow to Airflow by choosing one of the following options:
-  - Creating a new DAG
-  - Extending existing DAG to include a new task (preferred, if no large
-    modifications are needed)
+### 1. Check for Existing QA DAGs
+
+- [ ] **Verify if there is already a similar QA DAG running.**
+  - [ ] Check for existing QA DAGs (e.g., bid_ask/OHLCV, Cross QA for OHLCV
+        comparing real-time with historical data).
+  - [ ] Action: If the new QA is just a change in the universe or vendor, append
+        a new task to the existing running DAGs. Reference:
+        [Link to Relevant Section](https://github.com/cryptokaizen/cmamp/blob/6f6feec46704c96b9929fb174e6d66f7e94e6776/docs/datapull/ck.create_airflow_dag.tutorial.md?plain=1#L219)].
+
+### 2. Create a New QA DAG (if necessary)
+
+#### 2.1. Create and Test QA Notebook
+
+- [ ] **Develop a notebook to test the QA process.**
+  - [ ] Test over a small period to ensure it functions as expected.
+  - [ ] Tip: Use a small dataset or limited time frame for quick testing.
+
+#### 2.2. Run QA Notebook via Invoke Command
+
+- [ ] **Execute the QA notebook using the invoke command to validate
+      functionality.**
+  - [ ] Example:
+        [Invoke Command Example](https://github.com/cryptokaizen/cmamp/blob/6f6feec46704c96b9929fb174e6d66f7e94e6776/dev_scripts/lib_tasks_data_qa.py#L266)
+
+### 2.3. Create a New DAG File
+
+- [ ] **Create a new DAG file after QA process validation.**
+  - [ ] Follow the standard procedure for DAG creation. Reference:
+        [DAG Creation Tutorial](https://github.com/cryptokaizen/cmamp/blob/6f6feec46704c96b9929fb174e6d66f7e94e6776/docs/datapull/ck.create_airflow_dag.tutorial.md).
+
+Last review: GP on 2024-04-20

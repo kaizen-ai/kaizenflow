@@ -96,8 +96,8 @@ repo_list = [
     "cryptokaizen/cmamp",
     "cryptokaizen/orange",
     "cryptokaizen/lemonade",
-    "sorrentum/dev_tools",
-    "sorrentum/sorrentum",
+    "kaizen-ai/dev_tools",
+    "kaizen-ai/kaizenflow",
 ]
 workflow_df = hlitagh.gh_get_details_for_all_workflows(repo_list)
 # Reorder columns.
