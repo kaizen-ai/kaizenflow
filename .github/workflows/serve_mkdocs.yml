@@ -19,7 +19,7 @@ jobs:
           git config user.email 41898282+github-actions[bot]@users.noreply.github.com
       - uses: actions/setup-python@v5
         with:
-          python-version: 3.10.12
+          python-version: 3.x
       - run: echo "cache_id=$(date --utc '+%V')" >> $GITHUB_ENV 
       - uses: actions/cache@v4
         with:
@@ -28,5 +28,5 @@ jobs:
           restore-keys: |
             mkdocs-material-
       - run: pip install mkdocs-material
-      #- run: pip install -e mkdocs/mkdocs-toc-tag-filter 
-      - run: pip install -e mkdocs/mkdocs-toc-tag-filter && mkdocs gh-deploy --force
+      - run: pip install -e mkdocs/mkdocs-toc-tag-filter 
+      - run: mkdocs gh-deploy --force
