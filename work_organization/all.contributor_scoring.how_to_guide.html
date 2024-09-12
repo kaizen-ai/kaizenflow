@@ -1,0 +1,3907 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+      
+      
+      
+        <link rel="prev" href="all.buildmeister.how_to_guide.html">
+      
+      
+        <link rel="next" href="all.datapull_DAGmeister.how_to_guide.html">
+      
+      
+      <link rel="icon" href="../mkdocs/assets/favicon.ico">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.5.34">
+    
+    
+      
+        <title>Contributor Scoring - KaizenAI Documentation</title>
+      
+    
+    
+      <link rel="stylesheet" href="../assets/stylesheets/main.35f28582.min.css">
+      
+        
+        <link rel="stylesheet" href="../assets/stylesheets/palette.06af60db.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+      <link rel="stylesheet" href="../mkdocs/styles/styles.css">
+    
+    <script>__md_scope=new URL("..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+    
+  </head>
+  
+  
+    
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="black" data-md-color-accent="cyan">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#contributor-scoring" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+  
+
+<header class="md-header md-header--shadow" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href="../index.html" title="KaizenAI Documentation" class="md-header__button md-logo" aria-label="KaizenAI Documentation" data-md-component="logo">
+      
+  <img src="../mkdocs/assets/logo.png" alt="logo">
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            KaizenAI Documentation
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Contributor Scoring
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+    
+    
+    
+    
+      <label class="md-header__button md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+      </label>
+      <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+    
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+
+<nav class="md-nav md-nav--primary" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="../index.html" title="KaizenAI Documentation" class="md-nav__button md-logo" aria-label="KaizenAI Documentation" data-md-component="logo">
+      
+  <img src="../mkdocs/assets/logo.png" alt="logo">
+
+    </a>
+    KaizenAI Documentation
+  </label>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../index.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Kaizen Technologies internal documentation
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../all.code_organization.reference.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Code Organization
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../all.documentation_meta.reference.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Documentation Meta
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../all.software_components.reference.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Software Components
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../all.workflow.explanation.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Workflow
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../meta.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Files
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_7" >
+        
+          
+          <label class="md-nav__link" for="__nav_7" id="__nav_7_label" tabindex="0">
+            
+  
+  <span class="md-ellipsis">
+    Build
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_7_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_7">
+            <span class="md-nav__icon md-icon"></span>
+            Build
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../build/all.linter_gh_workflow.explanation.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Linter Gh Workflow
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../build/all.pytest_allure.explanation.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Pytest Allure
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../build/all.pytest_allure.how_to_guide.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Pytest Allure
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../build/all.semgrep_workflow.explanation.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Semgrep Integration in GitHub Actions
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_8" >
+        
+          
+          <label class="md-nav__link" for="__nav_8" id="__nav_8_label" tabindex="0">
+            
+  
+  <span class="md-ellipsis">
+    Coding
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_8_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_8">
+            <span class="md-nav__icon md-icon"></span>
+            Coding
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../coding/all.asyncio.explanation.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Asyncio Best Practices
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../coding/all.code_design.how_to_guide.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Code Design
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../coding/all.code_like_pragmatic_programmer.how_to_guide.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Code Like Pragmatic Programmer
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../coding/all.code_review.how_to_guide.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Code Review
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../coding/all.coding_style.how_to_guide.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Coding Style
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../coding/all.gsheet_into_pandas.how_to_guide.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Gsheet Into Pandas
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../coding/all.hcache.explanation.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Cache
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../coding/all.hplayback.how_to_guide.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Playback
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../coding/all.imports_and_packages.how_to_guide.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Imports And Packages
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../coding/all.integrate_repos.how_to_guide.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Integrate Repos
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../coding/all.jupyter_notebook.how_to_guide.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Jupyter Notebook
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../coding/all.plotting.how_to_guide.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Best practices for writing plotting functions
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../coding/all.profiling.how_to_guide.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Profiling
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../coding/all.publish_notebook.how_to_guide.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Publishing a notebook
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../coding/all.qgrid.how_to_guide.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Qgrid
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../coding/all.reading_other_people_code.how_to_guide.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Reading Other People Code
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../coding/all.run_jupyter_notebook.how_to_guide.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Run Jupyter notebook
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../coding/all.run_unit_tests.how_to_guide.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Run Unit Tests
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../coding/all.str_to_df.how_to_guide.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Converting a string into a Pandas df
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../coding/all.submit_code_for_review.how_to_guide.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    First Review Process
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../coding/all.type_hints.how_to_guide.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Type Hints
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../coding/all.write_unit_tests.how_to_guide.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Write Unit Tests
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_9" >
+        
+          
+          <label class="md-nav__link" for="__nav_9" id="__nav_9_label" tabindex="0">
+            
+  
+  <span class="md-ellipsis">
+    Dataflow
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_9_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_9">
+            <span class="md-nav__icon md-icon"></span>
+            Dataflow
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../dataflow/all.batch_and_streaming_mode_using_tiling.explanation.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Batch And Streaming Mode Using Tiling
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../dataflow/all.best_practice_for_building_dags.explanation.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Best Practice For Building Dags
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../dataflow/all.computation_as_graphs.explanation.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Computation As Graphs
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../dataflow/all.dag.explanation.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Debug information
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../dataflow/all.dataflow.explanation.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    DataFlow
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../dataflow/all.dataflow_data_format.explanation.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    DataFlow Data Format
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../dataflow/all.simulation_output.reference.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    All.simulation output.reference
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../dataflow/all.time_series.explanation.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Time series
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../dataflow/all.timing_semantic_and_clocks.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Timing Semantic And Clocks
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../dataflow/all.train_and_predict_phases.explanation.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Phases of evaluation of Dag
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_10" >
+        
+          
+          <label class="md-nav__link" for="__nav_10" id="__nav_10_label" tabindex="0">
+            
+  
+  <span class="md-ellipsis">
+    Datapull
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_10_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_10">
+            <span class="md-nav__icon md-icon"></span>
+            Datapull
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../datapull/all.data_schema.explanation.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Data Schema
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../datapull/all.datapull_client_stack.explanation.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Data client stack
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../datapull/all.datapull_derived_data.explanation.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Derived data workflows
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../datapull/all.datapull_qa_flow.explanation.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Data QA workflows
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../datapull/all.datapull_sandbox.explanation.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    DataPull sandbox
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../datapull/all.dataset_onboarding_checklist.reference.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Dataset onboarding checklist
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../datapull/all.update_CCXT_version.how_to_guide.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Update Ccxt Version
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_11" >
+        
+          
+          <label class="md-nav__link" for="__nav_11" id="__nav_11_label" tabindex="0">
+            
+  
+  <span class="md-ellipsis">
+    Dev tools
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_11_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_11">
+            <span class="md-nav__icon md-icon"></span>
+            Dev tools
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_11_1" >
+        
+          
+          <label class="md-nav__link" for="__nav_11_1" id="__nav_11_1_label" tabindex="0">
+            
+  
+  <span class="md-ellipsis">
+    Thin env
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_11_1_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_11_1">
+            <span class="md-nav__icon md-icon"></span>
+            Thin env
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../dev_tools/thin_env/all.gh_and_thin_env_requirements.reference.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Required Packages for the thin environment and GH Actions
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../dev_tools/thin_env/all.gh_thin_env_dependencies.how_to_guide.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    All.gh thin env dependencies.how to guide
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_12" >
+        
+          
+          <label class="md-nav__link" for="__nav_12" id="__nav_12_label" tabindex="0">
+            
+  
+  <span class="md-ellipsis">
+    Documentation meta
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_12_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_12">
+            <span class="md-nav__icon md-icon"></span>
+            Documentation meta
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../documentation_meta/all.architecture_diagrams.explanation.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Architecture Diagrams
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../documentation_meta/all.diataxis.explanation.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Diataxis
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../documentation_meta/all.gdocs.how_to_guide.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    All.gdocs.how to guide
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../documentation_meta/all.google_technical_writing.how_to_guide.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Google Technical Writing
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../documentation_meta/all.writing_docs.how_to_guide.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Writing Docs
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../documentation_meta/plotting_in_latex.how_to_guide.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Plotting in latex.how to guide
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_13" >
+        
+          
+          <label class="md-nav__link" for="__nav_13" id="__nav_13_label" tabindex="0">
+            
+  
+  <span class="md-ellipsis">
+    General background
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_13_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_13">
+            <span class="md-nav__icon md-icon"></span>
+            General background
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../general_background/all.common_abbreviations.reference.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Common abbreviations
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../general_background/all.glossary.reference.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Glossary
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../general_background/all.literature_review.reference.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Literature Review
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../general_background/all.reading_list.reference.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Reading List
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_14" >
+        
+          
+          <label class="md-nav__link" for="__nav_14" id="__nav_14_label" tabindex="0">
+            
+  
+  <span class="md-ellipsis">
+    Infra
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_14_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_14">
+            <span class="md-nav__icon md-icon"></span>
+            Infra
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../infra/all.auto_scaling.explanation.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Auto Scaling Explanation
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../infra/all.aws_iam_configuration.explanation.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    AWS IAM Configuration Best Practices Guide
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../infra/all.aws_scripts.reference.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Python Scripts Guide
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../infra/all.infrastructure_glossary.explanation.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Infrastructure Glossary
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../infra/all.infrastructure_update_rollout.how_to_guide.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Standardized Update Rollout Checklist
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../infra/all.rds.comparison.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Comparison of AWS RDS Instance Types and Storage Performance
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_15" >
+        
+          
+          <label class="md-nav__link" for="__nav_15" id="__nav_15_label" tabindex="0">
+            
+  
+  <span class="md-ellipsis">
+    Kaizenflow
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_15_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_15">
+            <span class="md-nav__icon md-icon"></span>
+            Kaizenflow
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../kaizenflow/all.dev_scripts_catalogue.reference.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Dev Scripts Catalogue
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../kaizenflow/all.devops_code_organization.reference.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    All.devops code organization.reference
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../kaizenflow/all.install_helpers.how_to_guide.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Install Helpers
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../kaizenflow/all.run_Mock2_in_batch_mode.how_to_guide.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Run Mock2 In Batch Mode
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../kaizenflow/all.run_end_to_end_Mock2_system.tutorial.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Run End To End Mock2 System
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_16" >
+        
+          
+          <label class="md-nav__link" for="__nav_16" id="__nav_16_label" tabindex="0">
+            
+  
+  <span class="md-ellipsis">
+    Onboarding
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_16_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_16">
+            <span class="md-nav__icon md-icon"></span>
+            Onboarding
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../onboarding/admin.onboarding_process.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    On-boarding Process
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../onboarding/all.communicate_in_telegram.how_to_guide.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Communicate In Telegram
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../onboarding/all.development_documents.reference.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Development Documents
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../onboarding/all.onboarding_checklist.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Onboarding Checklist
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../onboarding/all.organize_email.how_to_guide.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Organize Email
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../onboarding/all.receive_crypto_payment.how_to_guide.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Receive Crypto Payment
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../onboarding/all.track_time_with_hubstaff.how_to_guide.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Track Time With Hubstaff
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../onboarding/kaizenflow.hiring_meister.how_to_guide.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    General
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../onboarding/kaizenflow.set_up_development_environment.how_to_guide.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Set up KaizenFlow development environment
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../onboarding/kaizenflow.signing_up.how_to_guide.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Signing up to the project
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_17" >
+        
+          
+          <label class="md-nav__link" for="__nav_17" id="__nav_17_label" tabindex="0">
+            
+  
+  <span class="md-ellipsis">
+    Trading ops
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_17_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_17">
+            <span class="md-nav__icon md-icon"></span>
+            Trading ops
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../trading_ops/all.how_to_name_objects.explanation.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    How to name objects
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../trading_ops/all.scheduled_monitoring.explanation.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Scheduled trading monitoring
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../trading_ops/all.scheduled_trading.explanation.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Publishing Experiment Reports
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../trading_ops/all.shadow_monitoring.explanation.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Shadow trading monitoring
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../trading_ops/all.trading_run_summary_sheet.explanation.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Trading Run Summary Sheet
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_18" checked>
+        
+          
+          <label class="md-nav__link" for="__nav_18" id="__nav_18_label" tabindex="0">
+            
+  
+  <span class="md-ellipsis">
+    Work organization
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_18_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_18">
+            <span class="md-nav__icon md-icon"></span>
+            Work organization
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="Hiring_process.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    HiringMeister
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="all.buildmeister.how_to_guide.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Buildmeister
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  <span class="md-ellipsis">
+    Contributor Scoring
+  </span>
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="all.contributor_scoring.how_to_guide.html" class="md-nav__link md-nav__link--active">
+        
+  
+  <span class="md-ellipsis">
+    Contributor Scoring
+  </span>
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#scoring-process" class="md-nav__link">
+    <span class="md-ellipsis">
+      Scoring process
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Scoring process">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#general" class="md-nav__link">
+    <span class="md-ellipsis">
+      General
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#current-process" class="md-nav__link">
+    <span class="md-ellipsis">
+      Current process
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#scoring-topics" class="md-nav__link">
+    <span class="md-ellipsis">
+      Scoring topics
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Scoring topics">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#general_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      General
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#current-topics" class="md-nav__link">
+    <span class="md-ellipsis">
+      Current topics
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#roles" class="md-nav__link">
+    <span class="md-ellipsis">
+      Roles
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#more-detailed-topics-for-candidate-full-and-part-time" class="md-nav__link">
+    <span class="md-ellipsis">
+      More detailed topics for candidate full- and part-time
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="More detailed topics for candidate full- and part-time">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#technical" class="md-nav__link">
+    <span class="md-ellipsis">
+      Technical
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#process-related" class="md-nav__link">
+    <span class="md-ellipsis">
+      Process-related
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="all.datapull_DAGmeister.how_to_guide.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Datapull Dagmeister
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="all.epicmeister.how_to_guide.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Epicmeister
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="all.rollout.how_to_guide.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Rollout
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="all.scrum.explanation.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Scrum
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="all.team_collaboration.how_to_guide.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Team Collaboration
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="all.use_github_and_zenhub.how_to_guide.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Use Github And Zenhub
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="kaizenflow.organize_your_work.how_to_guide.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Golden rules
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_19" >
+        
+          
+          <label class="md-nav__link" for="__nav_19" id="__nav_19_label" tabindex="0">
+            
+  
+  <span class="md-ellipsis">
+    Work tools
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_19_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_19">
+            <span class="md-nav__icon md-icon"></span>
+            Work tools
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../work_tools/all.add_toc_to_notebook.how_to_guide.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Adding a table of contents to a notebook
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../work_tools/all.bfg_repo_cleaner.how_to_guide.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    BFG Repo-Cleaner
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../work_tools/all.chatgpt_api.how_to_guide.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Chatgpt Api
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../work_tools/all.codebase_clean_up.how_to_guide.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Codebase Clean Up
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../work_tools/all.conda_environment_obsolete.how_to_guide.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Conda Environment Obsolete
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../work_tools/all.development.how_to_guide.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Development
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../work_tools/all.dind_and_sibling_containers.how_to_guide.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Docker-in-docker (dind)
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../work_tools/all.docker.how_to_guide.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Docker
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../work_tools/all.docker.tutorial.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Docker
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../work_tools/all.docker_dev_tools_container.how_to_guide.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Dev tools container
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../work_tools/all.docker_optimizer_container.how_to_guide.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Optimizer container
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../work_tools/all.dockerhub.how_to_guide.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Dockerhub
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../work_tools/all.gh_and_thin_env_requirements.reference.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Required Packages for the thin environment and GH Actions
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../work_tools/all.gh_thin_env_dependencies.how_to_guide.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Thin environment dependencies
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../work_tools/all.git.how_to_guide.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Git
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../work_tools/all.invoke_workflows.how_to_guide.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Invoke Workflows
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../work_tools/all.jupytext.how_to_guide.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Jupytext
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../work_tools/all.latex_toolchain.how_to_guide.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Latex Toolchain
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../work_tools/all.parquet.explanation.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Pyarrow Parquet management
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../work_tools/all.pycharm.how_to_guide.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Pycharm
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../work_tools/all.python_package_upgrade_and_troubleshooting.how_to_guide.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Python package upgrade &amp; troubleshooting
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../work_tools/all.ssh.how_to_guide.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Ssh
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../work_tools/all.telegram_notify_bot.how_to_guide.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    telegram-notify
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../work_tools/all.visual_studio_code.how_to_guide.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Visual Studio Code
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#scoring-process" class="md-nav__link">
+    <span class="md-ellipsis">
+      Scoring process
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Scoring process">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#general" class="md-nav__link">
+    <span class="md-ellipsis">
+      General
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#current-process" class="md-nav__link">
+    <span class="md-ellipsis">
+      Current process
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#scoring-topics" class="md-nav__link">
+    <span class="md-ellipsis">
+      Scoring topics
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Scoring topics">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#general_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      General
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#current-topics" class="md-nav__link">
+    <span class="md-ellipsis">
+      Current topics
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#roles" class="md-nav__link">
+    <span class="md-ellipsis">
+      Roles
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#more-detailed-topics-for-candidate-full-and-part-time" class="md-nav__link">
+    <span class="md-ellipsis">
+      More detailed topics for candidate full- and part-time
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="More detailed topics for candidate full- and part-time">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#technical" class="md-nav__link">
+    <span class="md-ellipsis">
+      Technical
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#process-related" class="md-nav__link">
+    <span class="md-ellipsis">
+      Process-related
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+<h1 id="contributor-scoring">Contributor Scoring</h1>
+<h2 id="scoring-process">Scoring process</h2>
+<h3 id="general">General</h3>
+<ul>
+<li>
+<p>We want to evaluate and provide feedback to our team members on different
+  aspects of their work.</p>
+</li>
+<li>
+<p>We don't take non-perfect scores personally but just as a way to understand
+  what to improve.</p>
+</li>
+<li>
+<p>The scoring template is here
+  <a href="https://docs.google.com/spreadsheets/u/2/d/1WsWT8By2hr1VqB6ulIXf3_Rfa0zE2KHI/edit?usp=drive_web&amp;ouid=106425005676808098789&amp;rtpof=true"><span class="underline">Scoring template</span></a>
+  (this is an Excel spreadsheet since you need to upload it and it needs to be a
+  file and not a Google Sheet).</p>
+</li>
+<li>
+<p>Each metric is scored between 1 (poor), 3 (average) and 5 (excellent)</p>
+</li>
+<li>
+<p>We consider 4 as acceptable, anything less than 4 as problematic and needs
+    improve</p>
+</li>
+<li>
+<p>We want to score everyone we work with:</p>
+</li>
+<li>Initially only people that we supervise, later on anyone</li>
+<li>Feedback is anonymous</li>
+<li>
+<p>At least 2 persons should score everyone</p>
+</li>
+<li>
+<p>Scoring frequency</p>
+</li>
+<li>Every 2 weeks for full-time candidates, part-time collaborators</li>
+<li>Every month for full-time team</li>
+</ul>
+<h3 id="current-process">Current process</h3>
+<ul>
+<li>Every scoring needs to happen (e.g., every two weeks):</li>
+<li>Mentor make a copy of the Excel spreadsheet
+    <a href="https://docs.google.com/spreadsheets/u/2/d/1WsWT8By2hr1VqB6ulIXf3_Rfa0zE2KHI/edit?usp=drive_web&amp;ouid=106425005676808098789&amp;rtpof=true"><span class="underline">Scoring template</span></a></li>
+<li>Rename the template "Scoring - {Scorer} - {ScoringDate}" (e.g., "Scoring -
+    GP - 2023-09-01")</li>
+<li>Fill out the rows for the people that they need to score by looking at the
+    Mentor column</li>
+<li>Upload your Scoring Excel file
+    <a href="https://docs.google.com/forms/d/e/1FAIpQLSdXhjHo52Roz_ROY-zlkg0YPMHCzoDXmPpCd1x-KmeCtQVd5g/viewform"><span class="underline">here</span></a><ul>
+<li>You should see</li>
+<li><img src="figs/contributor_scoring/image1.png" style="width:6.5in;height:4.90278in" /></li>
+<li>(For admin use, the source is
+  <a href="https://docs.google.com/forms/d/1IXpcMSrtVI0xO3eNMrzGNJ0zpv-KySQVXjujlSuZlpo/edit"><span class="underline">here</span></a>
+  and
+  <a href="https://drive.google.com/drive/u/1/folders/1r-npms62yEvO90bXq8yZ99MkQk21c6SrQ5PpT1KqLpF1cnUqwJgO8E7cuD2t6zZe2P3hwjbe"><span class="underline">here</span></a>)</li>
+</ul>
+</li>
+<li>One of the integrators (GP, Paul, or somebody else) merges all the scoring
+    template in a single one, and then creates the averaged score for each
+    person</li>
+<li>The scores are then distributed anonymously<ul>
+<li>Scored team members don't know who / how many mentors scored them
+  (although they have a clue about at least one mentor)</li>
+</ul>
+</li>
+</ul>
+<h2 id="scoring-topics">Scoring topics</h2>
+<h3 id="general_1">General</h3>
+<ul>
+<li>
+<p>Topics should be independent</p>
+</li>
+<li>
+<p>We should provide</p>
+</li>
+<li>Concrete questions to assess how people do on each topic</li>
+<li>Ways to improve the score (e.g., "read this book!", "do more of this and
+    less of this")</li>
+</ul>
+<h3 id="current-topics">Current topics</h3>
+<ul>
+<li>Scoring table contains the following fields:</li>
+<li>Quality of code<ul>
+<li>Writes elegant code?</li>
+<li>Follows our standards and conventions?</li>
+<li>Designs beautiful abstractions, when needed?</li>
+</ul>
+</li>
+<li>Quality of design<ul>
+<li>Designs beautiful but simple abstractions?</li>
+<li>Adds abstractions only when needed?</li>
+<li>Orchestrates software components properly?</li>
+<li>Uses design patterns, when needed?</li>
+</ul>
+</li>
+<li>Attention to details<ul>
+<li>Thinks in terms of corner cases?</li>
+<li>Debugs things carefully?</li>
+<li>Takes pride in well-done product (e.g., code, documentation)?</li>
+</ul>
+</li>
+<li>Productivity<ul>
+<li>Closes issues effectively without unnecessary iterations?</li>
+<li>It is a qualitative measure of progress per unit of time</li>
+</ul>
+</li>
+<li>Make and achieve ETAs<ul>
+<li>Estimates complexity in bugs?</li>
+<li>Thinks of risks and unknown unknowns, best / average / worst ETAs?</li>
+<li>Resolves issues in set ETAs?</li>
+<li>Puts in a sufficient amount of hours to make progress?</li>
+</ul>
+</li>
+<li>Autonomy<ul>
+<li>Understands specs?</li>
+<li>Needs a lot of supervision to execute the tasks?</li>
+<li>Does what's right according to our shared way of doing things without
+  reminders?</li>
+</ul>
+</li>
+<li>Follow our PR process<ul>
+<li>Learns from reviews and doesn't make the same mistakes?</li>
+<li>Runs linter consistently before each iteration?</li>
+<li>Does a PR / day (even draft)?</li>
+</ul>
+</li>
+<li>Follow our organizational process<ul>
+<li>Sends a daily TODO email?</li>
+<li>Updates their issues daily?</li>
+<li>Curates GitHub / ZenHub?</li>
+</ul>
+</li>
+<li>Team work<ul>
+<li>Helps others on the team when others need help / supervision?</li>
+<li>Takes the initiative and goes the extra mile when needed?</li>
+<li>Sacrifices for the greater good (e.g., doing stuff that is not fun to do)?</li>
+</ul>
+</li>
+<li>Communication<ul>
+<li>Files issues with clear specs?</li>
+<li>Explains technical issues and gives updates properly and with clarity?</li>
+<li>Reports problems and solutions with proper context?</li>
+<li>Speaks and writes English well?</li>
+</ul>
+</li>
+<li>Ability to run a team<ul>
+<li>Can juggle multiple topics at once?</li>
+<li>Can split the work in specs?</li>
+<li>Is it ok with being interrupted to help team members?</li>
+</ul>
+</li>
+<li>Positive energy<ul>
+<li>Has an upbeat approach to working even if sh*t doesn't work (since things
+  never work)?</li>
+<li>Is a
+  <a href="https://www.urbandictionary.com/define.php?term=negative%20nelly"><span class="underline">Negative Nelly</span></a>?</li>
+</ul>
+</li>
+<li>Dev %, Data scientist %, Devops %<ul>
+<li>This just measures how much of a role one team member can cover</li>
+<li>See below</li>
+</ul>
+</li>
+</ul>
+<h3 id="roles">Roles</h3>
+<ul>
+<li>
+<p>We want to define how each team-member is comfortable covering several high
+  level activities.</p>
+</li>
+<li>
+<p>The idea is to understand what roles a new hire can play.</p>
+</li>
+<li>
+<p>Roles are not mutually exclusive</p>
+</li>
+<li>E.g., a jack-of-all-trades can be 4 on all topics</li>
+<li>E.g., XYZ is a data scientist and has data science=5, dev=3, devops=1</li>
+<li>Data science<ul>
+<li>Example of activities are:</li>
+<li>Write notebooks</li>
+<li>Do research</li>
+<li>Debug data</li>
+</ul>
+</li>
+<li>Dev<ul>
+<li>Example of activities are:</li>
+<li>Write code</li>
+<li>Refactor code</li>
+<li>Architecture code</li>
+<li>Debug code</li>
+<li>Unit test code</li>
+</ul>
+</li>
+<li>DevOps<ul>
+<li>Example of activities are:</li>
+<li>Manage / supervise infra</li>
+<li>Airflow</li>
+<li>Docker</li>
+<li>AWS</li>
+<li>Administer Linux</li>
+</ul>
+</li>
+</ul>
+<h3 id="more-detailed-topics-for-candidate-full-and-part-time">More detailed topics for candidate full- and part-time</h3>
+<ul>
+<li>When interviewing a candidate / collaborator we want to have more topics</li>
+</ul>
+<h4 id="technical">Technical</h4>
+<ul>
+<li>Unit testing</li>
+<li>Does he / she write good unit tests?</li>
+<li>Does he / she use coverage to understand what / how to test?</li>
+<li>Git / GitHub knowledge</li>
+<li>Linux knowledge</li>
+<li>Review churning</li>
+<li>Do the reviews take too long?</li>
+<li>Python knowledge / coding ability</li>
+</ul>
+<h4 id="process-related">Process-related</h4>
+<ul>
+<li>Send good TODO email</li>
+<li>Follow our PR process</li>
+<li>Read the docs with attention</li>
+<li>Follow our organizational process</li>
+<li>Make and achieve ETAs</li>
+<li>Autonomy / Independence</li>
+<li>Does he / she need a lot of supervision to execute the tasks?</li>
+<li>Productivity</li>
+<li>Number of hours</li>
+<li>This is a minor metric: the number of hours doesn't really matter as long as
+    stuff is done</li>
+<li>On the other hand, if somebody consistently doesn't put enough time to get
+    the needed stuff done, it can become a problem</li>
+</ul>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    <script id="__config" type="application/json">{"base": "..", "features": [], "search": "../assets/javascripts/workers/search.07f07601.min.js", "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}}</script>
+    
+    
+      <script src="../assets/javascripts/bundle.56dfad97.min.js"></script>
+      
+    
+  </body>
+</html>

@@ -1,0 +1,4445 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+      
+      
+      
+        <link rel="prev" href="all.code_like_pragmatic_programmer.how_to_guide.html">
+      
+      
+        <link rel="next" href="all.coding_style.how_to_guide.html">
+      
+      
+      <link rel="icon" href="../mkdocs/assets/favicon.ico">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.5.34">
+    
+    
+      
+        <title>Code Review - KaizenAI Documentation</title>
+      
+    
+    
+      <link rel="stylesheet" href="../assets/stylesheets/main.35f28582.min.css">
+      
+        
+        <link rel="stylesheet" href="../assets/stylesheets/palette.06af60db.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+      <link rel="stylesheet" href="../mkdocs/styles/styles.css">
+    
+    <script>__md_scope=new URL("..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+    
+  </head>
+  
+  
+    
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="black" data-md-color-accent="cyan">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#code-review" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+  
+
+<header class="md-header md-header--shadow" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href="../index.html" title="KaizenAI Documentation" class="md-header__button md-logo" aria-label="KaizenAI Documentation" data-md-component="logo">
+      
+  <img src="../mkdocs/assets/logo.png" alt="logo">
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            KaizenAI Documentation
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Code Review
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+    
+    
+    
+    
+      <label class="md-header__button md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+      </label>
+      <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+    
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+
+<nav class="md-nav md-nav--primary" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="../index.html" title="KaizenAI Documentation" class="md-nav__button md-logo" aria-label="KaizenAI Documentation" data-md-component="logo">
+      
+  <img src="../mkdocs/assets/logo.png" alt="logo">
+
+    </a>
+    KaizenAI Documentation
+  </label>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../index.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Kaizen Technologies internal documentation
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../all.code_organization.reference.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Code Organization
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../all.documentation_meta.reference.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Documentation Meta
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../all.software_components.reference.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Software Components
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../all.workflow.explanation.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Workflow
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../meta.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Files
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_7" >
+        
+          
+          <label class="md-nav__link" for="__nav_7" id="__nav_7_label" tabindex="0">
+            
+  
+  <span class="md-ellipsis">
+    Build
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_7_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_7">
+            <span class="md-nav__icon md-icon"></span>
+            Build
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../build/all.linter_gh_workflow.explanation.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Linter Gh Workflow
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../build/all.pytest_allure.explanation.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Pytest Allure
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../build/all.pytest_allure.how_to_guide.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Pytest Allure
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../build/all.semgrep_workflow.explanation.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Semgrep Integration in GitHub Actions
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_8" checked>
+        
+          
+          <label class="md-nav__link" for="__nav_8" id="__nav_8_label" tabindex="0">
+            
+  
+  <span class="md-ellipsis">
+    Coding
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_8_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_8">
+            <span class="md-nav__icon md-icon"></span>
+            Coding
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="all.asyncio.explanation.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Asyncio Best Practices
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="all.code_design.how_to_guide.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Code Design
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="all.code_like_pragmatic_programmer.how_to_guide.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Code Like Pragmatic Programmer
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  <span class="md-ellipsis">
+    Code Review
+  </span>
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="all.code_review.how_to_guide.html" class="md-nav__link md-nav__link--active">
+        
+  
+  <span class="md-ellipsis">
+    Code Review
+  </span>
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#code-review_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      Code review
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#general-rules-about-code-review" class="md-nav__link">
+    <span class="md-ellipsis">
+      General rules about code review
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="General rules about code review">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#read-the-google-code-review-best-practices" class="md-nav__link">
+    <span class="md-ellipsis">
+      Read the Google code review best practices
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#code-review-workflows" class="md-nav__link">
+    <span class="md-ellipsis">
+      Code review workflows
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Code review workflows">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#pull-request" class="md-nav__link">
+    <span class="md-ellipsis">
+      Pull request
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#from-the-code-author-point-of-view" class="md-nav__link">
+    <span class="md-ellipsis">
+      From the code author point of view
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="From the code author point of view">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#why-we-review-code" class="md-nav__link">
+    <span class="md-ellipsis">
+      Why we review code
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#pr-checklist" class="md-nav__link">
+    <span class="md-ellipsis">
+      PR checklist
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#the-golden-rule-of-code-review" class="md-nav__link">
+    <span class="md-ellipsis">
+      The golden rule of code review
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#be-clear-in-the-pr-request-about-what-you-want" class="md-nav__link">
+    <span class="md-ellipsis">
+      Be clear in the PR request about what you want
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#do-not-mix-changes-and-refactoring-shuffling-code" class="md-nav__link">
+    <span class="md-ellipsis">
+      Do not mix changes and refactoring / shuffling code
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#double-check-before-sending-a-pr" class="md-nav__link">
+    <span class="md-ellipsis">
+      Double check before sending a PR
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#reviewing-other-peoples-code-is-usually-not-fun" class="md-nav__link">
+    <span class="md-ellipsis">
+      Reviewing other people's code is usually not fun
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#the-first-reviews-are-painful" class="md-nav__link">
+    <span class="md-ellipsis">
+      The first reviews are painful
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#apply-review-comments-everywhere" class="md-nav__link">
+    <span class="md-ellipsis">
+      Apply review comments everywhere
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#look-at-the-code-top-to-bottom" class="md-nav__link">
+    <span class="md-ellipsis">
+      Look at the code top-to-bottom
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#answering-comments-after-a-review" class="md-nav__link">
+    <span class="md-ellipsis">
+      Answering comments after a review
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#apply-changes-to-a-review-quickly" class="md-nav__link">
+    <span class="md-ellipsis">
+      Apply changes to a review quickly
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#ask-for-another-review" class="md-nav__link">
+    <span class="md-ellipsis">
+      Ask for another review
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#workflow-of-a-review-in-terms-of-gh-labels" class="md-nav__link">
+    <span class="md-ellipsis">
+      Workflow of a review in terms of GH labels
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#link-pr-to-gh-issue" class="md-nav__link">
+    <span class="md-ellipsis">
+      Link PR to GH issue
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#fix-later" class="md-nav__link">
+    <span class="md-ellipsis">
+      Fix later
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#from-the-code-reviewer-point-of-view" class="md-nav__link">
+    <span class="md-ellipsis">
+      From the code reviewer point of view
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="From the code reviewer point of view">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#post-commit-review" class="md-nav__link">
+    <span class="md-ellipsis">
+      Post-commit review
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#code-walk-through" class="md-nav__link">
+    <span class="md-ellipsis">
+      Code walk-through
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#close-the-pr-and-delete-the-branch" class="md-nav__link">
+    <span class="md-ellipsis">
+      Close the PR and delete the branch
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#give-priority-to-code-review" class="md-nav__link">
+    <span class="md-ellipsis">
+      Give priority to code review
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#multiple-reviewers-problem" class="md-nav__link">
+    <span class="md-ellipsis">
+      Multiple reviewers problem
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#remember-small-steps-ahead" class="md-nav__link">
+    <span class="md-ellipsis">
+      Remember "small steps ahead"
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#nothing-is-too-small" class="md-nav__link">
+    <span class="md-ellipsis">
+      Nothing is too small
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#final-gh-comment" class="md-nav__link">
+    <span class="md-ellipsis">
+      Final GH comment
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="all.coding_style.how_to_guide.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Coding Style
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="all.gsheet_into_pandas.how_to_guide.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Gsheet Into Pandas
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="all.hcache.explanation.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Cache
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="all.hplayback.how_to_guide.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Playback
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="all.imports_and_packages.how_to_guide.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Imports And Packages
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="all.integrate_repos.how_to_guide.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Integrate Repos
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="all.jupyter_notebook.how_to_guide.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Jupyter Notebook
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="all.plotting.how_to_guide.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Best practices for writing plotting functions
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="all.profiling.how_to_guide.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Profiling
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="all.publish_notebook.how_to_guide.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Publishing a notebook
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="all.qgrid.how_to_guide.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Qgrid
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="all.reading_other_people_code.how_to_guide.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Reading Other People Code
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="all.run_jupyter_notebook.how_to_guide.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Run Jupyter notebook
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="all.run_unit_tests.how_to_guide.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Run Unit Tests
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="all.str_to_df.how_to_guide.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Converting a string into a Pandas df
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="all.submit_code_for_review.how_to_guide.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    First Review Process
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="all.type_hints.how_to_guide.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Type Hints
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="all.write_unit_tests.how_to_guide.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Write Unit Tests
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_9" >
+        
+          
+          <label class="md-nav__link" for="__nav_9" id="__nav_9_label" tabindex="0">
+            
+  
+  <span class="md-ellipsis">
+    Dataflow
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_9_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_9">
+            <span class="md-nav__icon md-icon"></span>
+            Dataflow
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../dataflow/all.batch_and_streaming_mode_using_tiling.explanation.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Batch And Streaming Mode Using Tiling
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../dataflow/all.best_practice_for_building_dags.explanation.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Best Practice For Building Dags
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../dataflow/all.computation_as_graphs.explanation.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Computation As Graphs
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../dataflow/all.dag.explanation.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Debug information
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../dataflow/all.dataflow.explanation.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    DataFlow
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../dataflow/all.dataflow_data_format.explanation.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    DataFlow Data Format
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../dataflow/all.simulation_output.reference.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    All.simulation output.reference
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../dataflow/all.time_series.explanation.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Time series
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../dataflow/all.timing_semantic_and_clocks.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Timing Semantic And Clocks
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../dataflow/all.train_and_predict_phases.explanation.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Phases of evaluation of Dag
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_10" >
+        
+          
+          <label class="md-nav__link" for="__nav_10" id="__nav_10_label" tabindex="0">
+            
+  
+  <span class="md-ellipsis">
+    Datapull
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_10_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_10">
+            <span class="md-nav__icon md-icon"></span>
+            Datapull
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../datapull/all.data_schema.explanation.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Data Schema
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../datapull/all.datapull_client_stack.explanation.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Data client stack
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../datapull/all.datapull_derived_data.explanation.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Derived data workflows
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../datapull/all.datapull_qa_flow.explanation.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Data QA workflows
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../datapull/all.datapull_sandbox.explanation.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    DataPull sandbox
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../datapull/all.dataset_onboarding_checklist.reference.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Dataset onboarding checklist
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../datapull/all.update_CCXT_version.how_to_guide.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Update Ccxt Version
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_11" >
+        
+          
+          <label class="md-nav__link" for="__nav_11" id="__nav_11_label" tabindex="0">
+            
+  
+  <span class="md-ellipsis">
+    Dev tools
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_11_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_11">
+            <span class="md-nav__icon md-icon"></span>
+            Dev tools
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_11_1" >
+        
+          
+          <label class="md-nav__link" for="__nav_11_1" id="__nav_11_1_label" tabindex="0">
+            
+  
+  <span class="md-ellipsis">
+    Thin env
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_11_1_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_11_1">
+            <span class="md-nav__icon md-icon"></span>
+            Thin env
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../dev_tools/thin_env/all.gh_and_thin_env_requirements.reference.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Required Packages for the thin environment and GH Actions
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../dev_tools/thin_env/all.gh_thin_env_dependencies.how_to_guide.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    All.gh thin env dependencies.how to guide
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_12" >
+        
+          
+          <label class="md-nav__link" for="__nav_12" id="__nav_12_label" tabindex="0">
+            
+  
+  <span class="md-ellipsis">
+    Documentation meta
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_12_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_12">
+            <span class="md-nav__icon md-icon"></span>
+            Documentation meta
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../documentation_meta/all.architecture_diagrams.explanation.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Architecture Diagrams
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../documentation_meta/all.diataxis.explanation.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Diataxis
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../documentation_meta/all.gdocs.how_to_guide.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    All.gdocs.how to guide
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../documentation_meta/all.google_technical_writing.how_to_guide.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Google Technical Writing
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../documentation_meta/all.writing_docs.how_to_guide.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Writing Docs
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../documentation_meta/plotting_in_latex.how_to_guide.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Plotting in latex.how to guide
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_13" >
+        
+          
+          <label class="md-nav__link" for="__nav_13" id="__nav_13_label" tabindex="0">
+            
+  
+  <span class="md-ellipsis">
+    General background
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_13_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_13">
+            <span class="md-nav__icon md-icon"></span>
+            General background
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../general_background/all.common_abbreviations.reference.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Common abbreviations
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../general_background/all.glossary.reference.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Glossary
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../general_background/all.literature_review.reference.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Literature Review
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../general_background/all.reading_list.reference.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Reading List
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_14" >
+        
+          
+          <label class="md-nav__link" for="__nav_14" id="__nav_14_label" tabindex="0">
+            
+  
+  <span class="md-ellipsis">
+    Infra
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_14_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_14">
+            <span class="md-nav__icon md-icon"></span>
+            Infra
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../infra/all.auto_scaling.explanation.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Auto Scaling Explanation
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../infra/all.aws_iam_configuration.explanation.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    AWS IAM Configuration Best Practices Guide
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../infra/all.aws_scripts.reference.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Python Scripts Guide
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../infra/all.infrastructure_glossary.explanation.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Infrastructure Glossary
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../infra/all.infrastructure_update_rollout.how_to_guide.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Standardized Update Rollout Checklist
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../infra/all.rds.comparison.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Comparison of AWS RDS Instance Types and Storage Performance
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_15" >
+        
+          
+          <label class="md-nav__link" for="__nav_15" id="__nav_15_label" tabindex="0">
+            
+  
+  <span class="md-ellipsis">
+    Kaizenflow
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_15_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_15">
+            <span class="md-nav__icon md-icon"></span>
+            Kaizenflow
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../kaizenflow/all.dev_scripts_catalogue.reference.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Dev Scripts Catalogue
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../kaizenflow/all.devops_code_organization.reference.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    All.devops code organization.reference
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../kaizenflow/all.install_helpers.how_to_guide.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Install Helpers
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../kaizenflow/all.run_Mock2_in_batch_mode.how_to_guide.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Run Mock2 In Batch Mode
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../kaizenflow/all.run_end_to_end_Mock2_system.tutorial.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Run End To End Mock2 System
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_16" >
+        
+          
+          <label class="md-nav__link" for="__nav_16" id="__nav_16_label" tabindex="0">
+            
+  
+  <span class="md-ellipsis">
+    Onboarding
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_16_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_16">
+            <span class="md-nav__icon md-icon"></span>
+            Onboarding
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../onboarding/admin.onboarding_process.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    On-boarding Process
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../onboarding/all.communicate_in_telegram.how_to_guide.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Communicate In Telegram
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../onboarding/all.development_documents.reference.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Development Documents
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../onboarding/all.onboarding_checklist.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Onboarding Checklist
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../onboarding/all.organize_email.how_to_guide.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Organize Email
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../onboarding/all.receive_crypto_payment.how_to_guide.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Receive Crypto Payment
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../onboarding/all.track_time_with_hubstaff.how_to_guide.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Track Time With Hubstaff
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../onboarding/kaizenflow.hiring_meister.how_to_guide.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    General
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../onboarding/kaizenflow.set_up_development_environment.how_to_guide.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Set up KaizenFlow development environment
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../onboarding/kaizenflow.signing_up.how_to_guide.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Signing up to the project
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_17" >
+        
+          
+          <label class="md-nav__link" for="__nav_17" id="__nav_17_label" tabindex="0">
+            
+  
+  <span class="md-ellipsis">
+    Trading ops
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_17_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_17">
+            <span class="md-nav__icon md-icon"></span>
+            Trading ops
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../trading_ops/all.how_to_name_objects.explanation.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    How to name objects
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../trading_ops/all.scheduled_monitoring.explanation.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Scheduled trading monitoring
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../trading_ops/all.scheduled_trading.explanation.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Publishing Experiment Reports
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../trading_ops/all.shadow_monitoring.explanation.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Shadow trading monitoring
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../trading_ops/all.trading_run_summary_sheet.explanation.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Trading Run Summary Sheet
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_18" >
+        
+          
+          <label class="md-nav__link" for="__nav_18" id="__nav_18_label" tabindex="0">
+            
+  
+  <span class="md-ellipsis">
+    Work organization
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_18_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_18">
+            <span class="md-nav__icon md-icon"></span>
+            Work organization
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../work_organization/Hiring_process.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    HiringMeister
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../work_organization/all.buildmeister.how_to_guide.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Buildmeister
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../work_organization/all.contributor_scoring.how_to_guide.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Contributor Scoring
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../work_organization/all.datapull_DAGmeister.how_to_guide.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Datapull Dagmeister
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../work_organization/all.epicmeister.how_to_guide.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Epicmeister
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../work_organization/all.rollout.how_to_guide.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Rollout
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../work_organization/all.scrum.explanation.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Scrum
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../work_organization/all.team_collaboration.how_to_guide.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Team Collaboration
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../work_organization/all.use_github_and_zenhub.how_to_guide.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Use Github And Zenhub
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../work_organization/kaizenflow.organize_your_work.how_to_guide.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Golden rules
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_19" >
+        
+          
+          <label class="md-nav__link" for="__nav_19" id="__nav_19_label" tabindex="0">
+            
+  
+  <span class="md-ellipsis">
+    Work tools
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_19_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_19">
+            <span class="md-nav__icon md-icon"></span>
+            Work tools
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../work_tools/all.add_toc_to_notebook.how_to_guide.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Adding a table of contents to a notebook
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../work_tools/all.bfg_repo_cleaner.how_to_guide.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    BFG Repo-Cleaner
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../work_tools/all.chatgpt_api.how_to_guide.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Chatgpt Api
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../work_tools/all.codebase_clean_up.how_to_guide.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Codebase Clean Up
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../work_tools/all.conda_environment_obsolete.how_to_guide.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Conda Environment Obsolete
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../work_tools/all.development.how_to_guide.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Development
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../work_tools/all.dind_and_sibling_containers.how_to_guide.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Docker-in-docker (dind)
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../work_tools/all.docker.how_to_guide.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Docker
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../work_tools/all.docker.tutorial.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Docker
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../work_tools/all.docker_dev_tools_container.how_to_guide.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Dev tools container
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../work_tools/all.docker_optimizer_container.how_to_guide.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Optimizer container
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../work_tools/all.dockerhub.how_to_guide.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Dockerhub
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../work_tools/all.gh_and_thin_env_requirements.reference.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Required Packages for the thin environment and GH Actions
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../work_tools/all.gh_thin_env_dependencies.how_to_guide.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Thin environment dependencies
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../work_tools/all.git.how_to_guide.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Git
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../work_tools/all.invoke_workflows.how_to_guide.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Invoke Workflows
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../work_tools/all.jupytext.how_to_guide.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Jupytext
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../work_tools/all.latex_toolchain.how_to_guide.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Latex Toolchain
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../work_tools/all.parquet.explanation.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Pyarrow Parquet management
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../work_tools/all.pycharm.how_to_guide.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Pycharm
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../work_tools/all.python_package_upgrade_and_troubleshooting.how_to_guide.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Python package upgrade &amp; troubleshooting
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../work_tools/all.ssh.how_to_guide.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Ssh
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../work_tools/all.telegram_notify_bot.how_to_guide.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    telegram-notify
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../work_tools/all.visual_studio_code.how_to_guide.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Visual Studio Code
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#code-review_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      Code review
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#general-rules-about-code-review" class="md-nav__link">
+    <span class="md-ellipsis">
+      General rules about code review
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="General rules about code review">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#read-the-google-code-review-best-practices" class="md-nav__link">
+    <span class="md-ellipsis">
+      Read the Google code review best practices
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#code-review-workflows" class="md-nav__link">
+    <span class="md-ellipsis">
+      Code review workflows
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Code review workflows">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#pull-request" class="md-nav__link">
+    <span class="md-ellipsis">
+      Pull request
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#from-the-code-author-point-of-view" class="md-nav__link">
+    <span class="md-ellipsis">
+      From the code author point of view
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="From the code author point of view">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#why-we-review-code" class="md-nav__link">
+    <span class="md-ellipsis">
+      Why we review code
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#pr-checklist" class="md-nav__link">
+    <span class="md-ellipsis">
+      PR checklist
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#the-golden-rule-of-code-review" class="md-nav__link">
+    <span class="md-ellipsis">
+      The golden rule of code review
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#be-clear-in-the-pr-request-about-what-you-want" class="md-nav__link">
+    <span class="md-ellipsis">
+      Be clear in the PR request about what you want
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#do-not-mix-changes-and-refactoring-shuffling-code" class="md-nav__link">
+    <span class="md-ellipsis">
+      Do not mix changes and refactoring / shuffling code
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#double-check-before-sending-a-pr" class="md-nav__link">
+    <span class="md-ellipsis">
+      Double check before sending a PR
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#reviewing-other-peoples-code-is-usually-not-fun" class="md-nav__link">
+    <span class="md-ellipsis">
+      Reviewing other people's code is usually not fun
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#the-first-reviews-are-painful" class="md-nav__link">
+    <span class="md-ellipsis">
+      The first reviews are painful
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#apply-review-comments-everywhere" class="md-nav__link">
+    <span class="md-ellipsis">
+      Apply review comments everywhere
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#look-at-the-code-top-to-bottom" class="md-nav__link">
+    <span class="md-ellipsis">
+      Look at the code top-to-bottom
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#answering-comments-after-a-review" class="md-nav__link">
+    <span class="md-ellipsis">
+      Answering comments after a review
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#apply-changes-to-a-review-quickly" class="md-nav__link">
+    <span class="md-ellipsis">
+      Apply changes to a review quickly
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#ask-for-another-review" class="md-nav__link">
+    <span class="md-ellipsis">
+      Ask for another review
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#workflow-of-a-review-in-terms-of-gh-labels" class="md-nav__link">
+    <span class="md-ellipsis">
+      Workflow of a review in terms of GH labels
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#link-pr-to-gh-issue" class="md-nav__link">
+    <span class="md-ellipsis">
+      Link PR to GH issue
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#fix-later" class="md-nav__link">
+    <span class="md-ellipsis">
+      Fix later
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#from-the-code-reviewer-point-of-view" class="md-nav__link">
+    <span class="md-ellipsis">
+      From the code reviewer point of view
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="From the code reviewer point of view">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#post-commit-review" class="md-nav__link">
+    <span class="md-ellipsis">
+      Post-commit review
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#code-walk-through" class="md-nav__link">
+    <span class="md-ellipsis">
+      Code walk-through
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#close-the-pr-and-delete-the-branch" class="md-nav__link">
+    <span class="md-ellipsis">
+      Close the PR and delete the branch
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#give-priority-to-code-review" class="md-nav__link">
+    <span class="md-ellipsis">
+      Give priority to code review
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#multiple-reviewers-problem" class="md-nav__link">
+    <span class="md-ellipsis">
+      Multiple reviewers problem
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#remember-small-steps-ahead" class="md-nav__link">
+    <span class="md-ellipsis">
+      Remember "small steps ahead"
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#nothing-is-too-small" class="md-nav__link">
+    <span class="md-ellipsis">
+      Nothing is too small
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#final-gh-comment" class="md-nav__link">
+    <span class="md-ellipsis">
+      Final GH comment
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+<h1 id="code-review">Code Review</h1>
+<h2 id="code-review_1">Code review</h2>
+<h2 id="general-rules-about-code-review">General rules about code review</h2>
+<h3 id="read-the-google-code-review-best-practices">Read the Google code review best practices</h3>
+<ul>
+<li>
+<p>From the
+  <a href="https://google.github.io/eng-practices/review/developer">developer\'s perspective</a></p>
+</li>
+<li>
+<p>From the
+  <a href="https://google.github.io/eng-practices/review/reviewer">reviewer\'s perspective</a></p>
+</li>
+<li>
+<p>Where the Google guide says "CL", think "PR"</p>
+</li>
+<li>
+<p>Read it (several times, if you need to)</p>
+</li>
+<li>
+<p>Think about it</p>
+</li>
+<li>
+<p>Understand the rationale</p>
+</li>
+</ul>
+<h2 id="code-review-workflows">Code review workflows</h2>
+<h3 id="pull-request">Pull request</h3>
+<ul>
+<li>Our usual review process is to work in a branch and create a pull request</li>
+<li>See the
+    <a href="https://docs.google.com/document/u/0/d/1zahC8uDnFGYRSgkBrQRgg3W3ZmDjZZJj6yln6YeuHq4/edit">Git</a>
+    notes for details</li>
+<li>The name of the pull request is generated with ghi_show.py and looks like
+    PTask2704 make exchange contracts get contracts applicable to series</li>
+</ul>
+<h2 id="from-the-code-author-point-of-view">From the code author point of view</h2>
+<h3 id="why-we-review-code">Why we review code</h3>
+<ul>
+<li>We spend time reviewing each other code so that we can:</li>
+<li>Build a better product, by letting other people look for bugs</li>
+<li>Propagate knowledge of the code base through the team</li>
+<li>Learn from each other</li>
+</ul>
+<h3 id="pr-checklist">PR checklist</h3>
+<ul>
+<li>
+<p>From
+  <a href="https://google.github.io/eng-practices/review/reviewer/looking-for.html">Google reviewer checklist</a>:</p>
+</li>
+<li>
+<p>In asking (and doing) a code review, you should make sure that:</p>
+</li>
+<li>The code is well-designed.</li>
+<li>The functionality is good for the users of the code.</li>
+<li>The code isn't more complex than it needs to be.</li>
+<li>The developer isn't implementing things they might need in the future but
+    don't know they need now.</li>
+<li>Code has appropriate unit tests.</li>
+<li>Tests are well-designed.</li>
+<li>The developer used clear names for everything.</li>
+<li>Comments are clear and useful, and mostly explain why instead of what.</li>
+<li>Code is appropriately documented.</li>
+<li>The code conforms to our style guides.</li>
+</ul>
+<h3 id="the-golden-rule-of-code-review">The golden rule of code review</h3>
+<ul>
+<li>Make life easy for the reviewers</li>
+<li>
+<p>Aka "Do not upset the reviewers, otherwise they won't let you merge your
+    code"</p>
+</li>
+<li>
+<p>Remember that reviewing other people's code is hard and unrewarding work</p>
+</li>
+<li>
+<p>Do your best for not frustrating the reviewers</p>
+</li>
+<li>
+<p>If you are in doubt "it's probably clear, although I am not 100% sure", err on
+  giving more information and answer potential questions</p>
+</li>
+</ul>
+<h3 id="be-clear-in-the-pr-request-about-what-you-want">Be clear in the PR request about what you want</h3>
+<ul>
+<li>Summarize what was done in the PR</li>
+<li>Refer to the GH task, but the task alone might not be sufficient</li>
+<li>
+<p>A PR can implement only part of a complex task</p>
+<ul>
+<li>Which part is it implementing?</li>
+<li>Why is it doing it in a certain way?</li>
+</ul>
+</li>
+<li>
+<p>If the code is not ready for merge, but you want a "pre-review" convert PR to
+  a draft</p>
+</li>
+<li>E.g., ask for an architectural review</li>
+<li>
+<p>Draft PRs can not be merged</p>
+</li>
+<li>
+<p>Is it blocking?</p>
+</li>
+<li>Do not abuse asking for a quick review</li>
+<li>All code is important and we do our best to review code quickly and
+    carefully</li>
+<li>If it\'s blocking a ping on IM is a good idea</li>
+</ul>
+<h3 id="do-not-mix-changes-and-refactoring-shuffling-code">Do not mix changes and refactoring / shuffling code</h3>
+<ul>
+<li>The job of the reviewers become frustrating when the author mixes:</li>
+<li>Refactoring / moving code; and</li>
+<li>
+<p>Changes</p>
+</li>
+<li>
+<p>It is time consuming or impossible for a reviewer to understand what happened:</p>
+</li>
+<li>What is exactly changed?</li>
+<li>
+<p>What was moved where?</p>
+</li>
+<li>
+<p>In those cases reviewers have the right to ask the PR to be broken in pieces</p>
+</li>
+<li>
+<p>One approach for the PR author is to:</p>
+</li>
+<li>Do a quick PR to move code around (e.g., refactoring) or purely cosmetic<ul>
+<li>You can ask the reviewer to take a quick look</li>
+</ul>
+</li>
+<li>
+<p>Do the next PRs with the actual changes</p>
+</li>
+<li>
+<p>Another approach is to develop in a branch and break the code into PRs as the
+  code firms up</p>
+</li>
+<li>In this case you need to be very organized and be fluent in using Git: both
+    qualities are expected of you</li>
+<li>E.g., develop in a branch (e.g., <code>gp_scratch</code>)</li>
+<li>Create a branch from it (e.g., <code>TaskXYZ_do_this_and_that</code>) or copy the files
+    from <code>gp_scratch</code> to <code>TaskXYZ_do_this_and_that</code></li>
+<li>Edit the files to make the PR self-consistent</li>
+<li>Do a PR for <code>TaskXYZ_do_this_and_that</code></li>
+<li>Keep working in gp_scratch while the review is moving forward</li>
+<li>Make changes to the <code>TaskXYZ_do_this_and_that</code> as requested</li>
+<li>Merge <code>TaskXYZ_do_this_and_that</code> to master</li>
+<li>Merge <code>master</code> back into <code>gp_scratch</code> and keep moving</li>
+</ul>
+<h3 id="double-check-before-sending-a-pr">Double check before sending a PR</h3>
+<ul>
+<li>After creating a PR take a look at it to make sure things look good, e.g.,</li>
+<li>Are there merge problems?</li>
+<li>Did you forget some file?</li>
+<li>Skim through the PR to make sure that people can understand what you changed</li>
+</ul>
+<h3 id="reviewing-other-peoples-code-is-usually-not-fun">Reviewing other people's code is usually not fun</h3>
+<ul>
+<li>Reviewing code is time-consuming and tedious</li>
+<li>So do everything you can to make the reviewer's job easier</li>
+<li>
+<p>Don't cut corners</p>
+</li>
+<li>
+<p>If a reviewer is confused about something, other readers (including you in 1
+  year) likely would be too</p>
+</li>
+<li>What is obvious to you as the author is often not obvious to readers</li>
+<li>Readability is paramount</li>
+<li>You should abhor write-only code</li>
+</ul>
+<h3 id="the-first-reviews-are-painful">The first reviews are painful</h3>
+<ul>
+<li>One needs to work on the same code over and over</li>
+<li>
+<p>Just think about the fact that the reviewer is also reading (still crappy)
+    code over and over</p>
+</li>
+<li>
+<p>Unfortunately it is needed pain to get to the quality of code we need to make
+  progress as a team</p>
+</li>
+</ul>
+<h3 id="apply-review-comments-everywhere">Apply review comments everywhere</h3>
+<ul>
+<li>
+<p>Apply a review comment everywhere, not just where the reviewer pointed out the
+  issue</p>
+</li>
+<li>
+<p>E.g., reviewer says:</p>
+</li>
+<li>"Please replace <code>_LOG.warning("Hello %s".format(name))</code> with
+    <code>_LOG.warning("Hello %s", name)</code>"</li>
+<li>You are expected to do this replacement:</li>
+<li>In the current review</li>
+<li>In all future code you write</li>
+<li>In old code, as you come across it in the course of your work<ul>
+<li>Of course don't start modifying the old code in this review, but open a
+  clean-up bug, if you need a reminder</li>
+</ul>
+</li>
+</ul>
+<h3 id="look-at-the-code-top-to-bottom">Look at the code top-to-bottom</h3>
+<ul>
+<li>E.g., if you do a search &amp; replace, make sure everything is fine</li>
+</ul>
+<h3 id="answering-comments-after-a-review">Answering comments after a review</h3>
+<ul>
+<li>It's better to answer comments in chunks so we don't get an email per comment</li>
+<li>Use "start a review" (not in conversation)</li>
+<li>If one of the comment is urgent (e.g., other comments depend on this) you can
+  send it as single comment</li>
+<li>When you answer a comment, mark it as resolved</li>
+</ul>
+<h3 id="apply-changes-to-a-review-quickly">Apply changes to a review quickly</h3>
+<ul>
+<li>In the same way the reviewers are expected to review PRs within 24 hours, the
+  author of a PR is expected to apply the requested changes quickly, ideally in
+  few hours</li>
+<li>
+<p>If it takes longer, then either the PR was too big or the quality of the PR
+    was too low</p>
+</li>
+<li>
+<p>If it takes too long to apply the changes:</p>
+</li>
+<li>The reviewers (and the authors) might forget what is the context of the
+    requested changes</li>
+<li>It becomes more difficult (or even impossible) to merge, since the code base
+    is continuously changing</li>
+<li>It creates dependencies among your PRs</li>
+<li>Remember that you should not be adding more code to the same PR, but only
+    fix the problems and then open a PR with new code</li>
+<li>Other people that rely on your code are blocked</li>
+</ul>
+<h3 id="ask-for-another-review">Ask for another review</h3>
+<ul>
+<li>Once you are done with resolving all the comments ask for another review</li>
+</ul>
+<h3 id="workflow-of-a-review-in-terms-of-gh-labels">Workflow of a review in terms of GH labels</h3>
+<ul>
+<li>The current meaning of the labels are:</li>
+<li>See GitHub ZenHub workflows
+    <a href="https://github.com/cryptokaizen/cmamp/blob/master/docs/work_organization/all.use_github_and_zenhub.how_to_guide.md#pr-labels">doc</a></li>
+</ul>
+<h3 id="link-pr-to-gh-issue">Link PR to GH issue</h3>
+<ul>
+<li>Mention the corresponding issue in the PR description to ease the navigation
+  E.g., see an
+  <a href="https://github.com/kaizen-ai/kaizenflow/pull/288#issue-1729654983">example</a></li>
+</ul>
+<h3 id="fix-later">Fix later</h3>
+<ul>
+<li>
+<p>It's ok for an author to file a follow up Issue (e.g., with a clean up), by
+  pointing the new Issue to the comments to address, and move on with merge</p>
+</li>
+<li>
+<p>The Issue needs to be addressed immediately after</p>
+</li>
+</ul>
+<h2 id="from-the-code-reviewer-point-of-view">From the code reviewer point of view</h2>
+<h3 id="post-commit-review">Post-commit review</h3>
+<ul>
+<li>
+<p>You can comment on a PR already merged</p>
+</li>
+<li>
+<p>You can comment on the relevant lines in a commit straight to <code>master</code> (this
+  is the exception)</p>
+</li>
+</ul>
+<h3 id="code-walk-through">Code walk-through</h3>
+<ul>
+<li>It is best to create a branch with the files you want to review</li>
+<li>Add TODOs in the code (so that the PR will pick up those sections)</li>
+<li>
+<p>File bugs for the more involved changes</p>
+</li>
+<li>
+<p>Try to get a top to bottom review of a component once every N weeks (N = 2, 3)</p>
+</li>
+<li>Sometimes the structure of the</li>
+</ul>
+<h3 id="close-the-pr-and-delete-the-branch">Close the PR and delete the branch</h3>
+<ul>
+<li>
+<p>When code is merged into master by one of the reviewers through the UI one can
+  select the delete branch option</p>
+</li>
+<li>
+<p>Otherwise you can delete the branch using the procedure in
+  <a href="https://docs.google.com/document/u/0/d/1zahC8uDnFGYRSgkBrQRgg3W3ZmDjZZJj6yln6YeuHq4/edit">Git</a></p>
+</li>
+</ul>
+<h3 id="give-priority-to-code-review">Give priority to code review</h3>
+<ul>
+<li>We target to give feedback on a PR within 24hr so that the author is not
+  blocked for too long</li>
+<li>Usually we respond in few hours</li>
+</ul>
+<h3 id="multiple-reviewers-problem">Multiple reviewers problem</h3>
+<ul>
+<li>
+<p>When there are multiple reviewers for the same PR there can be some problem</p>
+</li>
+<li>
+<p>Ok to keep moving fast and avoid blocking</p>
+</li>
+<li>
+<p>Block only if it is controversial</p>
+</li>
+<li>
+<p>Merge when we are confident that the other is ok</p>
+</li>
+<li>The other can catch up with post-commit review</li>
+<li>A good approach is to monitor recently merged PRs in GH to catch up</li>
+</ul>
+<h3 id="remember-small-steps-ahead">Remember "small steps ahead"</h3>
+<ul>
+<li>Follow the Google approach of merging a PR that is a strict improvement.</li>
+</ul>
+<h3 id="nothing-is-too-small">Nothing is too small</h3>
+<ul>
+<li>
+<p>Each reviewer reviews the code pointing out everything that can be a problem</p>
+</li>
+<li>
+<p>Problems are highlighted even if small or controversial</p>
+</li>
+<li>
+<p>Not all of those comments might not be implemented by the author</p>
+</li>
+<li>
+<p>Of course if different approaches are really equivalent but reviewers have
+  their own stylistic preference, this should not be pointed, unless it's a
+  matter of consistency or leave the choice to the author</p>
+</li>
+</ul>
+<h3 id="final-gh-comment">Final GH comment</h3>
+<ul>
+<li>Once you are done with the detailed review of the code, you need to</li>
+<li>Write a short comment</li>
+<li>
+<p>Decide what is the next step for the PR, e.g.,</p>
+<ul>
+<li>Comment</li>
+<li>Submit general feedback without explicit approval</li>
+<li>Approve</li>
+<li>Submit feedback and approve merging these changes</li>
+<li>Request changes</li>
+<li>Submit feedback that must be addressed before merging</li>
+</ul>
+</li>
+<li>
+<p>We use an integrator / developer manager workflow, initially with Paul and GP
+  testing and merging most of the PRs</p>
+</li>
+<li>
+<p>We use the 3 possible options in the following way:</p>
+</li>
+<li>Comment<ul>
+<li>When reviewers want the changes to be applies and then look at the
+  resulting changes to decide the next steps</li>
+<li>In practice this means "make the changes and then we'll discuss more"</li>
+<li>E.g., this is of course the right choice for a pre-PR</li>
+</ul>
+</li>
+<li>Approve<ul>
+<li>No more changes: time to merge!</li>
+<li>Often it is accompanied with the comment "LGMT" (Looks Good To Me)</li>
+</ul>
+</li>
+<li>Request changes<ul>
+<li>This typically means "if you address the comments we can merge"</li>
+<li>In practice this is more or less equivalent to "Comment"</li>
+</ul>
+</li>
+</ul>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    <script id="__config" type="application/json">{"base": "..", "features": [], "search": "../assets/javascripts/workers/search.07f07601.min.js", "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}}</script>
+    
+    
+      <script src="../assets/javascripts/bundle.56dfad97.min.js"></script>
+      
+    
+  </body>
+</html>

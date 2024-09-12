@@ -1,0 +1,4164 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+      
+      
+      
+        <link rel="prev" href="all.batch_and_streaming_mode_using_tiling.explanation.html">
+      
+      
+        <link rel="next" href="all.computation_as_graphs.explanation.html">
+      
+      
+      <link rel="icon" href="../mkdocs/assets/favicon.ico">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.5.34">
+    
+    
+      
+        <title>Best Practice For Building Dags - KaizenAI Documentation</title>
+      
+    
+    
+      <link rel="stylesheet" href="../assets/stylesheets/main.35f28582.min.css">
+      
+        
+        <link rel="stylesheet" href="../assets/stylesheets/palette.06af60db.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+      <link rel="stylesheet" href="../mkdocs/styles/styles.css">
+    
+    <script>__md_scope=new URL("..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+    
+  </head>
+  
+  
+    
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="black" data-md-color-accent="cyan">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#best-practice-for-building-dags" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+  
+
+<header class="md-header md-header--shadow" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href="../index.html" title="KaizenAI Documentation" class="md-header__button md-logo" aria-label="KaizenAI Documentation" data-md-component="logo">
+      
+  <img src="../mkdocs/assets/logo.png" alt="logo">
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            KaizenAI Documentation
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Best Practice For Building Dags
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+    
+    
+    
+    
+      <label class="md-header__button md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+      </label>
+      <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+    
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+
+<nav class="md-nav md-nav--primary" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="../index.html" title="KaizenAI Documentation" class="md-nav__button md-logo" aria-label="KaizenAI Documentation" data-md-component="logo">
+      
+  <img src="../mkdocs/assets/logo.png" alt="logo">
+
+    </a>
+    KaizenAI Documentation
+  </label>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../index.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Kaizen Technologies internal documentation
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../all.code_organization.reference.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Code Organization
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../all.documentation_meta.reference.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Documentation Meta
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../all.software_components.reference.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Software Components
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../all.workflow.explanation.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Workflow
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../meta.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Files
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_7" >
+        
+          
+          <label class="md-nav__link" for="__nav_7" id="__nav_7_label" tabindex="0">
+            
+  
+  <span class="md-ellipsis">
+    Build
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_7_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_7">
+            <span class="md-nav__icon md-icon"></span>
+            Build
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../build/all.linter_gh_workflow.explanation.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Linter Gh Workflow
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../build/all.pytest_allure.explanation.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Pytest Allure
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../build/all.pytest_allure.how_to_guide.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Pytest Allure
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../build/all.semgrep_workflow.explanation.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Semgrep Integration in GitHub Actions
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_8" >
+        
+          
+          <label class="md-nav__link" for="__nav_8" id="__nav_8_label" tabindex="0">
+            
+  
+  <span class="md-ellipsis">
+    Coding
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_8_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_8">
+            <span class="md-nav__icon md-icon"></span>
+            Coding
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../coding/all.asyncio.explanation.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Asyncio Best Practices
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../coding/all.code_design.how_to_guide.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Code Design
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../coding/all.code_like_pragmatic_programmer.how_to_guide.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Code Like Pragmatic Programmer
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../coding/all.code_review.how_to_guide.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Code Review
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../coding/all.coding_style.how_to_guide.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Coding Style
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../coding/all.gsheet_into_pandas.how_to_guide.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Gsheet Into Pandas
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../coding/all.hcache.explanation.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Cache
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../coding/all.hplayback.how_to_guide.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Playback
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../coding/all.imports_and_packages.how_to_guide.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Imports And Packages
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../coding/all.integrate_repos.how_to_guide.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Integrate Repos
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../coding/all.jupyter_notebook.how_to_guide.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Jupyter Notebook
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../coding/all.plotting.how_to_guide.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Best practices for writing plotting functions
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../coding/all.profiling.how_to_guide.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Profiling
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../coding/all.publish_notebook.how_to_guide.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Publishing a notebook
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../coding/all.qgrid.how_to_guide.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Qgrid
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../coding/all.reading_other_people_code.how_to_guide.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Reading Other People Code
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../coding/all.run_jupyter_notebook.how_to_guide.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Run Jupyter notebook
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../coding/all.run_unit_tests.how_to_guide.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Run Unit Tests
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../coding/all.str_to_df.how_to_guide.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Converting a string into a Pandas df
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../coding/all.submit_code_for_review.how_to_guide.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    First Review Process
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../coding/all.type_hints.how_to_guide.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Type Hints
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../coding/all.write_unit_tests.how_to_guide.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Write Unit Tests
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_9" checked>
+        
+          
+          <label class="md-nav__link" for="__nav_9" id="__nav_9_label" tabindex="0">
+            
+  
+  <span class="md-ellipsis">
+    Dataflow
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_9_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_9">
+            <span class="md-nav__icon md-icon"></span>
+            Dataflow
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="all.batch_and_streaming_mode_using_tiling.explanation.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Batch And Streaming Mode Using Tiling
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  <span class="md-ellipsis">
+    Best Practice For Building Dags
+  </span>
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="all.best_practice_for_building_dags.explanation.html" class="md-nav__link md-nav__link--active">
+        
+  
+  <span class="md-ellipsis">
+    Best Practice For Building Dags
+  </span>
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#config" class="md-nav__link">
+    <span class="md-ellipsis">
+      Config
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Config">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#config-builders" class="md-nav__link">
+    <span class="md-ellipsis">
+      Config builders
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#dag-builders" class="md-nav__link">
+    <span class="md-ellipsis">
+      DAG builders
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="DAG builders">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#dag-builder-methods" class="md-nav__link">
+    <span class="md-ellipsis">
+      DAG builder methods
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#dag-and-nodes" class="md-nav__link">
+    <span class="md-ellipsis">
+      DAG and Nodes
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#keeping-config-and-dagbuilder-in-sync" class="md-nav__link">
+    <span class="md-ellipsis">
+      Keeping config and DagBuilder in sync
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#dagbuilder-idiom" class="md-nav__link">
+    <span class="md-ellipsis">
+      DagBuilder idiom
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#invariants" class="md-nav__link">
+    <span class="md-ellipsis">
+      Invariants
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#make-code-easy-to-wrap-code-into-nodes" class="md-nav__link">
+    <span class="md-ellipsis">
+      Make code easy to wrap code into Nodes
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#columntransformer" class="md-nav__link">
+    <span class="md-ellipsis">
+      ColumnTransformer
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#one-vs-multiple-graphs" class="md-nav__link">
+    <span class="md-ellipsis">
+      One vs multiple graphs
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#how-to-handle-multiple-features-for-a-single-instrument" class="md-nav__link">
+    <span class="md-ellipsis">
+      How to handle multiple features for a single instrument
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#how-to-handle-multiple-instruments" class="md-nav__link">
+    <span class="md-ellipsis">
+      How to handle multiple instruments?
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#how-to-handle-multiple-features-with-multiple-instruments" class="md-nav__link">
+    <span class="md-ellipsis">
+      How to handle multiple features with multiple instruments
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#irregular-dags" class="md-nav__link">
+    <span class="md-ellipsis">
+      Irregular DAGs
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#namespace-vs-hierarchical-config" class="md-nav__link">
+    <span class="md-ellipsis">
+      Namespace vs hierarchical config
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#how-to-know-what-is-configurable" class="md-nav__link">
+    <span class="md-ellipsis">
+      How to know what is configurable
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#dag-extension-vs-copying" class="md-nav__link">
+    <span class="md-ellipsis">
+      DAG extension vs copying
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#reusing-parameters-across-nodes-configs" class="md-nav__link">
+    <span class="md-ellipsis">
+      Reusing parameters across nodes' configs
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#composing-vs-deriving-objects" class="md-nav__link">
+    <span class="md-ellipsis">
+      Composing vs deriving objects
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="all.computation_as_graphs.explanation.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Computation As Graphs
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="all.dag.explanation.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Debug information
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="all.dataflow.explanation.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    DataFlow
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="all.dataflow_data_format.explanation.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    DataFlow Data Format
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="all.simulation_output.reference.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    All.simulation output.reference
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="all.time_series.explanation.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Time series
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="all.timing_semantic_and_clocks.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Timing Semantic And Clocks
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="all.train_and_predict_phases.explanation.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Phases of evaluation of Dag
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_10" >
+        
+          
+          <label class="md-nav__link" for="__nav_10" id="__nav_10_label" tabindex="0">
+            
+  
+  <span class="md-ellipsis">
+    Datapull
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_10_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_10">
+            <span class="md-nav__icon md-icon"></span>
+            Datapull
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../datapull/all.data_schema.explanation.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Data Schema
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../datapull/all.datapull_client_stack.explanation.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Data client stack
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../datapull/all.datapull_derived_data.explanation.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Derived data workflows
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../datapull/all.datapull_qa_flow.explanation.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Data QA workflows
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../datapull/all.datapull_sandbox.explanation.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    DataPull sandbox
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../datapull/all.dataset_onboarding_checklist.reference.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Dataset onboarding checklist
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../datapull/all.update_CCXT_version.how_to_guide.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Update Ccxt Version
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_11" >
+        
+          
+          <label class="md-nav__link" for="__nav_11" id="__nav_11_label" tabindex="0">
+            
+  
+  <span class="md-ellipsis">
+    Dev tools
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_11_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_11">
+            <span class="md-nav__icon md-icon"></span>
+            Dev tools
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_11_1" >
+        
+          
+          <label class="md-nav__link" for="__nav_11_1" id="__nav_11_1_label" tabindex="0">
+            
+  
+  <span class="md-ellipsis">
+    Thin env
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_11_1_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_11_1">
+            <span class="md-nav__icon md-icon"></span>
+            Thin env
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../dev_tools/thin_env/all.gh_and_thin_env_requirements.reference.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Required Packages for the thin environment and GH Actions
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../dev_tools/thin_env/all.gh_thin_env_dependencies.how_to_guide.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    All.gh thin env dependencies.how to guide
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_12" >
+        
+          
+          <label class="md-nav__link" for="__nav_12" id="__nav_12_label" tabindex="0">
+            
+  
+  <span class="md-ellipsis">
+    Documentation meta
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_12_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_12">
+            <span class="md-nav__icon md-icon"></span>
+            Documentation meta
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../documentation_meta/all.architecture_diagrams.explanation.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Architecture Diagrams
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../documentation_meta/all.diataxis.explanation.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Diataxis
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../documentation_meta/all.gdocs.how_to_guide.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    All.gdocs.how to guide
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../documentation_meta/all.google_technical_writing.how_to_guide.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Google Technical Writing
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../documentation_meta/all.writing_docs.how_to_guide.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Writing Docs
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../documentation_meta/plotting_in_latex.how_to_guide.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Plotting in latex.how to guide
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_13" >
+        
+          
+          <label class="md-nav__link" for="__nav_13" id="__nav_13_label" tabindex="0">
+            
+  
+  <span class="md-ellipsis">
+    General background
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_13_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_13">
+            <span class="md-nav__icon md-icon"></span>
+            General background
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../general_background/all.common_abbreviations.reference.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Common abbreviations
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../general_background/all.glossary.reference.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Glossary
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../general_background/all.literature_review.reference.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Literature Review
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../general_background/all.reading_list.reference.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Reading List
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_14" >
+        
+          
+          <label class="md-nav__link" for="__nav_14" id="__nav_14_label" tabindex="0">
+            
+  
+  <span class="md-ellipsis">
+    Infra
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_14_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_14">
+            <span class="md-nav__icon md-icon"></span>
+            Infra
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../infra/all.auto_scaling.explanation.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Auto Scaling Explanation
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../infra/all.aws_iam_configuration.explanation.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    AWS IAM Configuration Best Practices Guide
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../infra/all.aws_scripts.reference.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Python Scripts Guide
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../infra/all.infrastructure_glossary.explanation.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Infrastructure Glossary
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../infra/all.infrastructure_update_rollout.how_to_guide.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Standardized Update Rollout Checklist
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../infra/all.rds.comparison.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Comparison of AWS RDS Instance Types and Storage Performance
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_15" >
+        
+          
+          <label class="md-nav__link" for="__nav_15" id="__nav_15_label" tabindex="0">
+            
+  
+  <span class="md-ellipsis">
+    Kaizenflow
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_15_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_15">
+            <span class="md-nav__icon md-icon"></span>
+            Kaizenflow
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../kaizenflow/all.dev_scripts_catalogue.reference.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Dev Scripts Catalogue
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../kaizenflow/all.devops_code_organization.reference.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    All.devops code organization.reference
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../kaizenflow/all.install_helpers.how_to_guide.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Install Helpers
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../kaizenflow/all.run_Mock2_in_batch_mode.how_to_guide.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Run Mock2 In Batch Mode
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../kaizenflow/all.run_end_to_end_Mock2_system.tutorial.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Run End To End Mock2 System
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_16" >
+        
+          
+          <label class="md-nav__link" for="__nav_16" id="__nav_16_label" tabindex="0">
+            
+  
+  <span class="md-ellipsis">
+    Onboarding
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_16_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_16">
+            <span class="md-nav__icon md-icon"></span>
+            Onboarding
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../onboarding/admin.onboarding_process.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    On-boarding Process
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../onboarding/all.communicate_in_telegram.how_to_guide.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Communicate In Telegram
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../onboarding/all.development_documents.reference.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Development Documents
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../onboarding/all.onboarding_checklist.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Onboarding Checklist
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../onboarding/all.organize_email.how_to_guide.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Organize Email
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../onboarding/all.receive_crypto_payment.how_to_guide.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Receive Crypto Payment
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../onboarding/all.track_time_with_hubstaff.how_to_guide.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Track Time With Hubstaff
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../onboarding/kaizenflow.hiring_meister.how_to_guide.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    General
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../onboarding/kaizenflow.set_up_development_environment.how_to_guide.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Set up KaizenFlow development environment
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../onboarding/kaizenflow.signing_up.how_to_guide.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Signing up to the project
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_17" >
+        
+          
+          <label class="md-nav__link" for="__nav_17" id="__nav_17_label" tabindex="0">
+            
+  
+  <span class="md-ellipsis">
+    Trading ops
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_17_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_17">
+            <span class="md-nav__icon md-icon"></span>
+            Trading ops
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../trading_ops/all.how_to_name_objects.explanation.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    How to name objects
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../trading_ops/all.scheduled_monitoring.explanation.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Scheduled trading monitoring
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../trading_ops/all.scheduled_trading.explanation.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Publishing Experiment Reports
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../trading_ops/all.shadow_monitoring.explanation.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Shadow trading monitoring
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../trading_ops/all.trading_run_summary_sheet.explanation.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Trading Run Summary Sheet
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_18" >
+        
+          
+          <label class="md-nav__link" for="__nav_18" id="__nav_18_label" tabindex="0">
+            
+  
+  <span class="md-ellipsis">
+    Work organization
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_18_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_18">
+            <span class="md-nav__icon md-icon"></span>
+            Work organization
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../work_organization/Hiring_process.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    HiringMeister
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../work_organization/all.buildmeister.how_to_guide.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Buildmeister
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../work_organization/all.contributor_scoring.how_to_guide.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Contributor Scoring
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../work_organization/all.datapull_DAGmeister.how_to_guide.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Datapull Dagmeister
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../work_organization/all.epicmeister.how_to_guide.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Epicmeister
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../work_organization/all.rollout.how_to_guide.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Rollout
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../work_organization/all.scrum.explanation.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Scrum
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../work_organization/all.team_collaboration.how_to_guide.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Team Collaboration
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../work_organization/all.use_github_and_zenhub.how_to_guide.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Use Github And Zenhub
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../work_organization/kaizenflow.organize_your_work.how_to_guide.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Golden rules
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_19" >
+        
+          
+          <label class="md-nav__link" for="__nav_19" id="__nav_19_label" tabindex="0">
+            
+  
+  <span class="md-ellipsis">
+    Work tools
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_19_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_19">
+            <span class="md-nav__icon md-icon"></span>
+            Work tools
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../work_tools/all.add_toc_to_notebook.how_to_guide.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Adding a table of contents to a notebook
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../work_tools/all.bfg_repo_cleaner.how_to_guide.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    BFG Repo-Cleaner
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../work_tools/all.chatgpt_api.how_to_guide.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Chatgpt Api
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../work_tools/all.codebase_clean_up.how_to_guide.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Codebase Clean Up
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../work_tools/all.conda_environment_obsolete.how_to_guide.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Conda Environment Obsolete
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../work_tools/all.development.how_to_guide.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Development
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../work_tools/all.dind_and_sibling_containers.how_to_guide.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Docker-in-docker (dind)
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../work_tools/all.docker.how_to_guide.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Docker
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../work_tools/all.docker.tutorial.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Docker
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../work_tools/all.docker_dev_tools_container.how_to_guide.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Dev tools container
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../work_tools/all.docker_optimizer_container.how_to_guide.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Optimizer container
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../work_tools/all.dockerhub.how_to_guide.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Dockerhub
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../work_tools/all.gh_and_thin_env_requirements.reference.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Required Packages for the thin environment and GH Actions
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../work_tools/all.gh_thin_env_dependencies.how_to_guide.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Thin environment dependencies
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../work_tools/all.git.how_to_guide.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Git
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../work_tools/all.invoke_workflows.how_to_guide.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Invoke Workflows
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../work_tools/all.jupytext.how_to_guide.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Jupytext
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../work_tools/all.latex_toolchain.how_to_guide.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Latex Toolchain
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../work_tools/all.parquet.explanation.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Pyarrow Parquet management
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../work_tools/all.pycharm.how_to_guide.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Pycharm
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../work_tools/all.python_package_upgrade_and_troubleshooting.how_to_guide.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Python package upgrade &amp; troubleshooting
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../work_tools/all.ssh.how_to_guide.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Ssh
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../work_tools/all.telegram_notify_bot.how_to_guide.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    telegram-notify
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../work_tools/all.visual_studio_code.how_to_guide.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Visual Studio Code
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#config" class="md-nav__link">
+    <span class="md-ellipsis">
+      Config
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Config">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#config-builders" class="md-nav__link">
+    <span class="md-ellipsis">
+      Config builders
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#dag-builders" class="md-nav__link">
+    <span class="md-ellipsis">
+      DAG builders
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="DAG builders">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#dag-builder-methods" class="md-nav__link">
+    <span class="md-ellipsis">
+      DAG builder methods
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#dag-and-nodes" class="md-nav__link">
+    <span class="md-ellipsis">
+      DAG and Nodes
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#keeping-config-and-dagbuilder-in-sync" class="md-nav__link">
+    <span class="md-ellipsis">
+      Keeping config and DagBuilder in sync
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#dagbuilder-idiom" class="md-nav__link">
+    <span class="md-ellipsis">
+      DagBuilder idiom
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#invariants" class="md-nav__link">
+    <span class="md-ellipsis">
+      Invariants
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#make-code-easy-to-wrap-code-into-nodes" class="md-nav__link">
+    <span class="md-ellipsis">
+      Make code easy to wrap code into Nodes
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#columntransformer" class="md-nav__link">
+    <span class="md-ellipsis">
+      ColumnTransformer
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#one-vs-multiple-graphs" class="md-nav__link">
+    <span class="md-ellipsis">
+      One vs multiple graphs
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#how-to-handle-multiple-features-for-a-single-instrument" class="md-nav__link">
+    <span class="md-ellipsis">
+      How to handle multiple features for a single instrument
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#how-to-handle-multiple-instruments" class="md-nav__link">
+    <span class="md-ellipsis">
+      How to handle multiple instruments?
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#how-to-handle-multiple-features-with-multiple-instruments" class="md-nav__link">
+    <span class="md-ellipsis">
+      How to handle multiple features with multiple instruments
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#irregular-dags" class="md-nav__link">
+    <span class="md-ellipsis">
+      Irregular DAGs
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#namespace-vs-hierarchical-config" class="md-nav__link">
+    <span class="md-ellipsis">
+      Namespace vs hierarchical config
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#how-to-know-what-is-configurable" class="md-nav__link">
+    <span class="md-ellipsis">
+      How to know what is configurable
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#dag-extension-vs-copying" class="md-nav__link">
+    <span class="md-ellipsis">
+      DAG extension vs copying
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#reusing-parameters-across-nodes-configs" class="md-nav__link">
+    <span class="md-ellipsis">
+      Reusing parameters across nodes' configs
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#composing-vs-deriving-objects" class="md-nav__link">
+    <span class="md-ellipsis">
+      Composing vs deriving objects
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+<h1 id="best-practice-for-building-dags">Best Practice For Building Dags</h1>
+<h2 id="config">Config</h2>
+<h3 id="config-builders">Config builders</h3>
+<p><code>Config</code>s can be built through functions that can complete a "template" config
+with some parameters passed from the user</p>
+<p>E.g.,</p>
+<pre><code class="language-python">def get_kibot_returns_config(symbol: str) -&gt; cfg.Config:
+    &quot;&quot;&quot;
+    A template configuration for `get_kibot_returns_dag()`.
+    &quot;&quot;&quot;
+    ...
+</code></pre>
+<p>Config builders can be nested.</p>
+<p>You can use put <code>nid_prefix</code> in the <code>DagBuilder</code> constructor, since <code>nid_prefix</code>
+acts as a namespace to avoid <code>nid</code> collisions</p>
+<h2 id="dag-builders">DAG builders</h2>
+<h3 id="dag-builder-methods">DAG builder methods</h3>
+<ul>
+<li>DAG builders accept a Config and return a DAG</li>
+<li>E.g.,</li>
+</ul>
+<pre><code class="language-python">def get_kibot_returns_dag(config: cfg.Config, dag: dtf.DAG) -&gt; dtf.DAG:
+&quot;&quot;&quot;
+
+Build a DAG (which in this case is a linear pipeline) for loading Kibot
+data and generating processed returns.
+
+The stages are:
+- read Kibot price data
+- compute returns
+- resample returns (optional)
+- zscore returns (optional)
+- filter returns by ATH (optional)
+- `config` must reference required stages and conform to specific node
+  interfaces
+&quot;&quot;&quot;
+</code></pre>
+<p>Some DAG builders can also add nodes to user-specified or inferred nodes (e.g.,
+a unique sink node) of an existing DAG. Thus builders allow one to build a
+complex DAG by adding in multiple steps subgraphs of nodes.</p>
+<p>DAG builders give meaningful <code>nid</code> names to their nodes. Collisions in graphs
+built from multiple builders are avoided by the user through the judicious use
+of namespace-like nid prefixes.</p>
+<h3 id="dag-and-nodes">DAG and Nodes</h3>
+<p>The DAG structure does not know about what data is exchanged between nodes.</p>
+<ul>
+<li>Structural assumptions, e.g., column names, can and should be expressed
+  through the config</li>
+<li><code>dataflow/core.py</code> does not impose any constraints on the type of data that
+  can be exchanged</li>
+<li>In practice (e.g., all concrete classes for nodes), we assume that
+  <code>pd.DataFrame</code>s are propagated</li>
+</ul>
+<p>The DAG <code>node</code>s are wrappers around Pandas dataframes</p>
+<ul>
+<li>E.g., if a node receives a column multi-index dataframe (e.g., with multiple
+  instruments and multiple features per instruments), the node should, assuming
+  a well-defined DAG and config, know how to melt and pivot columns</li>
+</ul>
+<h3 id="keeping-config-and-dagbuilder-in-sync">Keeping <code>config</code> and <code>DagBuilder</code> in sync</h3>
+<ul>
+<li><code>Config</code> asserts if a <code>DagBuilder</code> tries to access a hierarchical parameter
+  that doesn't exist and reports a meaningful error of what the problem is</li>
+<li><code>Config</code> tracks what parameters are accessed by <code>DagBuilder</code> function</li>
+<li>A method <code>sanity_check</code> is called after the DAG is completely built and
+    reports a warning for all the parameters that were not used</li>
+<li>This is mostly for a sanity check and debugging, so we don't assert</li>
+</ul>
+<h3 id="dagbuilder-idiom"><code>DagBuilder</code> idiom</h3>
+<p>When we build DAGs we use <code>DagBuilder</code> that call a constructor from <code>get_dag()</code>
+with params from the <code>get_config()</code></p>
+<pre><code>dag_builder = DagBuilder()
+template_config = dag_builder.get_template_config()
+## Complete the config.
+config = template_config[...]
+dag = dag_builder.get_dag(config)
+</code></pre>
+<h3 id="invariants">Invariants</h3>
+<p>Nodes of the DAG propagate dataframes</p>
+<p>Dataframes can be column multi-index to represent higher dimensionality datasets
+(e.g., multiple instruments, multiple features for each instrument)</p>
+<p>The index of each dataframe is always composed of <code>datatime.datetime</code></p>
+<ul>
+<li>For performance reasons, we prefer to use a single time zone (e.g., ET) in the
+  name of the columns rather than using <code>datetimes</code> with <code>tzinfo</code></li>
+</ul>
+<p>We assume that dataframes are aligned in terms of timescale</p>
+<ul>
+<li>I.e., the DAG has nodes that explicitly merge / align dataframes</li>
+<li>When data sources have different time resolutions, typically we perform outer
+  merges either leaving nans or filling with forward fills</li>
+</ul>
+<h3 id="make-code-easy-to-wrap-code-into-nodes">Make code easy to wrap code into <code>Nodes</code></h3>
+<p>We strive to write functions (e.g., from <code>signal_processing.py</code>) that:</p>
+<ul>
+<li>
+<p>Can be wrapped in <code>Node</code>s</p>
+</li>
+<li>
+<p>Operate on <code>pd.Series</code> and can be easily applied to <code>pd.DataFrame</code> columns
+  when needed using <code>apply_to_df</code> decorator, or operate on <code>pd.DataFrame</code>
+  directly</p>
+</li>
+<li>
+<p>Return information about the performed operation, so that we can store this
+  information in the <code>Node</code> info</p>
+</li>
+<li>
+<p>E.g., refer to <code>process_outliers()</code> as an example</p>
+</li>
+</ul>
+<h3 id="columntransformer"><code>ColumnTransformer</code></h3>
+<p><code>ColumnTransformer</code> is a very flexible <code>Node</code> class that can wrap a wide variety
+of functions</p>
+<ul>
+<li>
+<p>The function to use is passed to the <code>ColumnTransformer</code> constructor in the
+  DAG builder</p>
+</li>
+<li>
+<p>Arguments to forward to the function are passed through <code>transformer_kwargs</code></p>
+</li>
+<li>
+<p>Currently <code>ColumnTransformer</code> does not allow index-modifying changes (we may
+  relax this constraint but continue to enforce it by default)</p>
+</li>
+<li>
+<p><code>DataframeMethodRunner</code> can run any <code>pd.DataFrame</code> method supported and
+  forwards kwargs</p>
+</li>
+</ul>
+<h3 id="one-vs-multiple-graphs">One vs multiple graphs</h3>
+<ul>
+<li>We still don't have a final answer about this design issue</li>
+<li>Pros of one graph:</li>
+<li>Everything is in one place</li>
+<li>One config for the whole graph</li>
+<li>Pros of multiple graphs:</li>
+<li>Easier to parallelize</li>
+<li>Easier to manage memory</li>
+<li>Simpler to configure (maybe), e.g., templatize config</li>
+<li>One connected component (instead of a number depending upon the number of
+    tickers)</li>
+</ul>
+<h3 id="how-to-handle-multiple-features-for-a-single-instrument">How to handle multiple features for a single instrument</h3>
+<ul>
+<li>E.g., <code>close</code> and <code>volume</code> for a single futures instrument</li>
+<li>In this case we can use a dataframe with two columns <code>close_price</code> and
+  <code>volume</code></li>
+<li>The solution is to keep columns in the same dataframe either if they are
+  processed in the same way (i.e., vectorized) or if the computing node needs to
+  have both features available (like sklearn model)</li>
+<li>If close_price and volume are "independent", they should go in different
+  branches of the graph using a "Y" split</li>
+</ul>
+<h3 id="how-to-handle-multiple-instruments">How to handle multiple instruments?</h3>
+<ul>
+<li>E.g., <code>close</code> price for multiple futures</li>
+<li>We pass a dataframe with one column per instrument</li>
+<li>All the transformations are then performed on a column-basis</li>
+<li>We assume that the timeseries are aligned explicitly</li>
+</ul>
+<h3 id="how-to-handle-multiple-features-with-multiple-instruments">How to handle multiple features with multiple instruments</h3>
+<ul>
+<li>E.g., close price, high price, volume for multiple energy futures instrument</li>
+<li>In this case we can use a dataframe with hierarchical columns, where the first
+  dimension is the instrument, and the second dimension is the feature</li>
+</ul>
+<h3 id="irregular-dags">Irregular DAGs</h3>
+<ul>
+<li>
+<p>E.g., if we have 10 instruments that need to use different models, we could
+  build a DAG, instantiating 10 different pipelines</p>
+</li>
+<li>
+<p>In general, we try to use vectorization any time that is possible</p>
+</li>
+<li>
+<p>E.g., if the computation is the same, instantiate a single DAG working on all
+  the 10 instruments in a single dataframe (i.e., vectorization)</p>
+</li>
+<li>
+<p>E.g,. if the computation is the same up to until a point, vectorize the common
+  part, and then split the dataframe and use different pipelines</p>
+</li>
+</ul>
+<h3 id="namespace-vs-hierarchical-config">Namespace vs hierarchical config</h3>
+<ul>
+<li>We recognize that sometimes we might want to call the same <code>DagBuilder</code>
+  function multiple times (e.g., a DAG that is built with a loop)</li>
+<li>In this case it's not clear if it would be better to prefix the names of each
+  node with a tag to make them unique or use hierarchical DAG</li>
+<li>It seems simpler to use prefix for the tags, which is supported</li>
+</ul>
+<h3 id="how-to-know-what-is-configurable">How to know what is configurable</h3>
+<ul>
+<li>
+<p>By design, DataFlow can loosely wrap Python functions</p>
+</li>
+<li>
+<p>Any argument of the Python function could be a configuration parameter</p>
+</li>
+<li>
+<p><code>ColumnTransformer</code> is an example of an abstract node that wraps python
+  functions that operate on columns independently</p>
+</li>
+<li>
+<p>Introspection to determine what is configurable would be best</p>
+</li>
+<li>
+<p>Manually specifying function parameters in config may be a reasonable approach
+  for now</p>
+</li>
+<li>
+<p>This could be coupled with moving some responsibility to the <code>Config</code> class,
+  e.g., specifying "mandatory" parameters along with methods to indicate which
+  parameters are "dummies"</p>
+</li>
+<li>
+<p>Introspection on config should be easy (but may be hard in full generality on
+  DAG building code)</p>
+</li>
+<li>
+<p>Having the builder completely bail out is another possible approach</p>
+</li>
+<li>
+<p>Dataflow provides mechanisms for conceptually organizing config and mapping
+  config to configurable functions. This ability is more important than making
+  it easy to expose all possible configuration parameters.</p>
+</li>
+</ul>
+<h3 id="dag-extension-vs-copying">DAG extension vs copying</h3>
+<ul>
+<li>
+<p>Currently DAG builders are chained by progressively extending an existing DAG</p>
+</li>
+<li>
+<p>Another approach is to chain builders by constructing a new DAG from smaller
+  component DAGs</p>
+</li>
+<li>
+<p>On the one hand, this</p>
+</li>
+<li>May provide cleaner abstractions</li>
+<li>
+<p>Is functional</p>
+</li>
+<li>
+<p>On the other hand, this approach may require some customization of deep copies
+  (to be determined)</p>
+</li>
+<li>
+<p>If we have clean configs and builders for two DAGs to be merged / unioned,
+  then we could simply rebuild by chaining</p>
+</li>
+<li>
+<p>If one of the DAGs was built through, e.g., notebook experimentation, then a
+  graph-introspective deep copy approach is probably needed</p>
+</li>
+<li>
+<p>If we perform deep copies, do we want to create new "uninitialized" nodes, or
+  also copy state?</p>
+</li>
+<li>
+<p>The answer may depend upon the use case, e.g., notebooks vs production</p>
+</li>
+<li>
+<p>Extending DAGs node by node is in fact how they are built under the hood</p>
+</li>
+</ul>
+<h3 id="reusing-parameters-across-nodes-configs">Reusing parameters across nodes' configs</h3>
+<ul>
+<li>
+<p>The same parameter might need to be used by different objects / functions and
+  DAG nodes and kept in sync somehow</p>
+</li>
+<li>
+<p>E.g., the <code>start_datetime</code> for the reading node and for the <code>ReplayedTime</code></p>
+</li>
+<li>Solution #1:</li>
+<li>A "late binding" approach: in the config there is a <code>ConfigParam</code> specifying
+    the path of the corresponding value to use</li>
+<li>Solution #2:</li>
+<li>A "meta_parameter" Config key with all the parameters used by multiple nodes</li>
+</ul>
+<h3 id="composing-vs-deriving-objects">Composing vs deriving objects</h3>
+<p>We have a lot of composition of objects to create specialized versions of
+objects E.g., there is an <code>HistoricalDataSource</code> node that allows to connect an
+<code>AbstractMarketDataInterface</code> to a graph</p>
+<p><strong>Approach 1)</strong></p>
+<p>We could create a class for each specialization of <code>DataSource</code> object</p>
+<pre><code class="language-python">class EgHistoricalDataSource(HistoricalDataSource):
+  &quot;&quot;&quot;
+  A `HistoricalDataSource` with a `EgReplayedTimeMarketDataInterface` inside.
+  &quot;&quot;&quot;
+
+  def __init__(
+     self,
+     nid: dtfcore.NodeId,
+     market_data_interface: vltabaretimbar.EgReplayedTimeMarketDataInterface,
+     ):
+</code></pre>
+<p>In this case we use inheritance</p>
+<p>Pros:</p>
+<ul>
+<li>This specialized an <code>HistoricalDataSource</code> fixing some parameters that need to
+  be fixed Cons:</li>
+<li>It does the cross-product of objects</li>
+<li>It introduces a new name that we need to keep track of</li>
+</ul>
+<p>We can have further builder methods like <code>get_..._example1()</code> to create specific
+objects for testing purposes</p>
+<p><strong>Approach 2)</strong></p>
+<p>We could create a builder method, like <code>get_EgHistoricalDataSource(params)</code>,
+instead of a class In this case we use composition</p>
+<p>This is in practice the same approach as 1), even from the way it is called
+<code>``python # This is an instance of class</code>EgHistoricalDataSource`. obj =
+EgHistoricalDataSource(nid, ...)</p>
+<pre><code> # This is an instance of class `HistoricalDataSource`.
+ obj = get_EgHistoricalDataSource(nid, ...)
+```
+</code></pre>
+<p>We can use both approaches 1) and 2) in the <code>DagBuilder</code> approach</p>
+<p>Personally I prefer approach 2) since it avoids to create more classes An OOP
+adage says "prefer composition over inheritance when possible"</p>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    <script id="__config" type="application/json">{"base": "..", "features": [], "search": "../assets/javascripts/workers/search.07f07601.min.js", "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}}</script>
+    
+    
+      <script src="../assets/javascripts/bundle.56dfad97.min.js"></script>
+      
+    
+  </body>
+</html>

@@ -1,0 +1,5147 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+      
+      
+      
+        <link rel="prev" href="all.dind_and_sibling_containers.how_to_guide.html">
+      
+      
+        <link rel="next" href="all.docker.tutorial.html">
+      
+      
+      <link rel="icon" href="../mkdocs/assets/favicon.ico">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.5.34">
+    
+    
+      
+        <title>Docker - KaizenAI Documentation</title>
+      
+    
+    
+      <link rel="stylesheet" href="../assets/stylesheets/main.35f28582.min.css">
+      
+        
+        <link rel="stylesheet" href="../assets/stylesheets/palette.06af60db.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+      <link rel="stylesheet" href="../mkdocs/styles/styles.css">
+    
+    <script>__md_scope=new URL("..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+    
+  </head>
+  
+  
+    
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="black" data-md-color-accent="cyan">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#docker" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+  
+
+<header class="md-header md-header--shadow" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href="../index.html" title="KaizenAI Documentation" class="md-header__button md-logo" aria-label="KaizenAI Documentation" data-md-component="logo">
+      
+  <img src="../mkdocs/assets/logo.png" alt="logo">
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            KaizenAI Documentation
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Docker
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+    
+    
+    
+    
+      <label class="md-header__button md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+      </label>
+      <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+    
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+
+<nav class="md-nav md-nav--primary" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="../index.html" title="KaizenAI Documentation" class="md-nav__button md-logo" aria-label="KaizenAI Documentation" data-md-component="logo">
+      
+  <img src="../mkdocs/assets/logo.png" alt="logo">
+
+    </a>
+    KaizenAI Documentation
+  </label>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../index.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Kaizen Technologies internal documentation
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../all.code_organization.reference.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Code Organization
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../all.documentation_meta.reference.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Documentation Meta
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../all.software_components.reference.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Software Components
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../all.workflow.explanation.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Workflow
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../meta.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Files
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_7" >
+        
+          
+          <label class="md-nav__link" for="__nav_7" id="__nav_7_label" tabindex="0">
+            
+  
+  <span class="md-ellipsis">
+    Build
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_7_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_7">
+            <span class="md-nav__icon md-icon"></span>
+            Build
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../build/all.linter_gh_workflow.explanation.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Linter Gh Workflow
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../build/all.pytest_allure.explanation.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Pytest Allure
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../build/all.pytest_allure.how_to_guide.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Pytest Allure
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../build/all.semgrep_workflow.explanation.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Semgrep Integration in GitHub Actions
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_8" >
+        
+          
+          <label class="md-nav__link" for="__nav_8" id="__nav_8_label" tabindex="0">
+            
+  
+  <span class="md-ellipsis">
+    Coding
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_8_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_8">
+            <span class="md-nav__icon md-icon"></span>
+            Coding
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../coding/all.asyncio.explanation.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Asyncio Best Practices
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../coding/all.code_design.how_to_guide.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Code Design
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../coding/all.code_like_pragmatic_programmer.how_to_guide.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Code Like Pragmatic Programmer
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../coding/all.code_review.how_to_guide.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Code Review
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../coding/all.coding_style.how_to_guide.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Coding Style
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../coding/all.gsheet_into_pandas.how_to_guide.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Gsheet Into Pandas
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../coding/all.hcache.explanation.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Cache
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../coding/all.hplayback.how_to_guide.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Playback
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../coding/all.imports_and_packages.how_to_guide.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Imports And Packages
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../coding/all.integrate_repos.how_to_guide.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Integrate Repos
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../coding/all.jupyter_notebook.how_to_guide.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Jupyter Notebook
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../coding/all.plotting.how_to_guide.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Best practices for writing plotting functions
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../coding/all.profiling.how_to_guide.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Profiling
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../coding/all.publish_notebook.how_to_guide.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Publishing a notebook
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../coding/all.qgrid.how_to_guide.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Qgrid
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../coding/all.reading_other_people_code.how_to_guide.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Reading Other People Code
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../coding/all.run_jupyter_notebook.how_to_guide.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Run Jupyter notebook
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../coding/all.run_unit_tests.how_to_guide.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Run Unit Tests
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../coding/all.str_to_df.how_to_guide.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Converting a string into a Pandas df
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../coding/all.submit_code_for_review.how_to_guide.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    First Review Process
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../coding/all.type_hints.how_to_guide.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Type Hints
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../coding/all.write_unit_tests.how_to_guide.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Write Unit Tests
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_9" >
+        
+          
+          <label class="md-nav__link" for="__nav_9" id="__nav_9_label" tabindex="0">
+            
+  
+  <span class="md-ellipsis">
+    Dataflow
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_9_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_9">
+            <span class="md-nav__icon md-icon"></span>
+            Dataflow
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../dataflow/all.batch_and_streaming_mode_using_tiling.explanation.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Batch And Streaming Mode Using Tiling
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../dataflow/all.best_practice_for_building_dags.explanation.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Best Practice For Building Dags
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../dataflow/all.computation_as_graphs.explanation.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Computation As Graphs
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../dataflow/all.dag.explanation.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Debug information
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../dataflow/all.dataflow.explanation.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    DataFlow
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../dataflow/all.dataflow_data_format.explanation.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    DataFlow Data Format
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../dataflow/all.simulation_output.reference.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    All.simulation output.reference
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../dataflow/all.time_series.explanation.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Time series
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../dataflow/all.timing_semantic_and_clocks.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Timing Semantic And Clocks
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../dataflow/all.train_and_predict_phases.explanation.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Phases of evaluation of Dag
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_10" >
+        
+          
+          <label class="md-nav__link" for="__nav_10" id="__nav_10_label" tabindex="0">
+            
+  
+  <span class="md-ellipsis">
+    Datapull
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_10_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_10">
+            <span class="md-nav__icon md-icon"></span>
+            Datapull
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../datapull/all.data_schema.explanation.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Data Schema
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../datapull/all.datapull_client_stack.explanation.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Data client stack
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../datapull/all.datapull_derived_data.explanation.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Derived data workflows
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../datapull/all.datapull_qa_flow.explanation.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Data QA workflows
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../datapull/all.datapull_sandbox.explanation.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    DataPull sandbox
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../datapull/all.dataset_onboarding_checklist.reference.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Dataset onboarding checklist
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../datapull/all.update_CCXT_version.how_to_guide.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Update Ccxt Version
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_11" >
+        
+          
+          <label class="md-nav__link" for="__nav_11" id="__nav_11_label" tabindex="0">
+            
+  
+  <span class="md-ellipsis">
+    Dev tools
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_11_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_11">
+            <span class="md-nav__icon md-icon"></span>
+            Dev tools
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_11_1" >
+        
+          
+          <label class="md-nav__link" for="__nav_11_1" id="__nav_11_1_label" tabindex="0">
+            
+  
+  <span class="md-ellipsis">
+    Thin env
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_11_1_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_11_1">
+            <span class="md-nav__icon md-icon"></span>
+            Thin env
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../dev_tools/thin_env/all.gh_and_thin_env_requirements.reference.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Required Packages for the thin environment and GH Actions
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../dev_tools/thin_env/all.gh_thin_env_dependencies.how_to_guide.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    All.gh thin env dependencies.how to guide
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_12" >
+        
+          
+          <label class="md-nav__link" for="__nav_12" id="__nav_12_label" tabindex="0">
+            
+  
+  <span class="md-ellipsis">
+    Documentation meta
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_12_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_12">
+            <span class="md-nav__icon md-icon"></span>
+            Documentation meta
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../documentation_meta/all.architecture_diagrams.explanation.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Architecture Diagrams
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../documentation_meta/all.diataxis.explanation.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Diataxis
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../documentation_meta/all.gdocs.how_to_guide.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    All.gdocs.how to guide
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../documentation_meta/all.google_technical_writing.how_to_guide.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Google Technical Writing
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../documentation_meta/all.writing_docs.how_to_guide.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Writing Docs
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../documentation_meta/plotting_in_latex.how_to_guide.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Plotting in latex.how to guide
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_13" >
+        
+          
+          <label class="md-nav__link" for="__nav_13" id="__nav_13_label" tabindex="0">
+            
+  
+  <span class="md-ellipsis">
+    General background
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_13_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_13">
+            <span class="md-nav__icon md-icon"></span>
+            General background
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../general_background/all.common_abbreviations.reference.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Common abbreviations
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../general_background/all.glossary.reference.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Glossary
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../general_background/all.literature_review.reference.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Literature Review
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../general_background/all.reading_list.reference.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Reading List
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_14" >
+        
+          
+          <label class="md-nav__link" for="__nav_14" id="__nav_14_label" tabindex="0">
+            
+  
+  <span class="md-ellipsis">
+    Infra
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_14_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_14">
+            <span class="md-nav__icon md-icon"></span>
+            Infra
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../infra/all.auto_scaling.explanation.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Auto Scaling Explanation
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../infra/all.aws_iam_configuration.explanation.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    AWS IAM Configuration Best Practices Guide
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../infra/all.aws_scripts.reference.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Python Scripts Guide
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../infra/all.infrastructure_glossary.explanation.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Infrastructure Glossary
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../infra/all.infrastructure_update_rollout.how_to_guide.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Standardized Update Rollout Checklist
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../infra/all.rds.comparison.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Comparison of AWS RDS Instance Types and Storage Performance
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_15" >
+        
+          
+          <label class="md-nav__link" for="__nav_15" id="__nav_15_label" tabindex="0">
+            
+  
+  <span class="md-ellipsis">
+    Kaizenflow
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_15_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_15">
+            <span class="md-nav__icon md-icon"></span>
+            Kaizenflow
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../kaizenflow/all.dev_scripts_catalogue.reference.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Dev Scripts Catalogue
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../kaizenflow/all.devops_code_organization.reference.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    All.devops code organization.reference
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../kaizenflow/all.install_helpers.how_to_guide.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Install Helpers
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../kaizenflow/all.run_Mock2_in_batch_mode.how_to_guide.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Run Mock2 In Batch Mode
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../kaizenflow/all.run_end_to_end_Mock2_system.tutorial.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Run End To End Mock2 System
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_16" >
+        
+          
+          <label class="md-nav__link" for="__nav_16" id="__nav_16_label" tabindex="0">
+            
+  
+  <span class="md-ellipsis">
+    Onboarding
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_16_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_16">
+            <span class="md-nav__icon md-icon"></span>
+            Onboarding
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../onboarding/admin.onboarding_process.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    On-boarding Process
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../onboarding/all.communicate_in_telegram.how_to_guide.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Communicate In Telegram
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../onboarding/all.development_documents.reference.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Development Documents
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../onboarding/all.onboarding_checklist.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Onboarding Checklist
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../onboarding/all.organize_email.how_to_guide.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Organize Email
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../onboarding/all.receive_crypto_payment.how_to_guide.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Receive Crypto Payment
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../onboarding/all.track_time_with_hubstaff.how_to_guide.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Track Time With Hubstaff
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../onboarding/kaizenflow.hiring_meister.how_to_guide.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    General
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../onboarding/kaizenflow.set_up_development_environment.how_to_guide.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Set up KaizenFlow development environment
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../onboarding/kaizenflow.signing_up.how_to_guide.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Signing up to the project
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_17" >
+        
+          
+          <label class="md-nav__link" for="__nav_17" id="__nav_17_label" tabindex="0">
+            
+  
+  <span class="md-ellipsis">
+    Trading ops
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_17_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_17">
+            <span class="md-nav__icon md-icon"></span>
+            Trading ops
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../trading_ops/all.how_to_name_objects.explanation.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    How to name objects
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../trading_ops/all.scheduled_monitoring.explanation.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Scheduled trading monitoring
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../trading_ops/all.scheduled_trading.explanation.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Publishing Experiment Reports
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../trading_ops/all.shadow_monitoring.explanation.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Shadow trading monitoring
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../trading_ops/all.trading_run_summary_sheet.explanation.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Trading Run Summary Sheet
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_18" >
+        
+          
+          <label class="md-nav__link" for="__nav_18" id="__nav_18_label" tabindex="0">
+            
+  
+  <span class="md-ellipsis">
+    Work organization
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_18_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_18">
+            <span class="md-nav__icon md-icon"></span>
+            Work organization
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../work_organization/Hiring_process.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    HiringMeister
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../work_organization/all.buildmeister.how_to_guide.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Buildmeister
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../work_organization/all.contributor_scoring.how_to_guide.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Contributor Scoring
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../work_organization/all.datapull_DAGmeister.how_to_guide.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Datapull Dagmeister
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../work_organization/all.epicmeister.how_to_guide.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Epicmeister
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../work_organization/all.rollout.how_to_guide.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Rollout
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../work_organization/all.scrum.explanation.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Scrum
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../work_organization/all.team_collaboration.how_to_guide.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Team Collaboration
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../work_organization/all.use_github_and_zenhub.how_to_guide.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Use Github And Zenhub
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../work_organization/kaizenflow.organize_your_work.how_to_guide.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Golden rules
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_19" checked>
+        
+          
+          <label class="md-nav__link" for="__nav_19" id="__nav_19_label" tabindex="0">
+            
+  
+  <span class="md-ellipsis">
+    Work tools
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_19_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_19">
+            <span class="md-nav__icon md-icon"></span>
+            Work tools
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="all.add_toc_to_notebook.how_to_guide.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Adding a table of contents to a notebook
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="all.bfg_repo_cleaner.how_to_guide.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    BFG Repo-Cleaner
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="all.chatgpt_api.how_to_guide.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Chatgpt Api
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="all.codebase_clean_up.how_to_guide.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Codebase Clean Up
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="all.conda_environment_obsolete.how_to_guide.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Conda Environment Obsolete
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="all.development.how_to_guide.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Development
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="all.dind_and_sibling_containers.how_to_guide.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Docker-in-docker (dind)
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+      <a href="all.docker.how_to_guide.html" class="md-nav__link md-nav__link--active">
+        
+  
+  <span class="md-ellipsis">
+    Docker
+  </span>
+  
+
+      </a>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="all.docker.tutorial.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Docker
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="all.docker_dev_tools_container.how_to_guide.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Dev tools container
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="all.docker_optimizer_container.how_to_guide.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Optimizer container
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="all.dockerhub.how_to_guide.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Dockerhub
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="all.gh_and_thin_env_requirements.reference.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Required Packages for the thin environment and GH Actions
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="all.gh_thin_env_dependencies.how_to_guide.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Thin environment dependencies
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="all.git.how_to_guide.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Git
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="all.invoke_workflows.how_to_guide.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Invoke Workflows
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="all.jupytext.how_to_guide.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Jupytext
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="all.latex_toolchain.how_to_guide.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Latex Toolchain
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="all.parquet.explanation.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Pyarrow Parquet management
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="all.pycharm.how_to_guide.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Pycharm
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="all.python_package_upgrade_and_troubleshooting.how_to_guide.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Python package upgrade &amp; troubleshooting
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="all.ssh.how_to_guide.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Ssh
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="all.telegram_notify_bot.how_to_guide.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    telegram-notify
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="all.visual_studio_code.how_to_guide.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Visual Studio Code
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+<h1 id="docker">Docker</h1>
+<h1 id="introduction">Introduction</h1>
+<ul>
+<li>Docker is an open-source tool designed to make our life typically easier
+  (although sometimes it makes it harder) when creating, building, deploying,
+  and running software applications.</li>
+<li>Docker can package an application and its dependencies in a virtual container
+  that can run on any Linux, Windows, or macOS computer.</li>
+<li>Our Docker containers have everything required (e.g. OS packages, Python
+  packages) inside to run certain applications/code.</li>
+</ul>
+<h1 id="concepts">Concepts</h1>
+<h2 id="docker-image">Docker image</h2>
+<ul>
+<li>A Docker image is a read-only template with instructions for creating a Docker
+  container</li>
+<li>Typically instructions include information about which packages and their
+  versions to install, e.g. list of python packages and their corresponding
+  versions</li>
+<li>All steps needed to create the image and run it are defined in a Dockerfile,
+  e.g. <code>dev_tools/devops/docker_build/dev.Dockerfile</code></li>
+</ul>
+<h2 id="docker-container">Docker container</h2>
+<ul>
+<li>A Docker container is a runnable instance of an image. One can run code inside
+  a docker container having all requirements installed.</li>
+</ul>
+<h2 id="docker-registry">Docker registry</h2>
+<ul>
+<li>A Docker registry stores docker images. In other words, Docker registry for
+  docker images is like GitHub for code.</li>
+</ul>
+<h1 id="high-level-philosophy">High level philosophy</h1>
+<ul>
+<li>We always want to separate things that don't need to run together in different
+  containers (e.g., <code>dev / prod cmamp</code>, <code>optimizer</code>, <code>im</code>, <code>oms</code>, <code>dev_tools</code>),
+  along a logic of "independently runnable / deployable directories".</li>
+<li>The problem is that when we put too many dependencies in a single container,
+  trying to simplify the release approach we start having huge containers that
+  are difficult to deploy and are unstable in terms of building even using
+  <code>poetry</code>.</li>
+<li>Each dir that can be "deployed" and run should have a <code>devops</code> dir to build /
+  qa / release containers with all the needed dependencies</li>
+<li>Certain containers that need to be widely available to the team and deployed
+  go through the release process and ECR</li>
+<li>Other containers that are lightweight and used only by one person (e.g., the
+  <code>infra</code> container) can be built on the fly using
+  <code>docker compose</code>/<code>docker build</code>.</li>
+</ul>
+<h2 id="thin-client">Thin client</h2>
+<ul>
+<li>To bootstrap the system we use a "thin client" which installs in a virtual env
+  the minimum set of packages to run (e.g., installs <code>invoke</code>, <code>docker</code>, etc).</li>
+<li>TODO(gp): Audit / make sure we can simplify the thin env</li>
+</ul>
+<h2 id="amp-cmamp-container">amp / cmamp container</h2>
+<ul>
+<li>The <code>dev</code> version is used to develop</li>
+<li>The <code>prod</code> version can be used for deployment as shortcut to creating a
+  smaller container with only the strictly needed dependencies</li>
+</ul>
+<h2 id="prod-container">Prod container</h2>
+<ul>
+<li>In order to avoid shipping the monster cmamp dev / prod container, we want to
+  start building smaller containers with only the dependencies that specific
+  prod scripts need</li>
+</ul>
+<h2 id="infra-container">Infra container</h2>
+<ol>
+<li>To run infra script, if we only need <code>boto3</code> and <code>moto</code>, we can</li>
+<li>Create a Python library</li>
+<li>Create a script interface</li>
+<li>Create an <code>invoke</code> task that calls <code>i docker_cmd --cmd ...</code> reusing the
+     cmamp container, (since that container already has <code>boto3</code> and <code>moto</code> that
+     are dependencies we can't remove)<ul>
+<li>This approach is similar to calling the <code>linter</code></li>
+</ul>
+</li>
+<li>If we think we need to add new packages only for running infra scripts then
+   we will create a new <code>infra</code> container.</li>
+<li>
+<p>We can build on the fly and not release through ECR</p>
+</li>
+<li>
+<p>We can start with approach 1, which will also allow us to transition to 2
+  transparently, if needed</p>
+</li>
+</ol>
+<h2 id="relevant-bugs">Relevant bugs</h2>
+<ul>
+<li><a href="https://github.com/cryptokaizen/cmamp/issues/1060">https://github.com/cryptokaizen/cmamp/issues/1060</a></li>
+<li>Tool to extract the dependency from a project #1038</li>
+<li>Create tool for poetry debugging #1026</li>
+<li>Fix tests that fail due to pandas update and release cmamp image #1002</li>
+</ul>
+<h1 id="poetry">Poetry</h1>
+<ul>
+<li>Poetry is a tool for managing Python packages and dependencies:</li>
+<li>List packages you want to install with some constraints, e.g., <code>pandas</code> must
+    be above 1.0 in <code>devops/docker_build/pyproject.toml</code></li>
+<li>Given a list of packages you need to install to get the desired environment,
+    you want <code>poetry</code> to "optimize" the packages and generate
+    <code>devops/docker_build/poetry.lock</code>, which contains the list of versions of
+    the packages to install</li>
+<li>If there is a new version of a package re-running <code>poetry</code> might give you an
+    updated list of packages to install</li>
+</ul>
+<h1 id="build-a-docker-image">Build a Docker image</h1>
+<h2 id="general">General</h2>
+<ul>
+<li>A docker image is built from a <code>Dockerfile</code>. The image is then used to run a
+  Docker container.</li>
+</ul>
+<p><img src="figs/docker/image2.png" width=80% height=80%></p>
+<ul>
+<li>There is <code>/devops</code> dir under a project's dir that contains Docker-related
+  files, e.g. <code>cmamp/devops</code>.</li>
+</ul>
+<h2 id="dockerfile">Dockerfile</h2>
+<ul>
+<li>A <code>Dockerfile</code> is a text document that contains all the commands to call on
+  the command line to assemble an image. E.g.
+  <code>cmamp/devops/docker_build/dev.Dockerfile</code>.</li>
+</ul>
+<h3 id="base-image">Base image</h3>
+<ul>
+<li>A <code>Dockerfile</code> should start with specifying a base image.</li>
+<li>Base image is an image that a new image is built from. A new Docker image will
+  have all the packages/dependencies that are installed in the base image.</li>
+<li>Use <code>FROM</code> statement to specify a base image, e.g.
+  <code>FROM ubuntu:20.4</code></li>
+</ul>
+<h3 id="copy-files">Copy files</h3>
+<ul>
+<li>Copy files that are required to build a Docker image to the Docker filesystem.</li>
+<li>To copy a file from <code>/source_dir</code> (your filesystem) to <code>/dst_dir</code> (Docker
+  filesystem) do:
+  <code>COPY source_dir/file dst_dir</code></li>
+<li>E.g., the command below will copy <code>install_packages.sh</code> from
+  <code>devops/docker_build</code> to the Docker's root directory so that
+  <code>install_packages.sh</code> can be accessed by Docker.
+  <code>COPY devops/docker_build/install_packages.sh .</code></li>
+</ul>
+<h3 id="install-os-packages">Install OS packages</h3>
+<ul>
+<li>Install OS packages that are needed for a Docker app, but that are not
+  installed for a base image.</li>
+<li>Use <code>RUN</code> instruction to install a package, e.g.
+  <code>RUN apt-get install postgresql-client</code></li>
+<li>Alternatively you can package all installation instructions in a <code>.sh</code> file
+  and run it. Do not forget to copy a <code>.sh</code> file to the Docker filesystem so
+  that Docker can see it. E.g.,
+  <code>COPY devops/docker_build/install_packages.sh .
+  RUN /bin/sh -c "./install_packages.sh"</code></li>
+</ul>
+<h3 id="install-python-packages">Install Python packages</h3>
+<ul>
+<li>We prefer to install Python packages with <code>poetry</code>.</li>
+<li>Make sure that there is instruction to install <code>pip3</code> and <code>poetry</code>. You can
+  either put it in a <code>Dockerfile</code> or in a separate file like
+  <code>install_packages.sh</code>.
+  <code>RUN apt-get install python3-pip
+  RUN pip3 install poetry</code></li>
+<li>Copy poetry-related files to the Docker filesystem so that files can be
+  accessed by Docker
+  <code>COPY devops/docker_build/poetry.toml
+  COPY devops/docker_build/poetry.lock</code></li>
+<li>Update Python packages
+  <code>RUN poetry install</code></li>
+</ul>
+<h2 id="build-an-image-from-a-dockerfile">Build an image from a Dockerfile</h2>
+<ul>
+<li>To build an image from a <code>Dockerfile</code> run:
+  ```<blockquote>
+<p>docker build .
+  ```</p>
+</blockquote>
+</li>
+<li>The <code>Dockerfile</code> must be called <code>Dockerfile</code> and located in the root of the
+  context.</li>
+<li>You can point to any <code>Dockerfile</code> by using <code>-f</code>:
+  ```<blockquote>
+<p>docker build -f /path_to_dockerfile/dockerfile_name
+  ```</p>
+</blockquote>
+</li>
+</ul>
+<h1 id="run-multi-container-docker-application">Run multi-container Docker application</h1>
+<ul>
+<li>Compose is a tool for defining and running multi-container Docker
+  applications. With Compose, you use a <code>YAML</code> file to configure your
+  application's services.</li>
+</ul>
+<p><img src="figs/docker/image1.png"  width=80% height=80%></p>
+<h2 id="version">Version</h2>
+<ul>
+<li>At the beginning of a <code>docker-compose.yaml</code> file specify the <code>docker-compose</code>
+  version. We use the version <code>3.0</code>, for more information see
+  <a href="https://docs.docker.com/compose/compose-file/compose-versioning/">the official documents</a>.
+  <code>version: "3.0"</code></li>
+</ul>
+<h2 id="images">Images</h2>
+<ul>
+<li>You can either re-use a public image or build a new one from a <code>Dockerfile</code>.</li>
+<li>The <code>app</code> service below uses the image that is built from the
+  <code>dev.Dockerfile</code>.
+  <code>app:
+    build:
+      context: .
+      dockerfile: dev.Dockerfile</code></li>
+<li>The <code>im_postgres_local</code> service below uses the public <code>postgres</code> image pulled
+  from the <a href="https://hub.docker.com/_/postgres">Docker hub registry</a>.
+  <code>im_postgres_local:
+    image: postgres: 13</code></li>
+</ul>
+<h2 id="bind-mount">Bind mount</h2>
+<ul>
+<li>If you want to be able to access code inside a Docker container, you should
+  bind-mount a directory with the code on the host.</li>
+<li>Mount a directory on the host inside a Docker container, e.g. mount current
+  directory to <code>/app</code> dir inside a Docker container:
+  ```
+  app:
+    volumes:<ul>
+<li>.:/app
+  ```</li>
+</ul>
+</li>
+</ul>
+<h2 id="environment-variables">Environment variables</h2>
+<ul>
+<li>You can either use variables directly from the environment or pass them in a
+  <code>docker-compose.yaml</code> file.</li>
+<li>It is supposed that <code>POSTGRES_VERSION</code> is already defined in the shell.
+  <code>db:
+    image: "postgres:${POSTGRES_VERSION}"</code></li>
+<li>Set environment variable in a service's container
+  ```
+  db:
+    environment:<ul>
+<li>POSTGRES_VERSION=13
+  image: "postgres:${POSTGRES_VERSION}"
+  ```</li>
+</ul>
+</li>
+<li>Set environment variable with <code>.env</code> file
+  ```
+  db:
+    env_file:<ul>
+<li>./postgres_env.env
+  image: "postgres:${POSTGRES_VERSION}"
+  ```</li>
+</ul>
+</li>
+<li>File <code>postgres_env.env</code>
+  ```<blockquote>
+<p>cat ./postgres_env.env
+  POSTGRES_VERSION=13
+  ```</p>
+</blockquote>
+</li>
+</ul>
+<h2 id="basic-commands">Basic commands</h2>
+<ul>
+<li>To check more advanced usage, please see
+  <a href="https://docs.docker.com/compose/reference/">the official documentation.</a></li>
+<li>Build, (re)create, start, and attach to containers for a service. It is
+  assumed that a <code>docker-compose</code> file has the name <code>docker-compose.yaml</code> and is
+  located in the current dir.
+  ```<blockquote>
+<p>docker-compose up
+  ```</p>
+</blockquote>
+</li>
+<li>List containers
+  ```<blockquote>
+<p>docker-compose ps
+  ```</p>
+</blockquote>
+</li>
+<li>Stop containers created by <code>down</code>.
+  ```<blockquote>
+<p>docker-compose down
+  ```</p>
+</blockquote>
+</li>
+</ul>
+<h1 id="how-to-test-a-package-in-a-docker-container">How to test a package in a Docker container</h1>
+<pre><code>&gt; sudo /bin/bash -c &quot;(source /venv/bin/activate; pip install yfinance)&quot;
+&gt; python -c &quot;import finance&quot;
+</code></pre>
+<h2 id="hacky-approach-to-patch-up-a-container">Hacky approach to patch up a container</h2>
+<pre><code># After install create a new version of the container
+&gt; docker commit d2916dd5f122
+&gt; 623860924167.dkr.ecr.eu-north-1.amazonaws.com/cmamp:dev_ccxtpr
+
+# Push to the repo
+&gt; docker push 623860924167.dkr.ecr.eu-north-1.amazonaws.com/cmamp:dev_ccxtpro
+
+# Then you can push and pull on different machines
+&gt; docker pull 623860924167.dkr.ecr.eu-north-1.amazonaws.com/cmamp:dev_ccxtpro
+
+# To use `docker_bash` you might need to retag it to match what the system expects
+&gt; docker tag 623860924167.dkr.ecr.eu-north-1.amazonaws.com/cmamp:dev_ccxtpro
+</code></pre>
+<h1 id="how-to-release-a-docker-image">How to release a Docker image</h1>
+<ul>
+<li>All the <code>invoke</code> tasks to run the release flow are in
+  <code>//amp/helpers/lib_tasks.py</code>.</li>
+<li>Depending on the type of changes sometimes one needs to rebuild only the
+  <code>prod</code> image, other times one needs to rebuild also the <code>dev</code> image.</li>
+<li>E.g.,</li>
+<li>If you change Docker build-related things (e.g., add a Python package), you
+    need to rebuild the <code>dev</code> image and then the <code>prod</code> image from the <code>dev</code>
+    image</li>
+<li>If you change the code for a production system, you need to create a new
+    <code>prod</code> image</li>
+<li>We try to use the same flow, conventions, and code for all the containers
+  (e.g., amp, cmamp, dev_tools, opt).</li>
+</ul>
+<h2 id="multi-architecture-build">Multi-architecture build</h2>
+<ul>
+<li>To build multi-arch (e.g., <code>x86</code>, <code>arm</code>) docker image using
+  <code>docker_build_local_image</code> we should use <code>--multi-build</code> flag</li>
+<li>To build for specific platforms specify the platform name:<ul>
+<li>For <code>x86</code> - <code>linux/amd64</code></li>
+<li>For <code>arm</code> - <code>linux/arm64</code>
+  ```<blockquote>
+<p>i docker_build_local_image --version <VERSION> --multi-build --platform <PLATFORM NAME>
+  ```</p>
+</blockquote>
+</li>
+</ul>
+</li>
+<li>To build for both <code>arm</code> and <code>x86</code> architectures:
+    <code>&gt; i docker_build_local_image --version &lt;VERSION&gt; --multi-build --platform linux/amd64,linux/arm64</code></li>
+<li>Multi-arch images are built using <code>docker buildx</code> which do not generate any
+    local image by default</li>
+<li>Images are pushed to the remote registry and pulled for testing and usage</li>
+<li>To tag the local image as dev and push it to the target registry: e.g.,
+    <code>aws_ecr.ck</code> or <code>dockerhub.sorrentum</code> , use
+    <code>&gt; i docker_tag_push_multi_build_local_image_as_dev --version &lt;VERSION&gt; --target &lt;TARGET&gt;</code></li>
+<li>Once the image has been successfully pushed to both ECR and DockerHub
+    registries, the subsequent step involves pushing the <code>dev</code> image to GHCR
+    registry. However, this action currently requires manual execution due to
+    restricted access<ul>
+<li>Access to the <code>cryptokaizen</code> packages is limited. To gain access, kindly
+  reach out to GP or Juraj</li>
+<li>To proceed, perform a Docker login using your GitHub username and PAT
+  (Personal Access Token):
+  ```bash<blockquote>
+<p>docker login ghcr.io -u <username>
+  ```</p>
+</blockquote>
+</li>
+<li>Tag the <code>dev</code> image to the GHCR namespace:
+  ```bash<blockquote>
+<p>docker tag 623860924167.dkr.ecr.eu-north-1.amazonaws.com/cmamp:dev ghcr.io/cryptokaizen/cmamp:dev
+  ```</p>
+</blockquote>
+</li>
+<li>Push the tagged image to the GHCR registry:
+  ```bash<blockquote>
+<p>docker push ghcr.io/cryptokaizen/cmamp:dev
+  ```</p>
+</blockquote>
+</li>
+</ul>
+</li>
+</ul>
+<h3 id="run-the-dev-multi-architecture-image-release-end-to-end">Run the dev multi-architecture image release end-to-end</h3>
+<h4 id="overview">Overview</h4>
+<ul>
+<li>Update the <code>changelog.txt</code> file with description of new version</li>
+<li>Build "local" image remotely in the CK AWS ECR registry and pull once it is
+  built</li>
+<li>Run the <code>cmamp</code> regressions using a local image</li>
+<li>Run QA tests using a local image</li>
+<li>Tag the image as dev image and push it to the target Docker registries</li>
+<li>Tag the new <code>dev</code> image to GHCR namespace and push it to GHCR registry</li>
+</ul>
+<h4 id="pre-release-check-list">Pre-release check-list</h4>
+<p>Prerequisites:</p>
+<ul>
+<li>The new image is built locally</li>
+</ul>
+<p>Check-list:</p>
+<p>Make sure that the regressions are passing when being run using the local image
+because we run the regressions as part of the official release flow, i.e. via
+<code>docker_release_multi_build_dev_image()</code>.</p>
+<ul>
+<li><code>cmamp</code></li>
+<li>[ ] Update the <code>changelog.txt</code> file</li>
+<li>[ ] Fast tests</li>
+<li>[ ] Slow tests</li>
+<li>[ ] Super-slow test</li>
+<li>[ ] QA tests</li>
+</ul>
+<p>Running regressions in the <code>orange</code> repository is not a part of the official
+image release flow so run them separately.</p>
+<ul>
+<li><code>orange</code></li>
+<li>[ ] Update the <code>changelog.txt</code> file</li>
+<li>[ ] Fast tests</li>
+<li>[ ] Slow tests</li>
+<li>[ ] Super-slow test</li>
+</ul>
+<p>Example:</p>
+<pre><code>i run_fast_tests --version 1.10.0 --stage local
+</code></pre>
+<p>Where <code>1.10.0</code> is the new version of the image with stage as local.</p>
+<h4 id="command-to-run-the-release-flow">Command to run the release flow:</h4>
+<pre><code>&gt; i docker_release_multi_build_dev_image --version &lt;VERSION&gt; --platform &lt;PLATFORM&gt; --target-registries &lt;TARGET_REGISTRIES&gt;
+</code></pre>
+<p>E.g.,</p>
+<pre><code>i docker_release_multi_build_dev_image --version 1.6.1 --platform linux/amd64,linux/arm64 --target-registries aws_ecr.ck,dockerhub.sorrentum
+</code></pre>
+<p>TARGET_REGISTRIES: list of target registries to push the image to.</p>
+<p>E.g.,</p>
+<ul>
+<li><code>aws_ecr.ck</code> -- private CK AWS Docker registry</li>
+<li><code>dockerhub.sorrentum</code> -- public Dockerhub registry</li>
+</ul>
+<p>All other options are the same as for the <code>docker_release_dev_image</code> end-to-end
+flow.</p>
+<ul>
+<li><a href="#end-to-end-flow-for-dev-image">End-to-end flow for <code>dev</code> image</a></li>
+</ul>
+<h4 id="post-release-check-list">Post-release check-list</h4>
+<ul>
+<li>[ ] Make an integration with the <code>sorrentum</code> repository in order to copy all
+      the changes from the <code>cmamp</code> repository</li>
+<li>[ ] Tag the new <code>dev</code> image to GHCR namespace and push it to GHCR registry</li>
+</ul>
+<h2 id="stages">Stages</h2>
+<ul>
+<li>A "stage" is a step (e.g., local, dev, prod) in our release workflow of Docker
+  images, code, or infrastructure.</li>
+<li>To run a Docker container in a certain stage use the <code>stage</code> parameter</li>
+<li>E.g. <code>i docker_bash --stage="local"</code> creates a bash session inside the local
+    docker <code>amp</code> container</li>
+</ul>
+<h3 id="local">Local</h3>
+<ul>
+<li>A <code>local</code> image is used to develop and test an update to the Docker container,
+  e.g. after updating a package, installing a new package, etc.</li>
+<li>Local images can only be accessed locally by a developer, i.e. the team
+  members can not / should not use local images. In practice <code>local</code> images are
+  like <code>dev</code> images but private to users and servers.</li>
+</ul>
+<h3 id="dev">Dev</h3>
+<ul>
+<li>A <code>dev</code> image is used by our team to develop our systems (e.g., to add new
+  functionalities to the <code>dev_tools</code> code).</li>
+<li>Typically the source code is mounted through a bind mount in Docker so that
+  one can change the code and execute it in Docker.</li>
+<li>The image is tested, blessed, and released so that users and CI can use it
+  without worries. Once a <code>dev</code> image is pushed to the docker registry it can be
+  pulled and used by the team members.</li>
+</ul>
+<h3 id="prod">Prod</h3>
+<ul>
+<li>A <code>prod</code> image is used to run a system by final users. E.g., the linter inside
+  <code>dev_tools</code>, some prod system inside Airflow.</li>
+<li>It is self-contained (it should have no dependencies) since it has everything
+  required to run a system installed inside it, e.g., code (e.g., the linter),
+  Python packages.</li>
+<li>It is typically created from the <code>dev</code> image by copying the released code
+  inside the <code>prod</code> image.</li>
+</ul>
+<h2 id="overview-of-how-to-release-an-image">Overview of how to release an image</h2>
+<ul>
+<li>The release flow consists of the following phases</li>
+<li>Make changes to the image<ul>
+<li>E.g., add Python package</li>
+<li>Update the changelog</li>
+</ul>
+</li>
+<li>Build a local image<ul>
+<li>Run specific tests (e.g., make sure that the new packages are installed)</li>
+<li>Run unit tests</li>
+<li>Run QA tests</li>
+</ul>
+</li>
+<li>Tag local image as dev image</li>
+<li>Push dev image to ECR</li>
+<li>Push the image to GHCR</li>
+<li>If there is also an associated prod image</li>
+<li>Build prod image from dev image<ul>
+<li>Run unit / QA tests</li>
+</ul>
+</li>
+<li>Push prod image to ECR</li>
+</ul>
+<h2 id="how-to-add-a-python-package-to-docker-image">How to add a Python package to Docker image</h2>
+<ul>
+<li>To add a new Python package to a Docker image you need to update <code>poetry</code>
+  files and release a new image:</li>
+<li>Add a new package to <code>amp/devops/docker_build/pyproject.toml</code> file to the
+    <code>[tool.poetry.dependencies]</code> section E.g., to add <code>pytest-timeout</code> do:
+    <code>[tool.poetry.dependencies]
+    ...
+    pytest-timeout = "*"
+    ...</code></li>
+<li>In general we use the latest version of a package (<code>*</code>) until the tests fail
+    or the system stops working<ul>
+<li>If the system fails, we freeze the version of the problematic packages to
+  a known-good version to get the tests back to green until the problem is
+  solved. We switch back to the latest version once the problem is fixed</li>
+<li>If you need to put a constraint on the package version, follow the
+  <a href="https://python-poetry.org/docs/dependency-specification/">official docs</a>,
+  and explain in a comment why this is needed making reference to GitHub
+  issues</li>
+</ul>
+</li>
+<li>To verify that package is installed correctly one can<ul>
+<li>Build a local image. There are two options:</li>
+<li>Update poetry and upgrade all packages to the latest versions
+    <code>&gt; i docker_build_local_image --version {new version} --update-poetry</code></li>
+<li>Refresh the lock file (e.g., install / update / remove a single package)
+    without upgrading all the packages
+    <a href="https://python-poetry.org/docs/cli/#options-11">Link to the poetry docs</a>.
+    <code>&gt; i docker_build_local_image --version {new version} --update-poetry --refresh-only-poetry</code></li>
+<li>Run a docker container based on the local image
+  ```<blockquote>
+<p>i docker_bash --stage local --version {new version}
+  ```</p>
+</blockquote>
+</li>
+<li>Verify what package was installed with <code>pip show {package name}</code>, e.g.,
+  ```<blockquote>
+<p>pip show pytest-rerunfailures
+  Name: pytest-rerunfailures
+  Version: 10.2
+  Summary: pytest plugin to re-run tests to eliminate flaky failures
+  ...
+  Location: /venv/lib/python3.8/site-packages
+  Requires: pytest, setuptools
+  Required-by:
+  ```</p>
+</blockquote>
+</li>
+<li>Run regressions for the local image, i.e.
+  ```<blockquote>
+<p>i run_fast_tests --stage local --version {new version}
+i run_slow_tests --stage local --version {new version}
+  ```</p>
+</blockquote>
+</li>
+</ul>
+</li>
+<li>Update the changelog describing the new version</li>
+<li>Send a PR with the updated poetry files and any other change needed to make
+    the tests pass</li>
+<li>Release the new image. To do so follow the
+    <a href="#how-to-test-a-package-in-a-docker-container"># Release a Docker image</a>
+    section, use <code>--update-poetry</code> flag to resolve the dependencies</li>
+</ul>
+<h2 id="how-to-find-unused-packages">How to find unused packages</h2>
+<ul>
+<li>While installing Python packages we need to make sure that we do not install
+  packages that we do not use</li>
+</ul>
+<h3 id="import-based-approach-using-pipreqs">Import-based approach using <code>pipreqs</code></h3>
+<h4 id="how-it-works">How it works</h4>
+<ul>
+<li>To do so we use an import-based approach provided by
+  <a href="https://github.com/bndr/pipreqs"><code>pipreqs</code></a>. Under the hood it uses the regex
+  below and <code>os.walk</code> for selected dir:
+  <code>REGEXP = [
+      re.compile(r'^import (.+)$'),
+      re.compile(r'^from ((?!\.+).*?) import (?:.*)$')
+  ]</code></li>
+</ul>
+<h4 id="limitations">Limitations</h4>
+<ul>
+<li>Not all packages that we use are necessarily imported, e.g. <code>awscli</code>,
+  <code>jupyter</code>, <code>pytest-cov</code>, etc. -&gt; <code>pipreqs</code> won't find these packages</li>
+<li>The import name is not always equal to the package actual name, see the
+  mapping <a href="https://github.com/bndr/pipreqs/blob/master/pipreqs/mapping">here</a></li>
+</ul>
+<h4 id="usage">Usage</h4>
+<ul>
+<li>See the <a href="https://github.com/bndr/pipreqs">official docs</a> for the advanced
+  usage.</li>
+<li>Run a bash session inside a Docker container</li>
+<li>Install <code>pipreqs</code> with <code>sudo pip install pipreqs</code><ul>
+<li>We install it temporary within a Docker bash session in order to introduce
+  another dependency</li>
+<li>You need to re-install <code>pipreqs</code> everytime you create a new Docker bash
+  session</li>
+</ul>
+</li>
+<li>To run for a root dir do:
+    <code>pipreqs . --savepath ./tmp.requirements.txt</code><ul>
+<li>The command above will generate <code>./tmp.requirements.txt</code> with the list of
+  the imported packages, e.g.,
+  <code>amp==1.1.4
+  async_solipsism==0.3
+  beautifulsoup4==4.11.1
+  botocore==1.24.37
+  cvxopt==1.3.0
+  cvxpy==1.2.0
+  dill==0.3.4
+  environs==9.5.0
+  ...</code></li>
+<li>You can grep for a package name to see where it is used, e.g.,
+  ```<blockquote>
+<p>jackpy "dill"
+  helpers/hpickle.py:108:       import dill
+  ...
+  ```</p>
+</blockquote>
+</li>
+</ul>
+</li>
+</ul>
+<h2 id="how-to-build-a-local-image">How to build a local image</h2>
+<ul>
+<li>The recipe to build a <code>local</code> image is in
+  <code>devops/docker_build/dev.Dockerfile</code>. This launches various scripts to
+  install:</li>
+<li>OS</li>
+<li>Python</li>
+<li>Venv + Python packages</li>
+<li>Jupyter extensions</li>
+<li>Application-specific packages (e.g., for the linter)</li>
+<li>To build a local image run:
+  ```<blockquote>
+<p>i docker_build_local_image --version 1.0.0</p>
+</blockquote>
+</li>
+</ul>
+<p># Build from scratch and not incrementally.</p>
+<blockquote>
+<p>i docker_build_local_image --version 1.0.0 --no-cache</p>
+</blockquote>
+<p># Update poetry package list.</p>
+<blockquote>
+<p>i docker_build_local_image --version 1.0.0 --update-poetry</p>
+</blockquote>
+<p># Update poetry package list and build from scratch.</p>
+<blockquote>
+<p>i docker_build_local_image --version 1.0.0 --update-poetry --no-cache</p>
+</blockquote>
+<p># See more options:</p>
+<blockquote>
+<p>i docker_build_local_image -h
+  ```</p>
+</blockquote>
+<ul>
+<li>Once an image is built, it is tagged as <code>local-${user}-${version}</code>, e.g.,
+  <code>local-saggese-1.0.0</code>
+  ```
+  Successfully tagged 665840871993.dkr.ecr.us-east-1.amazonaws.com/amp:local-gsaggese-1.0.9</li>
+</ul>
+<p>docker image ls 665840871993.dkr.ecr.us-east-1.amazonaws.com/amp:local-gsaggese-1.0.9
+  REPOSITORY                                         TAG                    IMAGE ID            CREATED                  SIZE
+  665840871993.dkr.ecr.us-east-1.amazonaws.com/amp   local-gsaggese-1.0.9   cf16e3e3d1c7        Less than a second ago   2.75GB
+  ```</p>
+<ul>
+<li>A local image is a candidate for becoming a <code>dev</code> image.
+  ```<blockquote>
+<p>i run_fast_tests --stage local --version 1.0.0
+  ```</p>
+</blockquote>
+</li>
+</ul>
+<h2 id="testing-the-local-image">Testing the local image</h2>
+<ul>
+<li>Testing the local image
+  ```<blockquote>
+<p>i docker_bash
+pip list | tee pip_packages.dev.txt</p>
+</blockquote>
+</li>
+</ul>
+<blockquote>
+<p>i docker_cmd --cmd "pip list | tee pip_packages.dev.txt"</p>
+<p>i docker_bash --stage local --version 1.0.9
+pip list | tee pip_packages.local.txt
+  ```</p>
+</blockquote>
+<ul>
+<li>Or in one command:
+  ```<blockquote>
+<p>i docker_cmd --cmd "pip list | tee pip_packages.dev.txt"; i docker_cmd --stage=local --version=1.0.9 --cmd "pip list | tee pip_packages.local.txt"</p>
+</blockquote>
+</li>
+</ul>
+<blockquote>
+<p>vimdiff pip_packages.dev.txt pip_packages.local.txt
+  ```</p>
+</blockquote>
+<ul>
+<li>You can move the local image on different servers for testing by pushing it on
+  ECR:
+  ```<blockquote>
+<p>i docker_login
+i docker push 665840871993.dkr.ecr.us-east-1.amazonaws.com/amp:local-gsaggese-1.1.0
+  ```</p>
+</blockquote>
+</li>
+</ul>
+<h2 id="pass-the-local-image-to-another-user-for-testing">Pass the local image to another user for testing</h2>
+<ul>
+<li>
+<p>Push the local image built by a user to ECR registry. For e.g., if the image
+  is built by user <code>gsaggese</code>
+  ```</p>
+<blockquote>
+<p>i docker_login
+i docker push 665840871993.dkr.ecr.us-east-1.amazonaws.com/amp:local-gsaggese-1.1.0
+  ```</p>
+</blockquote>
+</li>
+<li>
+<p>From user session who wants to test: pull the local image from ECR
+  ```</p>
+<blockquote>
+<p>i docker pull 665840871993.dkr.ecr.us-east-1.amazonaws.com/amp:local-gsaggese-1.1.0
+  ```</p>
+</blockquote>
+</li>
+<li>
+<p>Tag the local image from user <code>gsaggese</code>, who built the image, as
+  <code>local-currentuser-1.1.0</code> for user <code>currentuser</code> who wants to test it
+  ```</p>
+<blockquote>
+<p>i docker tag 665840871993.dkr.ecr.us-east-1.amazonaws.com/amp:local-gsaggese-1.1.0 665840871993.dkr.ecr.us-east-1.amazonaws.com/amp:local-currentuser-1.1.0
+  ```</p>
+</blockquote>
+</li>
+<li>
+<p>Run any kind of test using the local image. For e.g., to run fast tests
+  ```</p>
+<blockquote>
+<p>i run_fast_tests --stage local --version 1.1.0
+  ```</p>
+</blockquote>
+</li>
+<li>
+<p>Check something inside the container
+  ```</p>
+<blockquote>
+<p>i docker_bash --stage local --version 1.1.0
+  docker &gt; pip freeze | grep pandas
+  ```</p>
+</blockquote>
+</li>
+<li>After testing and making sure the regressions are green, make sure to tag the
+  image built by the initial user as <code>dev</code> and not the one tagged for the
+  <code>current-user</code></li>
+<li>This will make sure image is tagged for both <code>arm</code> and <code>x86</code> architecture on
+  the remote registries</li>
+</ul>
+<h2 id="tag-local-image-as-dev">Tag <code>local</code> image as <code>dev</code></h2>
+<ul>
+<li>Docker tag is just a way of referring to an image. A good analogy is how Git
+  tags refer to a particular commit in your history.</li>
+<li>Basically, tagging is creating a reference from one image
+  (<code>local-saggese-1.0.0</code>) to another (<code>dev</code>)</li>
+<li>Once the <code>local</code> image is tagged as <code>dev</code>, your <code>dev</code> image becomes equal to
+  <code>local-saggese-1.0.0</code></li>
+<li><code>dev</code> image is also tagged with <code>dev-${version}</code>, e.g., <code>dev-1.0.0</code> to
+  preserve history and allow for quick rollback.</li>
+<li>Locally in git repository a git tag <code>${repo_name}-${version}</code>, e.g.
+  <code>cmamp-1.0.0</code> is created in order to properly control sync between code and
+  container.</li>
+</ul>
+<h2 id="push-image">Push image</h2>
+<ul>
+<li>To push <code>dev</code> or <code>prod</code> image means to send it to the docker registry. It is
+  more like pushing a commit to the GitHub</li>
+<li>Once an image is pushed, it can be used by the team members by running
+  <code>i docker_pull</code></li>
+<li>Local git tag <code>${repo_name}-${version}</code>, e.g. <code>cmamp-1.0.0</code>, is pushed at this
+  stage to the remote repository to allow others to properly control sync
+  between code and container.</li>
+<li>To be able to push an image to the ECR one should have permissions to do so</li>
+</ul>
+<h2 id="end-to-end-flow-for-dev-image">End-to-end flow for <code>dev</code> image</h2>
+<ul>
+<li>Conceptually the flow consists of the following phases:</li>
+<li>Build a local image of docker<ul>
+<li><code>i docker_build_local_image --version 1.0.0</code></li>
+</ul>
+</li>
+<li>Run fast tests to verify that nothing is broken<ul>
+<li><code>i run_fast_tests --stage local --version 1.0.0</code></li>
+</ul>
+</li>
+<li>Run end-to-end tests by, e.g., running linter on some file<ul>
+<li><code>i lint --files helpers/tasks.py --stage local --version 1.0.0</code></li>
+</ul>
+</li>
+<li>Tag <code>local</code> image as <code>dev</code><ul>
+<li><code>i docker_tag_local_image_as_dev --version 1.0.0</code></li>
+</ul>
+</li>
+<li>Push <code>dev</code> image to the docker registry<ul>
+<li><code>i docker_push_dev_image --version 1.0.0</code></li>
+</ul>
+</li>
+<li>The mentioned flow is executed by <code>Build dev image</code> GH action and that is a
+    preferred way to do an image release.</li>
+<li>For specific cases that can not be done via GH action see commands below:
+  ```
+  # To run the official flow end-to-end:<blockquote>
+<p>i docker_release_dev_image --version 1.0.0</p>
+</blockquote>
+</li>
+</ul>
+<p># To see the options:</p>
+<blockquote>
+<p>i docker_release_dev_image -h</p>
+</blockquote>
+<p># Run from scratch and not incrementally:</p>
+<blockquote>
+<p>i docker_release_dev_image --version 1.0.0 --no-cache</p>
+</blockquote>
+<p># Force an update to poetry to pick up new packages</p>
+<blockquote>
+<p>i docker_release_dev_image --version 1.0.0 --update-poetry</p>
+</blockquote>
+<p># Skip running the QA tests</p>
+<blockquote>
+<p>i docker_release_dev_image --version 1.0.0 --no-qa-tests</p>
+</blockquote>
+<p># Skip running the tests</p>
+<blockquote>
+<p>i docker_release_dev_image --version 1.0.0 --skip-tests</p>
+</blockquote>
+<p># Skip end-to-end tests</p>
+<blockquote>
+<p>i docker_release_dev_image --version 1.0.0 --no-run-end-to-end-tests
+  ```</p>
+</blockquote>
+<h2 id="build-prod-image">Build prod image</h2>
+<ul>
+<li>The recipe to build a <code>prod</code> image is in
+  <code>dev_tools/devops/docker_build/prod.Dockerfile</code>.</li>
+<li>The main difference between <code>dev</code> image and <code>prod</code> image is that<ul>
+<li>Source code is accessed through a bind mount for <code>dev</code> image (so that it
+  can be easily modified) and copied inside the image for a <code>prod</code> image
+  (since we want to package the code)</li>
+<li>Requirements to be installed are different:</li>
+<li><code>dev</code> image requires packages to develop and run the code</li>
+<li><code>prod</code> image requires packages only to run the code</li>
+</ul>
+</li>
+<li>To build the <code>prod</code> image run:
+  ```<blockquote>
+<p>i docker_build_prod_image --version 1.0.0</p>
+</blockquote>
+</li>
+</ul>
+<p># Check the options:</p>
+<blockquote>
+<p>i docker_build_prod_image -h</p>
+</blockquote>
+<p># To build from scratch and not incrementally:</p>
+<blockquote>
+<p>i docker_build_prod_image --version 1.0.0 --no-cache
+  ```</p>
+</blockquote>
+<ul>
+<li>To run a command inside the prod image
+  ```<blockquote>
+<p>docker run --rm -t --user $(id -u):$(id -g) --workdir=/app
+  665840871993.dkr.ecr.us-east-1.amazonaws.com/cmamp:prod-1.0.3 "ls -l /app"
+  ```</p>
+</blockquote>
+</li>
+<li>Example of a complex command:
+  ```<blockquote>
+<p>docker run --rm -t --workdir=/app 665840871993.dkr.ecr.us-east-1.amazonaws.com/cmamp:prod-1.0.3 "python /app/im_v2/ccxt/data/extract/download_realtime.py --to_datetime '20211204-194432' --from_datetime '20211204-193932' --dst_dir 'test/ccxt_test' --data_type 'ohlcv' --api_keys 'API_keys.json' --universe 'v03'"
+  ```</p>
+</blockquote>
+</li>
+</ul>
+<h2 id="qa-for-prod-image">QA for prod image</h2>
+<ul>
+<li>In dev_scripts repo test:
+  ```<blockquote>
+<p>i lint --files "linters/amp_black.py"
+  ```</p>
+</blockquote>
+</li>
+<li>In amp repo make sure:
+  ```<blockquote>
+<p>i lint -f "helpers/dbg.py"
+  ```</p>
+</blockquote>
+</li>
+</ul>
+<h2 id="end-to-end-flow-for-prod-image">End-to-end flow for <code>prod</code> image</h2>
+<ol>
+<li>Build docker <code>prod</code> image</li>
+<li><code>&gt; i docker_build_prod_image --version 1.0.0</code></li>
+<li>Run all the tests to verify that nothing is broken</li>
+<li><code>&gt; i run_fast_tests --version 1.0.0 --stage prod</code></li>
+<li><code>&gt; i run_slow_tests --version 1.0.0 --stage prod</code></li>
+<li><code>&gt; i run_superslow_tests --version 1.0.0 --stage prod</code></li>
+<li><code>&gt; i run_qa_tests --version 1.0.0 --stage prod</code></li>
+<li>Push <code>prod</code> image to the docker registry</li>
+<li>
+<p><code>&gt; i docker_push_prod_image --version 1.0.0</code></p>
+</li>
+<li>
+<p>To run the flow end-to-end do:
+  ```</p>
+<blockquote>
+<p>i docker_release_prod_image --version 1.0.0
+  ```</p>
+</blockquote>
+</li>
+<li>Same options are available as for <code>i docker_release_dev_image</code></li>
+<li>Check options <code>i docker_release_prod_image -h</code></li>
+</ol>
+<h2 id="flow-for-both-dev-and-prod-images">Flow for both dev and prod images</h2>
+<ul>
+<li>To run both flows end-to-end do:</li>
+<li><code>i docker_release_all</code></li>
+<li>Alternatively, one can run the release stages step-by-step.</li>
+</ul>
+<h1 id="docker-in-docker-dind">Docker-in-docker (dind)</h1>
+<ul>
+<li>It is possible to install a Docker engine inside a Docker container so that
+  one can run Docker container (e.g., OMS or IM) inside an isolated <code>amp</code>
+  container.</li>
+<li>The problems with this approach are:</li>
+<li>Dind requires to run the external container in privileged mode, which might
+    not be possible due to security concerns</li>
+<li>The Docker / build cache is not shared across parent and children
+    containers, so one needs to pull / build an image every time the outermost
+    container is restarted</li>
+<li>An alternative approach is the "sibling container" approach</li>
+</ul>
+<h2 id="sibling-container-approach">Sibling container approach</h2>
+<ul>
+<li>Refs:</li>
+<li><a href="https://stackoverflow.com/questions/29612463/can-i-run-docker-in-docker-without-using-the-privileged-flag">Can I run Docker-in-Docker without using the --privileged flag - Stack Overflow</a></li>
+<li><a href="https://jpetazzo.github.io/2015/09/03/do-not-use-docker-in-docker-for-ci/">https://jpetazzo.github.io/2015/09/03/do-not-use-docker-in-docker-for-ci/</a></li>
+<li>Often what's really needed is the ability to build / run a container from
+  another container (e.g., CI or unit test). This can be achieved by mounting
+  the Docker socket <code>/var/run/docker.sock</code> to the container, so that a container
+  can talk to Docker Engine.</li>
+<li>This approach allows reuse of the build cache across the sibling containers.</li>
+<li>The downside is less isolation from the external container, e.g., spawned
+  containers can be left hanging or can collide.</li>
+<li>E.g.,
+  <code>``
+  # Run</code>docker ps` in a container, showing the containers running in the main
+  container<blockquote>
+<p>docker run -ti --rm \
+        -v /var/run/docker.sock:/var/run/docker.sock \
+        dindtest \
+        docker ps</p>
+</blockquote>
+</li>
+</ul>
+<p># Start a sibling hello world container:</p>
+<blockquote>
+<p>docker run -it --rm \
+        -v /var/run/docker.sock:/var/run/docker.sock \
+        dindtest \
+        docker run -ti --rm hello-world
+  ```</p>
+</blockquote>
+<h3 id="connecting-to-postgres-instance-using-sibling-containers">Connecting to Postgres instance using sibling containers</h3>
+<ul>
+<li>We can start the Docker container with Postgres as a service from outside the
+  container.
+  ```<blockquote>
+<p>(cd oms;  i oms_docker_up -s local)
+  INFO: &gt; cmd='/local/home/gsaggese/src/venv/amp.client_venv/bin/invoke oms_docker_up -s local'
+  report_memory_usage=False report_cpu_usage=False
+  docker-compose \
+  --file /local/home/gsaggese/src/sasm-lime4/amp/oms/devops/compose/docker-compose.yml \
+  --env-file /local/home/gsaggese/src/sasm-lime4/amp/oms/devops/env/local.oms_db_config.env \
+  up \
+  oms_postgres
+  Creating compose_oms_postgres_1 ... done
+  Attaching to compose_oms_postgres_1
+  oms_postgres_1  |
+  oms_postgres_1  | PostgreSQL Database directory appears to contain a database; Skipping initialization
+  oms_postgres_1  |
+  oms_postgres_1  | 2022-05-19 22:57:15.659 UTC [1] LOG:  starting PostgreSQL 13.5 (Debian 13.5-1.pgdg110+1) on x86_64-pc-linux-gnu, compiled by gcc (Debian 10.2.1-6) 10.2.1 20210110, 64-bit
+  oms_postgres_1  | 2022-05-19 22:57:15.659 UTC [1] LOG:  listening on IPv4 address "0.0.0.0", port 5432
+  oms_postgres_1  | 2022-05-19 22:57:15.659 UTC [1] LOG:  listening on IPv6 address "::", port 5432
+  oms_postgres_1  | 2022-05-19 22:57:15.663 UTC [1] LOG:  listening on Unix socket "/var/run/postgresql/.s.PGSQL.5432"
+  oms_postgres_1  | 2022-05-19 22:57:15.670 UTC [25] LOG:  database system was shut down at 2022-05-19 22:56:50 UTC
+  oms_postgres_1  | 2022-05-19 22:57:15.674 UTC [1] LOG:  database system is ready to accept connections
+  ```</p>
+</blockquote>
+</li>
+<li>Note that Postgres needs to be</li>
+<li>Start a container able to</li>
+<li>From inside a container I launch postgres through the /var/...
+  ```<blockquote>
+<p>docker ps | grep postgres
+  CONTAINER ID IMAGE COMMAND CREATED STATUS PORTS NAMES
+  83bba0818c74 postgres:13 "docker-entrypoint.s..." 6 minutes ago Up 6 minutes
+  0.0.0.0:5432-&gt;5432/tcp compose-oms_postgres-1
+  ```</p>
+</blockquote>
+</li>
+<li>Test connection to the DB from outside the container
+  ```<blockquote>
+<p>psql --host=cf-spm-dev4 --port=5432 --user aljsdalsd -d oms_postgres_db_local
+  Password for user aljsdalsd:
+  psql (9.5.25, server 13.5 (Debian 13.5-1.pgdg110+1))
+  WARNING: psql major version 9.5, server major version 13.
+          Some psql features might not work.
+  Type "help" for help.
+  oms_postgres_db_local=#
+  ```</p>
+</blockquote>
+</li>
+<li>Test connection to the DB from inside the container
+  ```<blockquote>
+<p>psql --host=cf-spm-dev4 --port=5432 --user aljsdalsd -d oms_postgres_db_local
+  ...
+  ```</p>
+</blockquote>
+</li>
+</ul>
+<h1 id="release-flow">Release flow</h1>
+<h2 id="cmamp">cmamp</h2>
+<ul>
+<li>File an Issue for the release (e.g., "Add package foobar to cmamp image")</li>
+<li>Create the corresponding branch with <code>i git_create_branch -i ${issue_number}</code></li>
+<li>Change the code</li>
+<li>Update the changelog, i.e. <code>//cmamp/changelog.txt</code></li>
+<li>Specify what was changed</li>
+<li>Pick the release version accordingly<ul>
+<li>We use <a href="https://semver.org/">semantic versioning</a> convention</li>
+<li>For example for version <code>1.2.3</code>:<ul>
+<li>1 is major, 2 is minor, 3 is patch</li>
+</ul>
+</li>
+<li>We keep <code>dev</code> and <code>prod</code> image version major and minor versions in sync
+    <code>prod</code> gets patches -&gt; i.e. we go from <code>prod-1.1.0</code> to <code>prod-1.1.1</code> upon
+    a bug fix documented in the <code>changelog.txt</code>.<ul>
+<li>In this manner, it cannot happen we have <code>dev-1.1.0</code> and <code>prod-1.2.0</code>
+  at any point in time, but <code>dev-1.1.0</code> and <code>prod-1.1.2</code> are perfectly
+  fine.</li>
+</ul>
+</li>
+</ul>
+</li>
+<li>Test the change using the local release flow
+  <code>i docker_build_local_image -v ${version}</code></li>
+<li>If a new package is added run <code>docker_build_local_image</code> with
+    <code>--update-poetry</code> option and check in a <code>poetry.lock</code> file</li>
+<li>Make sure that the tests pass <code>i run_fast_slow_tests -s local -v ${version}</code>,
+  and that the goal of the Issue is achieved (e.g., a new package is visible,
+  the package version has been updated)</li>
+<li>Do a PR with the change including the updated <code>changelog.txt</code>, the poetry
+  files (both the specs <code>devops/docker_build/poetry.toml</code> and the package
+  version <code>devops/docker_build/poetry.lock</code>)</li>
+<li>Run the release flow manually (or rely on GH Action build workflow to create
+  the new image)
+  ```
+  # Release dev image<blockquote>
+<p>i docker_release_dev_image --version $version</p>
+</blockquote>
+</li>
+</ul>
+<p># Pick up the new image from ECR</p>
+<blockquote>
+<p>i docker_pull
+  ```</p>
+</blockquote>
+<ul>
+<li>Tag and push the latest <code>dev</code> to GHCR registry manually</li>
+<li>Perform a Docker login using your GitHub username and PAT (Personal Access
+    Token):
+    <code>bash
+    &gt; docker login ghcr.io -u &lt;username&gt;</code></li>
+<li>Tag the <code>dev</code> image to the GHCR namespace:
+    <code>bash
+    &gt; docker tag 623860924167.dkr.ecr.eu-north-1.amazonaws.com/cmamp:dev ghcr.io/cryptokaizen/cmamp:dev</code></li>
+<li>
+<p>Push the tagged image to the GHCR registry:
+    <code>bash
+    &gt; docker push ghcr.io/cryptokaizen/cmamp:dev</code></p>
+</li>
+<li>
+<p>Send a message on the <code>all@</code> chat telling people that a new version of the
+  <code>XYZ</code> container has been released</p>
+</li>
+<li>Users need to do a <code>i docker_pull</code> to get the new container</li>
+<li>Users that don't update should see a message telling them that the code and
+  container are not in sync any more, e.g.,:
+  ```</li>
+</ul>
+<hr />
+<p>This code is not in sync with the container:
+  code_version='1.0.3' != container_version='amp-1.0.3'</p>
+<hr />
+<p>You need to:
+  - merge origin/master into your branch with <code>invoke git_merge_master</code>
+  - pull the latest container with <code>invoke docker_pull</code>
+  ```</p>
+<h2 id="dev_tools">dev_tools</h2>
+<ul>
+<li>File an Issue for the release</li>
+<li>Create the corresponding branch in dev_tools</li>
+<li>Change the code</li>
+<li>Run the release flow end-to-end
+  ```<blockquote>
+<p>i docker_release_dev_image --version 1.1.0
+i docker_release_prod_image --version 1.1.0
+  ```
+  TODO(Vlad): Add a command to run the push to Dockerhub and add it to the
+  single arch release flow</p>
+</blockquote>
+</li>
+<li>Push the image to Dockerhub manually</li>
+<li>Login to Dockerhub with the <code>sorrentum</code> account
+  ```<blockquote>
+<p>docker login --username=sorrentum
+  ```</p>
+</blockquote>
+</li>
+<li>Tag the dev version image as <code>sorrentum/dev_tools:dev</code>
+  ```<blockquote>
+<p>docker tag 665840871993.dkr.ecr.us-east-1.amazonaws.com/dev_tools:dev-1.1.0 sorrentum/dev_tools:dev
+  ```</p>
+</blockquote>
+</li>
+<li>Push the dev image to Dockerhub
+  ```<blockquote>
+<p>docker push sorrentum/dev_tools:dev
+  ```</p>
+</blockquote>
+</li>
+<li>Tag the prod version image as <code>sorrentum/dev_tools:prod</code>
+  ```<blockquote>
+<p>docker tag 665840871993.dkr.ecr.us-east-1.amazonaws.com/dev_tools:prod sorrentum/dev_tools:prod
+  ```</p>
+</blockquote>
+</li>
+<li>Push the prod image to Dockerhub
+  ```<blockquote>
+<p>docker push sorrentum/dev_tools:prod
+  ```</p>
+</blockquote>
+</li>
+<li>Push the latest <code>prod</code> image to GHCR registry manually for GH actions to use
+  it</li>
+<li>Perform a Docker login using your GitHub username and PAT (Personal Access
+    Token):
+    <code>bash
+    &gt; docker login ghcr.io -u &lt;username&gt;</code></li>
+<li>Tag the <code>prod</code> image to the GHCR namespace:
+    <code>bash
+    &gt; docker tag 623860924167.dkr.ecr.eu-north-1.amazonaws.com/dev_tools:prod ghcr.io/cryptokaizen/dev_tools:prod</code></li>
+<li>
+<p>Push the tagged image to the GHCR registry:
+    <code>bash
+    &gt; docker push ghcr.io/cryptokaizen/dev_tools:prod</code></p>
+</li>
+<li>
+<p>Update the changelog, i.e. <code>//dev_tools/changelog.txt</code></p>
+</li>
+<li>The changelog should be updated only after the image is released; otherwise
+    the sanity checks will assert that the release's version is not higher than
+    the latest version recorded in the changelog.</li>
+<li>Specify what has changed</li>
+<li>Pick the release version accordingly<ul>
+<li>NB! The release version should consist of 3 digits, e.g. "1.1.0" instead
+  of "1.1"</li>
+<li>We use <a href="https://semver.org/">semantic versioning</a> convention</li>
+<li>For example, adding a package to the image would mean bumping up version
+    1.0.0 to 1.0.1</li>
+</ul>
+</li>
+<li>Do a PR with the change including the updated <code>changelog.txt</code></li>
+<li>Send a message on the <code>all@</code> chat telling people that a new version of the
+  container has been released</li>
+<li>Users need to do<ul>
+<li><code>i docker_pull</code> from <code>dev_tools</code>,</li>
+<li><code>i docker_pull_dev_tools</code> from <code>cmamp</code></li>
+</ul>
+</li>
+<li>Users need to make sure to pull docker after the master is up-to-date
+    (including amp submodules)</li>
+</ul>
+<h1 id="design-release-flow-discussion">Design release flow - discussion</h1>
+<p>TODO(gp, Vitalii): Turn this into a description of the release flow</p>
+<p>Let's assume that we want to release dev image with version 1.2.3:</p>
+<pre><code>&gt; i docker_build_local_image --tag-name 1.2.3
+</code></pre>
+<p>Initially we thought about using Git tags to mark releases points in the source
+repo for <code>dev</code> and <code>prod</code> releases (but not <code>local</code> since <code>local</code> is reserved to
+private use by a user).</p>
+<p>This approach is elegant, but it has some corner cases when used with containers
+for multiple repos that contain Git submodules.</p>
+<p>We decided to use an approach where a <code>changelog.txt</code> file contains the latest
+code version</p>
+<ul>
+<li>All test tasks now also use <code>hversion.get_code_version()</code> that calls
+  <code>hgit.git_describe()</code> to get latest tag in the repo (1.0.0 in this case)</li>
+</ul>
+<p>Agree. git_describe will need to accept a dir to find the tag of the releasable
+dir</p>
+<ul>
+<li>When we are satisfied with local image, we run
+  <code>i docker_tag_local_image_as_dev</code></li>
+</ul>
+<p>We will still need to pass --version 1.0.0</p>
+<ul>
+<li>Invoke internally tags <code>local-1.0.0</code> as <code>dev-1.0.0</code>, in addition to <code>dev</code></li>
+</ul>
+<p>Both for Git tags and docker tags</p>
+<ul>
+<li>Then we run <code>i docker_push_dev_image</code></li>
+</ul>
+<p>We will still need to pass --version 1.0.0</p>
+<ul>
+<li>Invoke internally pushes both <code>dev-1.0.0</code> and <code>dev</code> images to ECR **AND**
+  pushes local 1.0.0 git tag to remote git repo (github)</li>
+</ul>
+<p><code>docker_release_dev_image</code> will do basically the same (will require tag_name).
+Of course docker_release... is just a convenience wrapper running all the stages</p>
+<p>Now let's assume we want to promote dev image to prod:</p>
+<ul>
+<li>Then we run <code>i docker_build_prod_image</code></li>
+<li>Invoke internally checks with <code>hversion.get_code_version()</code> and builds
+  <code>prod-1.0.0</code> based on <code>dev-1.0.0</code>, also tagging <code>prod-1.0.0</code> as <code>prod</code></li>
+<li>Then we run <code>i docker_push_prod_image</code></li>
+<li>Invoke pushes <code>prod-1.0.0</code> and <code>prod</code> tags to ECR</li>
+</ul>
+<p><code>docker_release_prod_image</code> will do basically the same (will require tag_name).</p>
+<p>Q0: Is the flow ok?</p>
+<ul>
+<li>Yes</li>
+</ul>
+<p>Q1: The flow is the same for <code>dev_tools</code> and <code>cmamp</code>, but to update the version
+of image on which <code>dev_tools</code> is based -- we'll need to modify Dockerfile now.
+Is that ok?</p>
+<ul>
+<li>Maybe we should just create the dev_tools from scratch using the full-blown
+  flow instead of build on top of it</li>
+<li>The idea of building on top of it, was just a shortcut but it is creating more
+  problems that what it's worth it</li>
+<li>Then everything looks and behaves the same</li>
+<li>TODO(vitalii): File a bug, if we don't have it yet</li>
+</ul>
+<p>Q2: If the flow is run in the submodule, e.g. in <code>amp</code> dir, currently the
+behaviour is not well defined. Commands will try to build <code>cmamp</code> image in this
+case, but code version will be from <code>dev_tools</code> -- should we fix this?</p>
+<ul>
+<li>We are going towards the concept of "releasable dirs" (see im, optimizer). If
+  there is a dir with devops, then that dir runs inside a container</li>
+<li>The "Git version" should be associated to the dir we are releasing (e.g.,
+  cmamp, im, optimizer, dev_tools)</li>
+</ul>
+<p>Vitalii: If we will have monorepo with releasable dirs, then indeed git tags are
+not that comfortable to use, however I could argue that when one releases <code>im</code>
+image with version 1.0.0, he gets docker image <code>im:dev-1.0.0</code> , <code>im:prod-1.0.0</code>,
+<code>im:dev</code> and <code>im:prod</code> -- but how then one is able to find corresponding code
+that was used in that image?</p>
+<p>Perhaps instead, we could share namespace of git tags between all tags.</p>
+<p>E.g. in git repo (github) we will have:</p>
+<ul>
+<li>Im-dev-1.0.0</li>
+<li>Cmamp-dev-1.0.0</li>
+<li>Im-prod-1.0.0</li>
+</ul>
+<p>GP: Point taken. In fact the code in a releasable dir still needs code from
+other submodules (e.g., helpers). One approach is to put the Git hash in
+version.txt. The one you suggest (of tagging the entire repo) with also info on
+the dir makes sense.</p>
+<p>I think the Git tags are designed to do what we want, so let's use them.</p>
+<p>Q3: We don't need version.txt file in this flow. I will remove it, ok?</p>
+<ul>
+<li>Yes, we can remove version.txt and use a README or changelog in the releasable
+  dir</li>
+</ul>
+<p>The flow is similar to what I thought.</p>
+<p>Some observations / questions:</p>
+<p>INV: version becomes mandatory in the release flow</p>
+<ul>
+<li>This requires a lot of cosmetic changes to the code since now it's optional,
+  but it's worth make the changes</li>
+</ul>
+<p>We need to ensure that version can only be created going fwd.</p>
+<p>We can do a comparison of the current version with the new version as tuples (we
+could use semver but it feels not needed)</p>
+<ul>
+<li>The workflows are:</li>
+<li>Build a local image</li>
+<li>Release a dev image</li>
+<li>Release a prod image</li>
+<li>Rollback an image<ul>
+<li>We rarely move the dev / prod tag back, but rather users needs to docker
+  pull an older image and pass --base<em>name --stage and --version to
+  docker</em>{bash, cmd, jupyter}</li>
+<li>Then the image is fixed going forward</li>
+</ul>
+</li>
+</ul>
+<p>A releasable dir has a</p>
+<ul>
+<li>Repo_config</li>
+<li>Maybe we should call it component_config since now also dirs can be released</li>
+<li>README.md or changelog.md</li>
+<li>Devops</li>
+<li>Tasks.py (with the exposed Invoke tasks)</li>
+<li>Lib_tasks.py (with the custom invoke tasks)</li>
+</ul>
+<p>We want to try to move to helpers/lib_tasks all the "common" code without
+dependencies from the specific sw components. We pass function pointers for
+callbacks.</p>
+<p>What to do with:</p>
+<pre><code>CONTAINER_VERSION='amp-1.1.1'
+BUILD_TAG='amp-1.1.1-20211114_093142-AmpTask1845_Get_docker_in_docker_to_work-47fb46513f084b8f3c9008a2e623ec05040a10e9'
+</code></pre>
+<h2 id="qa-flow">QA flow</h2>
+<ul>
+<li>The goal is to test that the container as a whole works</li>
+<li>We want to run the container as a user would do</li>
+</ul>
+<p>Usually we run tests inside a container to verify that the code is correct To
+test the container itself right now we test outside (in the thin client)</p>
+<pre><code>&gt; pytest -m qa test --image_stage dev
+</code></pre>
+<p>The problem is that now the thin client needs to have a bunch of deps (including
+pytest, pandas and so on) which defeats the purpose of the thin env</p>
+<p><code>dev_scripts_devto/client_setup/</code></p>
+<p>E.g., <code>//amp/dev_scripts/client_setup/requirements.txt</code></p>
+<p>A hack is to</p>
+<pre><code>vimdiff /Users/saggese/src/lemonade2/amp/dev_scripts/client_setup/requirements.txt dev_scripts_devto/client_setup/requirements.txt
+</code></pre>
+<pre><code>&gt; dev_scripts_devto/client_setup/build.sh
+</code></pre>
+<p>A possible solution is to use Docker-in-Docker</p>
+<ul>
+<li>In this way we don't have to pollute the thin env with a bunch of stuff</li>
+<li>Talk to Grisha and Vitalii</li>
+</ul>
+<p>This works in dev_tools because the code for the import detector is there and we
+are using a dev container which binds the src dir to the container</p>
+<pre><code>  &gt; i lint_detect_cycles --dir-name import_check/test/Test_detect_import_cycles.test1/input/ --stage dev
+</code></pre>
+<p>In all the other repos, one needs to use the prod of dev_tools container (that's
+what the user would do)</p>
+<p>Next steps:</p>
+<ul>
+<li>TODO(Sonya + Grisha): release the prod dev_toools container as it is</li>
+<li>TODO(Sonya + Grisha): document dev_tools, release procedure</li>
+<li>TODO(Sonya): pull prod dev_tools (i docker_pull_dev_tools) and test that now
+  in cmamp the tool works</li>
+<li>TODO(gp): figure out the QA workflow (and improve the thin client with dind)</li>
+<li>To break the circular dep we release a prod-candidate</li>
+</ul>
+<h1 id="dev_tools-container">Dev_tools container</h1>
+<ul>
+<li>For specific dev_tools workflows see</li>
+</ul>
+<h1 id="optimizer-container">Optimizer container</h1>
+<h2 id="rationale">Rationale</h2>
+<ul>
+<li>The high-level goal is to move towards containerized Python scripts running in
+  smaller containers instead of keep adding packages to <code>amp</code> / <code>cmamp</code>, which
+  makes the <code>amp</code> / <code>cmamp</code> container bloated and risky to build</li>
+<li>Along this design philosophy similar to microservices, we want to have a
+  Docker container, called <code>opt</code> with a Python script that uses some packages
+  that are not compatible with <code>amp</code> (specifically cvxopt, cvxpy)</li>
+<li>This is similar to what we do for the <code>dev_tools</code>, which is like a
+  containerized Python script for the linter</li>
+</ul>
+<h2 id="build-and-run-a-local-version-of-opt">Build and run a local version of <code>opt</code></h2>
+<ul>
+<li>You can build the container locally with:
+  ```<blockquote>
+<p>cd optimizer
+i opt_docker_build_local_image --version 0.1.0
+  ```</p>
+</blockquote>
+</li>
+<li>This process takes around 5 mins and then you should have the container
+  <code>docker image ls 665840871993.dkr.ecr.us-east-1.amazonaws.com/opt:local-saggese-0.1.0
+  REPOSITORY                                         TAG                   IMAGE ID       CREATED         SIZE
+  665840871993.dkr.ecr.us-east-1.amazonaws.com/opt   local-saggese-0.1.0   bb7d60d6a7d0   7 seconds ago   1.23GB</code></li>
+<li>Run the container as:
+  ```<blockquote>
+<p>i opt_docker_bash --stage local --version 0.1.0
+  ```</p>
+</blockquote>
+</li>
+<li>To run a Jupyter notebook in the <code>opt</code> container:</li>
+</ul>
+<h2 id="internals">Internals</h2>
+<h3 id="one-container-per-git-repo">One container per Git repo</h3>
+<ul>
+<li>A simple approach is to have each deployable unit (i.e., container)
+  corresponding to a Git repo</li>
+<li>
+<p>The consequence would be:</p>
+<ul>
+<li>A multiplication of repos</li>
+<li>No implicit sharing of code across different containers</li>
+<li>Some mechanism to share code (e.g., <code>helpers</code>) across repos (e.g., using
+  bind mount)</li>
+<li>Not playing nice with Git subrepo mechanism since Docker needs to see the
+  entire repo</li>
+</ul>
+</li>
+<li>
+<p>So the code would be organized in 4 repos:
+  ```</p>
+</li>
+<li>lemonade / lime<ul>
+<li>helpers</li>
+<li>optimizer</li>
+<li>oms</li>
+<li>models in amp
+  ```</li>
+</ul>
+</li>
+<li>Where the dependency between containers are<ul>
+<li>Lemonade -&gt; amp</li>
+<li>Amp -&gt; optimizer, helpers</li>
+<li>Optimizer -&gt; helpers, core</li>
+</ul>
+</li>
+</ul>
+<h3 id="multiple-containers-per-git-repo">Multiple containers per Git repo</h3>
+<ul>
+<li>Another approach is to have <code>optimizer</code> as a directory inside <code>amp</code></li>
+<li>This keeps <code>amp</code> and <code>optimizer</code> in a single repo</li>
+<li>To build / run optimizer code in its container one needs to <code>cd</code> in the dir</li>
+<li>The problem then becomes how to share <code>helpers</code></li>
+</ul>
+<h4 id="mounting-only-optimizer-dir-inside-docker">Mounting only <code>optimizer</code> dir inside Docker</h4>
+<ul>
+<li>From <code>devops/compose/docker-compose.yml</code>
+  <code>42 volumes:
+  43  # Move one dir up to include the entire git repo (see AmpTask1017).
+  44  - ../../:/app
+  45 # Move one dir down to include the entire git repo (see AmpTask1017).
+  46 working_dir: /app</code></li>
+<li>From <code>devops/docker_build/dev.Dockerfile</code></li>
+<li>ENTRYPOINT ["devops/docker_run/entrypoint.sh"]</li>
+<li>The problem is that Git repo doesn't work anymore
+  <code>git --version: git version 2.30.2
+  fatal: not a git repository (or any parent up to mount point /)
+  Stopping at filesystem boundary (GIT_DISCOVERY_ACROSS_FILESYSTEM not set).</code></li>
+<li>A work around is to inject .git in /git of the container and then point git to
+  that
+  ```
+  environment:
+  ...</li>
+<li>GIT_DIR=/git</li>
+</ul>
+<p>volumes:
+    # Move one dir up to include the entire git repo (see AmpTask1017).
+    - ../../:/app
+    - ../../../../.git:/git
+    - ../../../../amp/helpers:/app/helpers
+  ```</p>
+<ul>
+<li>Git works but it gets confused with the paths
+  <code>modified: .dockerignore
+      deleted: .github/gh_requirements.txt
+      deleted: .github/workflows/build_image.yml.DISABLED
+      deleted: .github/workflows/fast_tests.yml
+      deleted: .github/workflows/linter.yml.DISABLED
+      deleted: .github/workflows/slow_tests.yml
+      deleted: .github/workflows/superslow_tests.yml.DISABLED
+      deleted: .gitignore</code></li>
+</ul>
+<h4 id="mounting-the-supermodule-eg-lime-lemonade-amp-inside-docker">Mounting the supermodule (e.g., lime, lemonade, amp) inside Docker</h4>
+<ul>
+<li>From <code>devops/compose/docker-compose.yml</code>
+  <code>42 volumes:
+  43  # Move one dir up to include the entire git repo (see AmpTask1017).
+  44  - ../../../:/app
+  45 # Move one dir down to include the entire git repo (see AmpTask1017).
+  46 working_dir: /app/amp</code></li>
+<li>From <code>devops/docker_build/dev.Dockerfile</code></li>
+<li>ENTRYPOINT ["optimizer/devops/docker_run/entrypoint.sh"]</li>
+<li>This approach mounts 4 dirs up from devops/compose/docker-compose.yml, i.e.,
+  //lime</li>
+<li>The problem with this approach is that now repo_config.py is incorrect</li>
+<li><code>i opt_docker_build_local_image --version 0.4.0</code>
+  <code>32 - ../../../helpers:/app/amp/optimizer/helpers
+  33
+  34 # Shared cache. This is specific of lime.
+  35 - /local/home/share/cache:/cache
+  36
+  37 # Mount `amp` when it is used as submodule. In this case we need to
+  38 # mount the super project in the container (to make git work with the
+  39 # supermodule) and then change dir to `amp`.
+  40 app:
+  41  extends:
+  42    base_app
+  43 volumes:
+  44  # Move one dir up to include the entire git repo (see AmpTask1017).
+  45  - ../../../../:/app
+  46 # Move one dir down to include the entire git repo (see AmpTask1017).
+  47 working_dir: /app/amp/optimizer
+  48 #entrypoint: /bin/bash -c "ls helpers"</code></li>
+</ul>
+<h2 id="invariants">Invariants</h2>
+<ul>
+<li>A deployable dir is a dir under a Git repo</li>
+<li>It corresponds to a software component (code + library = Docker container)</li>
+<li>Anything that has a devops dir is "deployable"</li>
+<li>Each Docker container is run from its corresponding dir, e.g.,</li>
+<li>Amp container from the amp dir</li>
+<li>Amp container from the lemonade dir (this is just a shortcut since lemonade
+    has the same deps right now as amp)</li>
+<li>Always mount the outermost Git repo under <code>/app</code></li>
+<li>Set the Docker working dir as the current dir</li>
+<li>Each deployable dir specifies all the needed information in <code>repo_config.py</code>
+  (which is the one in the current dir)</li>
+<li>What container to run</li>
+<li>What functionality is supported on different servers (e.g., privileged way)</li>
+<li>The <code>changelog.txt</code> file is in the deployable dir (e.g.,
+  optimizer/changelog.txt)</li>
+<li>Each</li>
+</ul>
+<p>One run the invoke commands from optimizer dir</p>
+<p>When the Docker container starts the current dir is optimizer</p>
+<p>helpers, core is mounted in the same dir</p>
+<p>You can't see code outside optimizer</p>
+<p>TODO(gp): running in amp under lemonade should use the local repo_config</p>
+<h2 id="release-and-ecr-flow">Release and ECR flow</h2>
+<p>TODO(gp): Implement this</p>
+<h2 id="unit-testing-code-inside-opt-container">Unit testing code inside <code>opt</code> container</h2>
+<ul>
+<li>Since we want to segregate the package dependencies in different containers,
+  tests that have a dependency from cvxopt /cvxpy can't be run inside the <code>amp</code>
+  container but need to be run inside <code>opt</code>.</li>
+<li>We want to:</li>
+<li>(as always) write and run unit tests for the optimizer code in isolation,
+     i.e., test the code in the directory <code>optimizer</code> by itself</li>
+<li>Run all the tests for the entire repo (relying on both containers <code>amp</code> and
+     <code>optimizer</code> with a single command invocation)</li>
+<li>Be able to run tests belonging to only one of the containers to shorten the
+     debugging cycle</li>
+<li>To achieve this we need to solve the 3 problems below.</li>
+</ul>
+<h3 id="avoid-compiling-code-depending-from-cvxopt-when-running-amp">Avoid compiling code depending from cvxopt when running amp</h3>
+<ul>
+<li>We can't parse code (e.g., in <code>pytest</code>) that includes packages that are not
+  present in a container</li>
+<li>
+<p>E.g., <code>pytest</code> running in <code>amp</code> should not parse code in <code>//amp/optimizer</code>
+    since it contains imports that will fail</p>
+</li>
+<li>
+<p><strong>Solution 1</strong></p>
+</li>
+<li>
+<p>We use the pytest mechanism <code>cvx = pytest.importorskip("cvxpy")</code> which is
+    conceptually equivalent to:
+    ```
+    try:
+      import cvxopt
+      has_cvxopt = True
+    except ImportError:
+      has_cvxopt = False</p>
+<p>if has_cvxopt:
+        def utils1():
+                 cvxopt…
+```</p>
+</li>
+<li>
+<p><strong>Solution 2</strong></p>
+</li>
+<li>
+<p>Test in eachfile for the existence of the needed packages and enclose the
+    code in an <code>if _has_package</code></p>
+<ul>
+<li>Pros:</li>
+<li>We can skip code based dynamically on a <code>try ... except ImportModule</code> to
+    check what packages are present</li>
+<li>Cons:</li>
+<li>Repeat the same piece of <code>try ... except</code> in many places<ul>
+<li>Solution: we can factor it out in a function</li>
+</ul>
+</li>
+<li>We need to enclose the code in a <code>if ...</code> that screws up the indentation
+    and makes the code weird</li>
+</ul>
+</li>
+<li>
+<p><strong>Solution 3</strong></p>
+</li>
+<li>
+<p>Exclude certain directories (e.g., <code>//amp/optimizer</code>) from <code>pytest</code></p>
+<ul>
+<li>Pros:</li>
+<li>We don't have to spread the <code>try ... except</code> and <code>if \_has_package</code> in
+    the code</li>
+<li>Cons:</li>
+<li>The directory is relative to the top directory<ul>
+<li>Solution: we can use a regex to specify the dir without the full path</li>
+</ul>
+</li>
+<li>Which directories are included and excluded depends on where <code>pytest</code> is
+    run<ul>
+<li>E.g., running <code>pytest</code> in an <code>amp</code> container we need to skip the
+  <code>optimizer</code> dir, while <code>pytest</code> in an <code>optimizer</code> container should
+  skip everything but the <code>optimizer</code> dir</li>
+</ul>
+</li>
+</ul>
+</li>
+<li>
+<p><strong>Solution 4</strong></p>
+</li>
+<li>Exclude certain directories or files based on which container we are running
+    in<ul>
+<li>Cons:</li>
+<li>We need to have a way to determine in which container we are running<ul>
+<li>Solution: we can use the env vars we use for versioning
+```<blockquote>
+<p>echo $AM_CONTAINER_VERSION
+amp-1.0.3-
+```</p>
+</blockquote>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+<li>Given the pros and cons, we decided to follow Solution 1 and Solution 3</li>
+</ul>
+<h3 id="run-optimizer-tests-in-a-stand-alone-opt-container">Run optimizer tests in a stand-alone <code>opt</code> container</h3>
+<ul>
+<li>To run the optimizer tests, you can create an <code>opt</code> container and then run
+  <code>pytest</code>
+  ```<blockquote>
+<p>cd optimizer
+i opt_docker_bash
+  docker&gt; pytest .
+  ```</p>
+</blockquote>
+</li>
+<li>We wrap this in an invoke target like <code>i opt_run_fast_tests</code></li>
+</ul>
+<p><strong>Alternative solution</strong></p>
+<ul>
+<li>We can use dind to run the <code>opt</code> container inside a <code>cmamp</code> one</li>
+<li>Cons:<ul>
+<li>Dind complicates the system</li>
+<li>Dind is not supported everywhere (one needs privileged containers)</li>
+<li>Dind is slower since there are 2 levels of (relatively fast)
+  virtualization</li>
+</ul>
+</li>
+</ul>
+<h3 id="run-optimizer-tests-as-part-of-running-unit-tests-for-cmamp">Run optimizer tests as part of running unit tests for <code>cmamp</code></h3>
+<ul>
+<li>We use the same mechanism as <code>run_fast_slow_superslow_tests</code> to pull together
+  different test lists</li>
+</ul>
+<h2 id="call-a-dockerized-executable-from-a-container">Call a Dockerized executable from a container</h2>
+<ul>
+<li>From
+  <a href="https://github.com/cryptokaizen/cmamp/issues/1357">https://github.com/cryptokaizen/cmamp/issues/1357</a></li>
+<li>
+<p>We need to call something from <code>amp</code> to <code>opt</code> Docker</p>
+</li>
+<li>
+<p><strong>Solution 1</strong></p>
+</li>
+<li>
+<p>Inside the code we build the command line
+    <code>cmd = 'docker run -it ... '; system(cmd)</code></p>
+<ul>
+<li>Cons:</li>
+<li>There is code replicated between here and the invoke task (e.g., the
+    info about the container, ...)</li>
+</ul>
+</li>
+<li>
+<p><strong>Solution 2</strong></p>
+</li>
+<li>
+<p>Call the Dockerized executable using the <code>docker_cmd</code> invoke target
+    <code>cmd = "invoke opt_docker_cmd -cmd '...'"
+    system(cmd)</code></p>
+<ul>
+<li>Pros:</li>
+<li>All the Docker commands go through the same interface inside invoke</li>
+<li>Cons</li>
+<li>Bash interpolation in the command</li>
+<li>Another level of indirection: do a system call to call <code>invoke</code>,
+    <code>invoke</code> calls docker, docker does the work</li>
+<li><code>invoke</code> needs to be installed inside the calling container</li>
+</ul>
+</li>
+<li>
+<p><strong>Solution 3</strong></p>
+</li>
+<li>
+<p>Call opt_lib_tasks.py <code>opt_docker_cmd(cmd, ...)</code></p>
+<ul>
+<li>Pros</li>
+<li>Avoid doing a call to invoke</li>
+<li>Can deal with bash interpolation in Python</li>
+</ul>
+</li>
+<li>
+<p>We should always use Solution 3, although in the code sometimes we use
+  Solution 1 and 2 (but we should replace in favor of Solution 3).</p>
+</li>
+</ul>
+<h2 id="_1"></h2>
+<ul>
+<li>The interface to the Dockerized optimizer is in <code>run_optimizer</code> in
+  <code>//amp/oms/call_optimizer.py</code></li>
+<li>To run the examples
+  ```<blockquote>
+<p>cd //lime
+i docker_bash
+pytest ./amp/oms/test/test_call_optimizer.py::Test_run_dockerized_optimizer1
+  ```</p>
+</blockquote>
+</li>
+</ul>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    <script id="__config" type="application/json">{"base": "..", "features": [], "search": "../assets/javascripts/workers/search.07f07601.min.js", "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}}</script>
+    
+    
+      <script src="../assets/javascripts/bundle.56dfad97.min.js"></script>
+      
+    
+  </body>
+</html>

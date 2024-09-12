@@ -1,0 +1,5077 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+      
+      
+      
+        <link rel="prev" href="all.type_hints.how_to_guide.html">
+      
+      
+        <link rel="next" href="../dataflow/all.batch_and_streaming_mode_using_tiling.explanation.html">
+      
+      
+      <link rel="icon" href="../mkdocs/assets/favicon.ico">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.5.34">
+    
+    
+      
+        <title>Write Unit Tests - KaizenAI Documentation</title>
+      
+    
+    
+      <link rel="stylesheet" href="../assets/stylesheets/main.35f28582.min.css">
+      
+        
+        <link rel="stylesheet" href="../assets/stylesheets/palette.06af60db.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+      <link rel="stylesheet" href="../mkdocs/styles/styles.css">
+    
+    <script>__md_scope=new URL("..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+    
+  </head>
+  
+  
+    
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="black" data-md-color-accent="cyan">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#write-unit-tests" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+  
+
+<header class="md-header md-header--shadow" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href="../index.html" title="KaizenAI Documentation" class="md-header__button md-logo" aria-label="KaizenAI Documentation" data-md-component="logo">
+      
+  <img src="../mkdocs/assets/logo.png" alt="logo">
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            KaizenAI Documentation
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Write Unit Tests
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+    
+    
+    
+    
+      <label class="md-header__button md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+      </label>
+      <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+    
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+
+<nav class="md-nav md-nav--primary" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="../index.html" title="KaizenAI Documentation" class="md-nav__button md-logo" aria-label="KaizenAI Documentation" data-md-component="logo">
+      
+  <img src="../mkdocs/assets/logo.png" alt="logo">
+
+    </a>
+    KaizenAI Documentation
+  </label>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../index.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Kaizen Technologies internal documentation
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../all.code_organization.reference.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Code Organization
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../all.documentation_meta.reference.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Documentation Meta
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../all.software_components.reference.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Software Components
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../all.workflow.explanation.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Workflow
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../meta.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Files
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_7" >
+        
+          
+          <label class="md-nav__link" for="__nav_7" id="__nav_7_label" tabindex="0">
+            
+  
+  <span class="md-ellipsis">
+    Build
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_7_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_7">
+            <span class="md-nav__icon md-icon"></span>
+            Build
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../build/all.linter_gh_workflow.explanation.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Linter Gh Workflow
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../build/all.pytest_allure.explanation.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Pytest Allure
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../build/all.pytest_allure.how_to_guide.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Pytest Allure
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../build/all.semgrep_workflow.explanation.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Semgrep Integration in GitHub Actions
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_8" checked>
+        
+          
+          <label class="md-nav__link" for="__nav_8" id="__nav_8_label" tabindex="0">
+            
+  
+  <span class="md-ellipsis">
+    Coding
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_8_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_8">
+            <span class="md-nav__icon md-icon"></span>
+            Coding
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="all.asyncio.explanation.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Asyncio Best Practices
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="all.code_design.how_to_guide.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Code Design
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="all.code_like_pragmatic_programmer.how_to_guide.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Code Like Pragmatic Programmer
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="all.code_review.how_to_guide.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Code Review
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="all.coding_style.how_to_guide.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Coding Style
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="all.gsheet_into_pandas.how_to_guide.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Gsheet Into Pandas
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="all.hcache.explanation.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Cache
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="all.hplayback.how_to_guide.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Playback
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="all.imports_and_packages.how_to_guide.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Imports And Packages
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="all.integrate_repos.how_to_guide.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Integrate Repos
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="all.jupyter_notebook.how_to_guide.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Jupyter Notebook
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="all.plotting.how_to_guide.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Best practices for writing plotting functions
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="all.profiling.how_to_guide.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Profiling
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="all.publish_notebook.how_to_guide.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Publishing a notebook
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="all.qgrid.how_to_guide.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Qgrid
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="all.reading_other_people_code.how_to_guide.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Reading Other People Code
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="all.run_jupyter_notebook.how_to_guide.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Run Jupyter notebook
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="all.run_unit_tests.how_to_guide.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Run Unit Tests
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="all.str_to_df.how_to_guide.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Converting a string into a Pandas df
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="all.submit_code_for_review.how_to_guide.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    First Review Process
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="all.type_hints.how_to_guide.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Type Hints
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  <span class="md-ellipsis">
+    Write Unit Tests
+  </span>
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="all.write_unit_tests.how_to_guide.html" class="md-nav__link md-nav__link--active">
+        
+  
+  <span class="md-ellipsis">
+    Write Unit Tests
+  </span>
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#guidelines-about-writing-unit-tests" class="md-nav__link">
+    <span class="md-ellipsis">
+      Guidelines about writing unit tests
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Guidelines about writing unit tests">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#what-is-a-unit-test" class="md-nav__link">
+    <span class="md-ellipsis">
+      What is a unit test?
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#why-is-unit-testing-important" class="md-nav__link">
+    <span class="md-ellipsis">
+      Why is unit testing important?
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#the-pragmatic-programming-and-unit-testing" class="md-nav__link">
+    <span class="md-ellipsis">
+      The Pragmatic Programming and unit testing
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#unit-testing-tips" class="md-nav__link">
+    <span class="md-ellipsis">
+      Unit testing tips
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Unit testing tips">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#test-one-thing" class="md-nav__link">
+    <span class="md-ellipsis">
+      Test one thing
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#keep-tests-self-contained" class="md-nav__link">
+    <span class="md-ellipsis">
+      Keep tests self-contained
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#only-specify-data-related-to-what-is-being-tested" class="md-nav__link">
+    <span class="md-ellipsis">
+      Only specify data related to what is being tested
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#test-realistic-corner-cases" class="md-nav__link">
+    <span class="md-ellipsis">
+      Test realistic corner cases
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#test-a-typical-scenario" class="md-nav__link">
+    <span class="md-ellipsis">
+      Test a typical scenario
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#test-executable-scripts-end-to-end" class="md-nav__link">
+    <span class="md-ellipsis">
+      Test executable scripts end-to-end
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#conventions" class="md-nav__link">
+    <span class="md-ellipsis">
+      Conventions
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Conventions">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#naming-and-placement-conventions" class="md-nav__link">
+    <span class="md-ellipsis">
+      Naming and placement conventions
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#keep-testing-code-in-sync-with-tested-code" class="md-nav__link">
+    <span class="md-ellipsis">
+      Keep testing code in sync with tested code
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#test-code-is-not-second-class-citizen" class="md-nav__link">
+    <span class="md-ellipsis">
+      Test code is not second-class citizen
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#testing-code-layout" class="md-nav__link">
+    <span class="md-ellipsis">
+      Testing code layout
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#our-framework-to-test-using-input-output-data" class="md-nav__link">
+    <span class="md-ellipsis">
+      Our framework to test using input / output data
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#use-text-and-not-pickle-files-as-inputoutputs" class="md-nav__link">
+    <span class="md-ellipsis">
+      Use text and not pickle files as input/outputs
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#small-testing-data-is-best" class="md-nav__link">
+    <span class="md-ellipsis">
+      Small testing data is best
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#check_string-vs-selfassertequal" class="md-nav__link">
+    <span class="md-ellipsis">
+      check_string vs self.assertEqual
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#use-selfassert_equal" class="md-nav__link">
+    <span class="md-ellipsis">
+      Use self.assert_equal()
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#how-to-split-unit-test-code-in-files" class="md-nav__link">
+    <span class="md-ellipsis">
+      How to split unit test code in files
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#skeleton-for-unit-test" class="md-nav__link">
+    <span class="md-ellipsis">
+      Skeleton for unit test
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#hierarchical-testcase-approach" class="md-nav__link">
+    <span class="md-ellipsis">
+      Hierarchical TestCase approach
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#use-the-appropriate-selfassert" class="md-nav__link">
+    <span class="md-ellipsis">
+      Use the appropriate self.assert*
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#do-not-use-hdbgdassert-in-testing" class="md-nav__link">
+    <span class="md-ellipsis">
+      Do not use hdbg.dassert in testing
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#always-explain-selfassertraises" class="md-nav__link">
+    <span class="md-ellipsis">
+      Always explain self.assertRaises
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#interesting-testing-functions" class="md-nav__link">
+    <span class="md-ellipsis">
+      Interesting testing functions
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#use-set_up_test-tear_down_test" class="md-nav__link">
+    <span class="md-ellipsis">
+      Use set_up_test / tear_down_test
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_9" >
+        
+          
+          <label class="md-nav__link" for="__nav_9" id="__nav_9_label" tabindex="0">
+            
+  
+  <span class="md-ellipsis">
+    Dataflow
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_9_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_9">
+            <span class="md-nav__icon md-icon"></span>
+            Dataflow
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../dataflow/all.batch_and_streaming_mode_using_tiling.explanation.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Batch And Streaming Mode Using Tiling
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../dataflow/all.best_practice_for_building_dags.explanation.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Best Practice For Building Dags
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../dataflow/all.computation_as_graphs.explanation.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Computation As Graphs
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../dataflow/all.dag.explanation.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Debug information
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../dataflow/all.dataflow.explanation.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    DataFlow
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../dataflow/all.dataflow_data_format.explanation.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    DataFlow Data Format
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../dataflow/all.simulation_output.reference.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    All.simulation output.reference
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../dataflow/all.time_series.explanation.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Time series
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../dataflow/all.timing_semantic_and_clocks.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Timing Semantic And Clocks
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../dataflow/all.train_and_predict_phases.explanation.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Phases of evaluation of Dag
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_10" >
+        
+          
+          <label class="md-nav__link" for="__nav_10" id="__nav_10_label" tabindex="0">
+            
+  
+  <span class="md-ellipsis">
+    Datapull
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_10_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_10">
+            <span class="md-nav__icon md-icon"></span>
+            Datapull
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../datapull/all.data_schema.explanation.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Data Schema
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../datapull/all.datapull_client_stack.explanation.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Data client stack
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../datapull/all.datapull_derived_data.explanation.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Derived data workflows
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../datapull/all.datapull_qa_flow.explanation.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Data QA workflows
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../datapull/all.datapull_sandbox.explanation.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    DataPull sandbox
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../datapull/all.dataset_onboarding_checklist.reference.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Dataset onboarding checklist
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../datapull/all.update_CCXT_version.how_to_guide.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Update Ccxt Version
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_11" >
+        
+          
+          <label class="md-nav__link" for="__nav_11" id="__nav_11_label" tabindex="0">
+            
+  
+  <span class="md-ellipsis">
+    Dev tools
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_11_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_11">
+            <span class="md-nav__icon md-icon"></span>
+            Dev tools
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_11_1" >
+        
+          
+          <label class="md-nav__link" for="__nav_11_1" id="__nav_11_1_label" tabindex="0">
+            
+  
+  <span class="md-ellipsis">
+    Thin env
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_11_1_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_11_1">
+            <span class="md-nav__icon md-icon"></span>
+            Thin env
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../dev_tools/thin_env/all.gh_and_thin_env_requirements.reference.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Required Packages for the thin environment and GH Actions
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../dev_tools/thin_env/all.gh_thin_env_dependencies.how_to_guide.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    All.gh thin env dependencies.how to guide
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_12" >
+        
+          
+          <label class="md-nav__link" for="__nav_12" id="__nav_12_label" tabindex="0">
+            
+  
+  <span class="md-ellipsis">
+    Documentation meta
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_12_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_12">
+            <span class="md-nav__icon md-icon"></span>
+            Documentation meta
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../documentation_meta/all.architecture_diagrams.explanation.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Architecture Diagrams
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../documentation_meta/all.diataxis.explanation.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Diataxis
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../documentation_meta/all.gdocs.how_to_guide.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    All.gdocs.how to guide
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../documentation_meta/all.google_technical_writing.how_to_guide.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Google Technical Writing
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../documentation_meta/all.writing_docs.how_to_guide.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Writing Docs
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../documentation_meta/plotting_in_latex.how_to_guide.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Plotting in latex.how to guide
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_13" >
+        
+          
+          <label class="md-nav__link" for="__nav_13" id="__nav_13_label" tabindex="0">
+            
+  
+  <span class="md-ellipsis">
+    General background
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_13_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_13">
+            <span class="md-nav__icon md-icon"></span>
+            General background
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../general_background/all.common_abbreviations.reference.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Common abbreviations
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../general_background/all.glossary.reference.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Glossary
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../general_background/all.literature_review.reference.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Literature Review
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../general_background/all.reading_list.reference.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Reading List
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_14" >
+        
+          
+          <label class="md-nav__link" for="__nav_14" id="__nav_14_label" tabindex="0">
+            
+  
+  <span class="md-ellipsis">
+    Infra
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_14_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_14">
+            <span class="md-nav__icon md-icon"></span>
+            Infra
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../infra/all.auto_scaling.explanation.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Auto Scaling Explanation
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../infra/all.aws_iam_configuration.explanation.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    AWS IAM Configuration Best Practices Guide
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../infra/all.aws_scripts.reference.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Python Scripts Guide
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../infra/all.infrastructure_glossary.explanation.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Infrastructure Glossary
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../infra/all.infrastructure_update_rollout.how_to_guide.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Standardized Update Rollout Checklist
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../infra/all.rds.comparison.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Comparison of AWS RDS Instance Types and Storage Performance
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_15" >
+        
+          
+          <label class="md-nav__link" for="__nav_15" id="__nav_15_label" tabindex="0">
+            
+  
+  <span class="md-ellipsis">
+    Kaizenflow
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_15_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_15">
+            <span class="md-nav__icon md-icon"></span>
+            Kaizenflow
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../kaizenflow/all.dev_scripts_catalogue.reference.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Dev Scripts Catalogue
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../kaizenflow/all.devops_code_organization.reference.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    All.devops code organization.reference
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../kaizenflow/all.install_helpers.how_to_guide.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Install Helpers
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../kaizenflow/all.run_Mock2_in_batch_mode.how_to_guide.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Run Mock2 In Batch Mode
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../kaizenflow/all.run_end_to_end_Mock2_system.tutorial.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Run End To End Mock2 System
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_16" >
+        
+          
+          <label class="md-nav__link" for="__nav_16" id="__nav_16_label" tabindex="0">
+            
+  
+  <span class="md-ellipsis">
+    Onboarding
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_16_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_16">
+            <span class="md-nav__icon md-icon"></span>
+            Onboarding
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../onboarding/admin.onboarding_process.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    On-boarding Process
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../onboarding/all.communicate_in_telegram.how_to_guide.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Communicate In Telegram
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../onboarding/all.development_documents.reference.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Development Documents
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../onboarding/all.onboarding_checklist.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Onboarding Checklist
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../onboarding/all.organize_email.how_to_guide.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Organize Email
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../onboarding/all.receive_crypto_payment.how_to_guide.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Receive Crypto Payment
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../onboarding/all.track_time_with_hubstaff.how_to_guide.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Track Time With Hubstaff
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../onboarding/kaizenflow.hiring_meister.how_to_guide.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    General
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../onboarding/kaizenflow.set_up_development_environment.how_to_guide.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Set up KaizenFlow development environment
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../onboarding/kaizenflow.signing_up.how_to_guide.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Signing up to the project
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_17" >
+        
+          
+          <label class="md-nav__link" for="__nav_17" id="__nav_17_label" tabindex="0">
+            
+  
+  <span class="md-ellipsis">
+    Trading ops
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_17_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_17">
+            <span class="md-nav__icon md-icon"></span>
+            Trading ops
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../trading_ops/all.how_to_name_objects.explanation.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    How to name objects
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../trading_ops/all.scheduled_monitoring.explanation.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Scheduled trading monitoring
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../trading_ops/all.scheduled_trading.explanation.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Publishing Experiment Reports
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../trading_ops/all.shadow_monitoring.explanation.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Shadow trading monitoring
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../trading_ops/all.trading_run_summary_sheet.explanation.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Trading Run Summary Sheet
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_18" >
+        
+          
+          <label class="md-nav__link" for="__nav_18" id="__nav_18_label" tabindex="0">
+            
+  
+  <span class="md-ellipsis">
+    Work organization
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_18_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_18">
+            <span class="md-nav__icon md-icon"></span>
+            Work organization
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../work_organization/Hiring_process.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    HiringMeister
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../work_organization/all.buildmeister.how_to_guide.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Buildmeister
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../work_organization/all.contributor_scoring.how_to_guide.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Contributor Scoring
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../work_organization/all.datapull_DAGmeister.how_to_guide.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Datapull Dagmeister
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../work_organization/all.epicmeister.how_to_guide.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Epicmeister
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../work_organization/all.rollout.how_to_guide.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Rollout
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../work_organization/all.scrum.explanation.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Scrum
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../work_organization/all.team_collaboration.how_to_guide.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Team Collaboration
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../work_organization/all.use_github_and_zenhub.how_to_guide.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Use Github And Zenhub
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../work_organization/kaizenflow.organize_your_work.how_to_guide.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Golden rules
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_19" >
+        
+          
+          <label class="md-nav__link" for="__nav_19" id="__nav_19_label" tabindex="0">
+            
+  
+  <span class="md-ellipsis">
+    Work tools
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_19_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_19">
+            <span class="md-nav__icon md-icon"></span>
+            Work tools
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../work_tools/all.add_toc_to_notebook.how_to_guide.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Adding a table of contents to a notebook
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../work_tools/all.bfg_repo_cleaner.how_to_guide.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    BFG Repo-Cleaner
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../work_tools/all.chatgpt_api.how_to_guide.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Chatgpt Api
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../work_tools/all.codebase_clean_up.how_to_guide.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Codebase Clean Up
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../work_tools/all.conda_environment_obsolete.how_to_guide.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Conda Environment Obsolete
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../work_tools/all.development.how_to_guide.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Development
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../work_tools/all.dind_and_sibling_containers.how_to_guide.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Docker-in-docker (dind)
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../work_tools/all.docker.how_to_guide.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Docker
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../work_tools/all.docker.tutorial.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Docker
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../work_tools/all.docker_dev_tools_container.how_to_guide.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Dev tools container
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../work_tools/all.docker_optimizer_container.how_to_guide.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Optimizer container
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../work_tools/all.dockerhub.how_to_guide.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Dockerhub
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../work_tools/all.gh_and_thin_env_requirements.reference.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Required Packages for the thin environment and GH Actions
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../work_tools/all.gh_thin_env_dependencies.how_to_guide.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Thin environment dependencies
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../work_tools/all.git.how_to_guide.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Git
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../work_tools/all.invoke_workflows.how_to_guide.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Invoke Workflows
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../work_tools/all.jupytext.how_to_guide.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Jupytext
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../work_tools/all.latex_toolchain.how_to_guide.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Latex Toolchain
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../work_tools/all.parquet.explanation.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Pyarrow Parquet management
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../work_tools/all.pycharm.how_to_guide.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Pycharm
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../work_tools/all.python_package_upgrade_and_troubleshooting.how_to_guide.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Python package upgrade &amp; troubleshooting
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../work_tools/all.ssh.how_to_guide.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Ssh
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../work_tools/all.telegram_notify_bot.how_to_guide.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    telegram-notify
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../work_tools/all.visual_studio_code.how_to_guide.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Visual Studio Code
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#guidelines-about-writing-unit-tests" class="md-nav__link">
+    <span class="md-ellipsis">
+      Guidelines about writing unit tests
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Guidelines about writing unit tests">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#what-is-a-unit-test" class="md-nav__link">
+    <span class="md-ellipsis">
+      What is a unit test?
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#why-is-unit-testing-important" class="md-nav__link">
+    <span class="md-ellipsis">
+      Why is unit testing important?
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#the-pragmatic-programming-and-unit-testing" class="md-nav__link">
+    <span class="md-ellipsis">
+      The Pragmatic Programming and unit testing
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#unit-testing-tips" class="md-nav__link">
+    <span class="md-ellipsis">
+      Unit testing tips
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Unit testing tips">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#test-one-thing" class="md-nav__link">
+    <span class="md-ellipsis">
+      Test one thing
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#keep-tests-self-contained" class="md-nav__link">
+    <span class="md-ellipsis">
+      Keep tests self-contained
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#only-specify-data-related-to-what-is-being-tested" class="md-nav__link">
+    <span class="md-ellipsis">
+      Only specify data related to what is being tested
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#test-realistic-corner-cases" class="md-nav__link">
+    <span class="md-ellipsis">
+      Test realistic corner cases
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#test-a-typical-scenario" class="md-nav__link">
+    <span class="md-ellipsis">
+      Test a typical scenario
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#test-executable-scripts-end-to-end" class="md-nav__link">
+    <span class="md-ellipsis">
+      Test executable scripts end-to-end
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#conventions" class="md-nav__link">
+    <span class="md-ellipsis">
+      Conventions
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Conventions">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#naming-and-placement-conventions" class="md-nav__link">
+    <span class="md-ellipsis">
+      Naming and placement conventions
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#keep-testing-code-in-sync-with-tested-code" class="md-nav__link">
+    <span class="md-ellipsis">
+      Keep testing code in sync with tested code
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#test-code-is-not-second-class-citizen" class="md-nav__link">
+    <span class="md-ellipsis">
+      Test code is not second-class citizen
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#testing-code-layout" class="md-nav__link">
+    <span class="md-ellipsis">
+      Testing code layout
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#our-framework-to-test-using-input-output-data" class="md-nav__link">
+    <span class="md-ellipsis">
+      Our framework to test using input / output data
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#use-text-and-not-pickle-files-as-inputoutputs" class="md-nav__link">
+    <span class="md-ellipsis">
+      Use text and not pickle files as input/outputs
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#small-testing-data-is-best" class="md-nav__link">
+    <span class="md-ellipsis">
+      Small testing data is best
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#check_string-vs-selfassertequal" class="md-nav__link">
+    <span class="md-ellipsis">
+      check_string vs self.assertEqual
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#use-selfassert_equal" class="md-nav__link">
+    <span class="md-ellipsis">
+      Use self.assert_equal()
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#how-to-split-unit-test-code-in-files" class="md-nav__link">
+    <span class="md-ellipsis">
+      How to split unit test code in files
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#skeleton-for-unit-test" class="md-nav__link">
+    <span class="md-ellipsis">
+      Skeleton for unit test
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#hierarchical-testcase-approach" class="md-nav__link">
+    <span class="md-ellipsis">
+      Hierarchical TestCase approach
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#use-the-appropriate-selfassert" class="md-nav__link">
+    <span class="md-ellipsis">
+      Use the appropriate self.assert*
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#do-not-use-hdbgdassert-in-testing" class="md-nav__link">
+    <span class="md-ellipsis">
+      Do not use hdbg.dassert in testing
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#always-explain-selfassertraises" class="md-nav__link">
+    <span class="md-ellipsis">
+      Always explain self.assertRaises
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#interesting-testing-functions" class="md-nav__link">
+    <span class="md-ellipsis">
+      Interesting testing functions
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#use-set_up_test-tear_down_test" class="md-nav__link">
+    <span class="md-ellipsis">
+      Use set_up_test / tear_down_test
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+<h1 id="write-unit-tests">Write Unit Tests</h1>
+<h2 id="guidelines-about-writing-unit-tests">Guidelines about writing unit tests</h2>
+<h3 id="what-is-a-unit-test">What is a unit test?</h3>
+<ul>
+<li>A unit test is a small, self-contained test of a (public) function or method
+  of a library</li>
+<li>The test specifies the given inputs, any necessary state, and the expected
+  output</li>
+<li>Running the test ensures that the actual output agrees with the expected
+  output</li>
+</ul>
+<h3 id="why-is-unit-testing-important">Why is unit testing important?</h3>
+<ul>
+<li>Good unit testing improves software quality by:</li>
+<li>Eliminating bugs (obvious)</li>
+<li>Clarifying code design and interfaces ("Design to Test")</li>
+<li>Making refactoring safer and easier ("Refactor Early, Refactor Often")</li>
+<li>Documenting expected behavior and usage</li>
+</ul>
+<h3 id="the-pragmatic-programming-and-unit-testing">The Pragmatic Programming and unit testing</h3>
+<ul>
+<li>
+<p>Unit testing is an integral part of
+  <a href="https://pragprog.com/titles/tpp20/the-pragmatic-programmer-20th-anniversary-edition/">The Pragmatic Programming</a>
+  approach</p>
+</li>
+<li>
+<p>Some of the tips that relate to unit testing are:</p>
+</li>
+<li>Design with Contracts</li>
+<li>Refactor Early, Refactor Often</li>
+<li>Test Your Software, or Your Users Will</li>
+<li>Coding Ain't Done Till All the Tests Run</li>
+<li>Test State Coverage, Not Code Coverage</li>
+<li>You Can't Write Perfect Software</li>
+<li>Crash Early</li>
+<li>Design to Test</li>
+<li>Test Early. Test Often. Test Automatically.</li>
+<li>Use Saboteurs to Test Your Testing</li>
+<li>Find Bugs Once</li>
+</ul>
+<h3 id="unit-testing-tips">Unit testing tips</h3>
+<h4 id="test-one-thing">Test one thing</h4>
+<ul>
+<li>A good unit test tests only one thing</li>
+<li>Testing one thing keeps the unit test simple, relatively easy to understand,
+  and helps isolate the root cause when the test fails</li>
+<li>How do you test more than one thing? By having more than one unit test!</li>
+</ul>
+<h4 id="keep-tests-self-contained">Keep tests self-contained</h4>
+<ul>
+<li>A unit test should be independent of all other unit tests</li>
+<li>Each test should be self-sufficient</li>
+<li>One should never assume that unit tests will be executed in a particular order</li>
+<li>A corollary of keeping tests self-contained is to keep all information needed
+  to understand the test within the test itself</li>
+<li>Specify the data explicitly in the test where it is used</li>
+<li>This makes the test easier to understand and easier to debug when it fails</li>
+<li>If multiple unit tests use or can use the same initialization data, do not
+    hesitate repeating it in each test (or consider using parameterized testing)</li>
+</ul>
+<h4 id="only-specify-data-related-to-what-is-being-tested">Only specify data related to what is being tested</h4>
+<ul>
+<li>Specify the minimum of what is required to test what is being tested</li>
+<li>E.g., if a function that is being tested supports optional arguments, but
+  those optional arguments are not needed for a particular unit test, then do
+  not specify them in the test</li>
+</ul>
+<h4 id="test-realistic-corner-cases">Test realistic corner cases</h4>
+<ul>
+<li>Can the function receive an empty list?</li>
+<li>Can it return an empty Series?</li>
+<li>What happens if it receives a numerical value outside of an expected range?</li>
+<li>How should the function behave in those cases? Should it crash? Should it
+    return a reasonable default value?</li>
+<li>Expect these questions to come up in practice and think through what the
+  appropriate behavior should be. Then, test for it.</li>
+</ul>
+<h4 id="test-a-typical-scenario">Test a typical scenario</h4>
+<ul>
+<li>In ensuring that corner cases are covered, do not overlook testing basic
+  functionality for typical cases</li>
+<li>This is useful for verifying current behavior and to support refactoring.</li>
+</ul>
+<h4 id="test-executable-scripts-end-to-end">Test executable scripts end-to-end</h4>
+<ul>
+<li>In some cases, like scripts, it is easy to get lost chasing the coverage %</li>
+<li>E.g., covering every line of the original, including the parser</li>
+<li>This is not always necessary</li>
+<li>If you can run a script with all arguments present, it means that the parser
+    works correctly</li>
+<li>So an end-to-end smoke test will also cover the parser</li>
+<li>This saves a little time and reduces the bloat</li>
+<li>If you need to test the functionality, consider factoring out as much code as
+  possible from <code>_main()</code></li>
+<li>A good practice is to have a <code>_run()</code> function that does all the job and
+    <code>_main()</code> only brings together the parser and the executable part</li>
+</ul>
+<h3 id="conventions">Conventions</h3>
+<h4 id="naming-and-placement-conventions">Naming and placement conventions</h4>
+<ul>
+<li>
+<p>We follow conventions that happen to be mostly the default to <code>pytest</code></p>
+</li>
+<li>
+<p>A directory <code>test</code> contains all the test code and artifacts</p>
+</li>
+<li>The <code>test</code> directory contains all the <code>test_*.py</code> files and all inputs and
+    outputs for the tests.</li>
+<li>
+<p>A unit test file should be close to the library / code it tests</p>
+</li>
+<li>
+<p>The test class should make clear reference to the code that is tested</p>
+</li>
+<li>To test a class <code>FooBar</code>, the corresponding test class is named
+    <code>TestFooBar</code>, i.e. we use the CamelCase for the test classes</li>
+<li>To test a function <code>generate_html_tables()</code>, the corresponding test class is
+    named <code>Test_generate_html_tables</code></li>
+<li>To test a method <code>method_a()</code> of the class <code>FooBar</code>, the corresponding test
+    class is named <code>TestFooBar</code> and the test method in this class is named
+    <code>test_method_a</code></li>
+<li>
+<p>To test a protected method <code>_gozilla()</code> of <code>FooBar</code>, the corresponding test
+    method is named <code>test__gozilla</code> (note the double underscore). This is needed
+    to distinguish testing the public method <code>FooBar.gozilla()</code> from
+    <code>FooBar._gozilla()</code></p>
+</li>
+<li>
+<p>Numbers can be used to differentiate between separate test cases clearly</p>
+</li>
+<li>A number can be added to the test class name, e.g., <code>TestFooBar1()</code>, if
+    there are multiple test classes that are testing the code in different ways
+    (e.g., with different set up and tear down actions)</li>
+<li>We prefer to name classes <code>TestFooBar1</code> and methods <code>TestFooBar1.test1()</code>,
+    even if there is a single class / method, to make it easier to add another
+    test class, without having to rename class and <code>check_string</code> files</li>
+<li>
+<p>We are OK with using suffixes like <code>01</code>, <code>02</code>, ... , when we believe it's
+    important that methods are tested in a certain order (e.g., from the
+    simplest to the most complex)</p>
+</li>
+<li>
+<p>A single test class can have multiple test methods, e.g., for
+  <code>FooBar.method_a()</code> and <code>FooBar.method_b()</code>, the test class contains the
+  following methods:</p>
+</li>
+</ul>
+<p>```python
+  class TestFooBar1(unittest2.TestCase):
+      def test_method_a(self):
+          ...</p>
+<pre><code>  def test_method_b(self):
+      ...
+</code></pre>
+<p>```</p>
+<ul>
+<li>Split test classes and methods in a reasonable way so each one tests one
+  single thing in the simplest possible way</li>
+</ul>
+<h4 id="keep-testing-code-in-sync-with-tested-code">Keep testing code in sync with tested code</h4>
+<ul>
+<li>If you change the name of a tested class, also the test should be changed</li>
+<li>If you change the name of a file also the name of the file with the testing
+  code should be changed</li>
+</ul>
+<h4 id="test-code-is-not-second-class-citizen">Test code is not second-class citizen</h4>
+<ul>
+<li>
+<p>Test code is not second-class citizen, even though it's auxiliary to the code</p>
+</li>
+<li>
+<p>Add comments and docstring explaining what the code is doing</p>
+</li>
+<li>
+<p>Avoid repetition in test code, but use helper to factor out common code</p>
+</li>
+<li>Abhor copy-paste and keep the code DRY</li>
+</ul>
+<h4 id="testing-code-layout">Testing code layout</h4>
+<ul>
+<li>The layout of a test dir should look like:
+  ```bash<blockquote>
+<p>ls -1 helpers/test/
+  Test_dassert1.test2
+  Test_dassert1.test3
+  Test_dassert1.test4
+  ...
+  Test_dassert_misc1.test6
+  Test_dassert_misc1.test8
+  Test_system1.test7
+  test_dbg.py
+  test_helpers.py
+  test_system_interaction.py
+  ```</p>
+</blockquote>
+</li>
+</ul>
+<h4 id="our-framework-to-test-using-input-output-data">Our framework to test using input / output data</h4>
+<ul>
+<li><code>helpers/unit_test.py</code> has some utilities to create input and output easily
+  dirs storing data for unit tests</li>
+<li><code>hut.TestCase</code> has various methods to help you create</li>
+<li><code>get_input_dir()</code>: return the name of the dir used to store the inputs</li>
+<li><code>get_scratch_space()</code>: return the name of a scratch dir to keep artifacts of
+    the test</li>
+<li>
+<p><code>get_output_dir()</code>: probably not interesting for the user</p>
+</li>
+<li>
+<p>The directory structure enforced by the out <code>TestCase</code> is like:</p>
+</li>
+</ul>
+<p>```bash</p>
+<blockquote>
+<p>tree -d edg/form_8/test/
+  edg/form_8/test/
+  └── TestExtractTables1.test1
+      ├── input
+      └── output
+  ```</p>
+</blockquote>
+<h4 id="use-text-and-not-pickle-files-as-inputoutputs">Use text and not pickle files as input/outputs</h4>
+<ul>
+<li>The problems with pickle files are the usual ones</li>
+<li>Pickle files are not stable across different versions of libraries</li>
+<li>
+<p>Pickle files are not human-readable</p>
+</li>
+<li>
+<p>Prefer to use text file</p>
+</li>
+<li>
+<p>E.g., use a CSV file</p>
+</li>
+<li>
+<p>If the data used for testing is generated in a non-complicated way</p>
+</li>
+<li>Document how it was generated</li>
+<li>Even better, add a test that generates the data</li>
+</ul>
+<h4 id="small-testing-data-is-best">Small testing data is best</h4>
+<ul>
+<li>
+<p>Use a subset of the input data</p>
+</li>
+<li>
+<p>The smaller, the better for everybody</p>
+</li>
+<li>Fast tests</li>
+<li>Easier to debug</li>
+<li>
+<p>More targeted unit test</p>
+</li>
+<li>
+<p>Do not check in 1 megabyte of test data!</p>
+</li>
+</ul>
+<p>Last review: GP on 2024-05-13</p>
+<h4 id="check_string-vs-selfassertequal"><code>check_string</code> vs <code>self.assertEqual</code></h4>
+<ul>
+<li>TODO(gp): Add</li>
+</ul>
+<h4 id="use-selfassert_equal">Use <code>self.assert_equal()</code></h4>
+<ul>
+<li>This is a function that helps you understand what the mismatches are</li>
+<li>It works on <code>str</code></li>
+</ul>
+<h4 id="how-to-split-unit-test-code-in-files">How to split unit test code in files</h4>
+<ul>
+<li>The two extreme approaches are:</li>
+<li>All the test code for a directory goes in one file
+    <code>foo/bar/test/test_$DIRNAME.py</code> (or <code>foo/bar/test/test_all.py</code>)</li>
+<li>Each file <code>foo/bar/$FILENAME</code> with code gets its corresponding
+    <code>foo/bar/test/test_$FILENAME.py</code><ul>
+<li>It should also be named according to the library it tests</li>
+<li>For example, if the library to test is called <code>pnl.py</code>, then a
+  corresponding unit test should be called <code>test_pnl.py</code></li>
+</ul>
+</li>
+<li>Pros of 1) vs 2)</li>
+<li>Less maintenance churn<ul>
+<li>It takes work to keep the code and the test files in sync, e.g.,</li>
+<li>If you change the name of the code file, you don't have to change other
+    file names</li>
+<li>If you move one class from one file to another, you might not need to
+    move test code</li>
+</ul>
+</li>
+<li>Fewer files opened in your editor</li>
+<li>Avoid many files with a lot of boilerplate code</li>
+<li>Cons of 1) vs 2)</li>
+<li>The single file can become huge!</li>
+<li>Compromise solution: Start with a single file
+  <code>test_$DIRNAME.py</code>(or<code>test*dir_name.py</code>) * In the large file add a framed
+  comment like:
+  <code>python
+  # ##################
+  # Unit tests for …
+  # ##################</code></li>
+<li>So it's easy to find which file is tested were using grep</li>
+<li>Then split when it becomes too big using <code>test_$FILENAME.py</code></li>
+</ul>
+<h4 id="skeleton-for-unit-test">Skeleton for unit test</h4>
+<ul>
+<li>Interesting unit tests are in <code>helpers/test</code></li>
+<li>A unit test looks like:
+  <code>python
+  import helpers.unit_test as hut
+  class Test...(hut.TestCase):
+      def test...(self):
+          ...</code></li>
+<li><code>pytest</code> will take care of running the code so you don't need:
+  <code>python
+  if __name__ == '__main__':
+  unittest.main()</code></li>
+</ul>
+<h4 id="hierarchical-testcase-approach">Hierarchical <code>TestCase</code> approach</h4>
+<ul>
+<li>Whenever there is a hierarchy in classes, we also create a hierarchy of test
+  classes</li>
+<li>A parent test class looks like:
+  <code>python
+  import helpers.unit_test as hut
+  class SomeClientTestCase(hut.TestCase):
+      def _test...1(self):
+          ...
+      def _test...2(self):
+          ...</code></li>
+<li>While a child test class looks like this, where test methods use the
+  corresponding methods from the parent test class:
+  <code>python
+  class TestSomeClient(SomeClientTestCase):
+      def test...1(self):
+          ...
+      def test...2(self):
+          ...</code></li>
+<li>Each <code>TestCase</code> tests a "behavior" like a set of related methods</li>
+<li>Each <code>TestCase</code> is under the test dir</li>
+<li>Each derived class should use the proper <code>TestCase</code> classes to reach a decent
+  coverage</li>
+<li>It is OK to use non-private methods in test classes to ensure that the code is
+  in order of dependency so that the reader doesn't have to jump back / forth</li>
+<li>We want to separate chunks of unit test code using:</li>
+</ul>
+<p><code>python
+  # ########################################################################</code></p>
+<p>putting all the methods used by that chunk at the beginning and so on</p>
+<ul>
+<li>It is OK to skip a <code>TestCase</code> method if it is not meaningful, when coverage is
+  enough</li>
+<li>As an example, see <code>im_v2/common/data/client/test/im_client_test_case.py</code> and
+  <code>im_v2/ccxt/data/client/test/test_ccxt_clients.py</code></li>
+</ul>
+<h4 id="use-the-appropriate-selfassert">Use the appropriate <code>self.assert*</code></h4>
+<ul>
+<li>When you get a failure, you don't want to get something like "True is not
+  False", rather an informative message like "5 is not &lt; 4"</li>
+<li>Bad <code>self.assertTrue(a &lt; b)</code></li>
+<li>Good <code>self.assertLess(a, b)</code></li>
+</ul>
+<h4 id="do-not-use-hdbgdassert-in-testing">Do not use <code>hdbg.dassert</code> in testing</h4>
+<ul>
+<li><code>dassert</code>s are for checking the self-consistency of the code</li>
+<li>The invariant is that you can remove <code>dbg.dassert</code> without changing the code's
+  behavior. Of course, you can't remove the assertion and get unit tests to work</li>
+</ul>
+<h4 id="always-explain-selfassertraises">Always explain <code>self.assertRaises</code></h4>
+<ul>
+<li>Testing for an assertion needs to always be done with the following idiom to
+  explain exactly what we are catching and why
+  <code>python
+  with self.assertRaises(AssertionError) as cm:
+      hlitagit.git_patch_create(
+          ctx, mode, modified, branch, last_commit, files
+      )
+  act = str(cm.exception)
+  exp = r"""</code></li>
+<li>Failed assertion * '0' == '1' Specify only one among --modified,
+  --branch, --last-commit """ self.assert_equal(act, exp, fuzzy_match=True)
+  <code></code></li>
+</ul>
+<h4 id="interesting-testing-functions">Interesting testing functions</h4>
+<ul>
+<li>List of useful testing functions are:</li>
+<li><a href="https://docs.python.org/2/library/unittest.html#test-cases">General python</a></li>
+<li><a href="https://docs.scipy.org/doc/numpy-1.15.0/reference/routines.testing.html">Numpy</a></li>
+<li><a href="https://pandas.pydata.org/pandas-docs/version/0.21/api.html#testing-functions">Pandas</a></li>
+</ul>
+<h4 id="use-set_up_test-tear_down_test">Use set_up_test / tear_down_test</h4>
+<ul>
+<li>If you have a lot of repeated code in your tests, you can make them shorter by
+  moving this code to <code>set_up_test/tear_down_test</code> methods:</li>
+<li>These methods are our preferred alternative to <code>setUp()</code> and <code>tearDown()</code>
+    methods that are standardly used in the <code>unittest</code> framework. As a general
+    rule, we should avoid defining custom <code>setUp()</code> and <code>tearDown()</code> methods in
+    our test classes. The reason is that the <code>unittest</code>/<code>pytest</code> framework
+    relies on its built-in <code>setUp()</code> and <code>tearDown()</code> methods, and if we
+    introduce additional operations in these methods in the individual test
+    classes (e.g., mocking, opening DBs), it can interfere with the inner
+    workings of the framework.</li>
+<li>Instead of <code>setUp()</code>, we define a <code>set_up_test()</code> method within the test
+    class and then run it at the beginning of each test method.</li>
+<li>Similarly, instead of <code>tearDown()</code>, we define <code>tear_down_test()</code> and run it
+    at the end of each test method.</li>
+<li>
+<p>To make sure both <code>set_up_test()</code> and <code>tear_down_test()</code> run even if the
+    test itself fails, we wrap them in a
+    <a href="https://docs.pytest.org/en/6.2.x/fixture.html#yield-fixtures-recommended">pytest fixture</a>.</p>
+<p><strong>Bad</strong>:</p>
+<p>```python
+def setUp(self) -&gt; None:
+    super().setUp()
+    ...
+    ... # custom code
+    ...</p>
+<p>def tearDown(self) -&gt; None:
+    ...
+    ... # custom code
+    ...
+    super().tearDown()</p>
+<p>def test1(self) -&gt; None:
+    ...
+```</p>
+<p><strong>Good</strong>:</p>
+<p>```python</p>
+<h1 id="this-will-be-run-before-and-after-each-test">This will be run before and after each test.</h1>
+<p>@pytest.fixture(autouse=True)
+def setup_teardown_test(self):
+    # Run before each test.
+    self.set_up_test()
+    yield
+    # Run after each test.
+    self.tear_down_test()</p>
+<p>def set_up_test(self) -&gt; None:
+    ...
+    ... # custom code
+    ...</p>
+<p>def tear_down_test(self) -&gt; None:
+    ...
+    ... # custom code
+    ...</p>
+<p>def test1(self) -&gt; None:
+    ...
+<code>``
+  - If there is nothing left in</code>setUp()<code>/</code>tearDown()<code>after removing</code>super().setUp()<code>/</code>super.tearDown()<code>, then</code>setUp()<code>/</code>tearDown()` can be
+discarded completely.</p>
+</li>
+</ul>
+<h5 id="nested-set_up_test-tear_down_test">Nested set_up_test / tear_down_test</h5>
+<ul>
+<li>When a test class (e.g., TestChild) inherits from another test class (e.g.,
+  TestParent), <code>setUp()</code>/<code>tearDown()</code> methods in the child class normally
+  incorporate the corresponding methods from the parent class.</li>
+<li>We prioritize clarity and explicitness in the naming and usage of our methods.
+  Therefore, the general rule is that we define
+  <code>set_up_test()</code>/<code>tear_down_test()</code> in the parent class, and in the child class
+  we define <code>set_up_test2()</code>/<code>tear_down_test2()</code>, which call the corresponding
+  methods from the parent class.</li>
+<li>If the child class itself is used as a parent for another class, then the
+    deeper nested class's methods are named
+    <code>set_up_test3()</code>/<code>tear_down_test3()</code>, and so on, with the numerical suffix
+    increasing at each level.</li>
+<li>The following cases are possible with regard to the <code>setUp()</code>/<code>tearDown()</code>
+  configuration:</li>
+<li>Both of TestParent and TestChild have separate <code>setUp()</code>/<code>tearDown()</code>
+    methods. Then, in TestParent, <code>setUp()</code>/<code>tearDown()</code> should be replaced by
+    <code>set_up_test()</code>/<code>tear_down_test()</code> as described above; in TestChild,
+    <code>setUp()</code>/<code>tearDown()</code> should be replaced by
+    <code>set_up_test2()</code>/<code>tear_down_test2()</code>, which call
+    <code>set_up_test()</code>/<code>tear_down_test()</code> from the parent class. For example:</li>
+</ul>
+<p>```python
+  class TestParent(hunitest.TestCase):
+      def setUp(self) -&gt; None:
+          super().setUp()
+          ...</p>
+<pre><code>  def tearDown(self) -&gt; None:
+      ...
+      super().tearDown()
+
+  def test1(self) -&gt; None:
+      ...
+</code></pre>
+<p>class TestChild(TestParent):
+      def setUp(self) -&gt; None:
+          super().setUp()
+          ...</p>
+<pre><code>  def tearDown(self) -&gt; None:
+      ...
+      super().tearDown()
+
+  def test1(self) -&gt; None:
+      ...
+</code></pre>
+<p>```</p>
+<p>should be replaced by:</p>
+<p>```python
+  class TestParent(hunitest.TestCase):
+      @pytest.fixture(autouse=True)
+      def setup_teardown_test(self):
+          # Run before each test.
+          self.set_up_test()
+          yield
+          # Run after each test.
+          self.tear_down_test()</p>
+<pre><code>  def set_up_test(self) -&gt; None:
+      ...
+
+  def tear_down_test(self) -&gt; None:
+      ...
+
+  def test1(self) -&gt; None:
+      ...
+</code></pre>
+<p>class TestChild(TestParent):
+      @pytest.fixture(autouse=True)
+      def setup_teardown_test(self):
+          # Run before each test.
+          self.set_up_test2()
+          yield
+          # Run after each test.
+          self.tear_down_test2()</p>
+<pre><code>  def set_up_test2(self) -&gt; None:
+      self.set_up_test()
+      ...
+
+  def tear_down_test2(self) -&gt; None:
+      ...
+      self.tear_down_test()
+
+  def test1(self) -&gt; None:
+      ...
+</code></pre>
+<p><code>``
+  - TestParent has</code>setUp()<code>and</code>tearDown()<code>, while TestChild does not. Then,
+    in TestParent,</code>setUp()<code>/</code>tearDown()<code>should be replaced by</code>set_up_test()<code>/</code>tear_down_test()<code>as described above; in TestChild,</code>set_up_test()<code>/</code>tear_down_test()` will run in the test methods
+    automatically via the inherited fixture. For example:</p>
+<p>```python
+  class TestParent(hunitest.TestCase):
+      def setUp(self) -&gt; None:
+          super().setUp()
+          ...</p>
+<pre><code>  def tearDown(self) -&gt; None:
+      ...
+      super().tearDown()
+
+  def test1(self) -&gt; None:
+      ...
+</code></pre>
+<p>class TestChild(TestParent):
+      def test1(self) -&gt; None:
+          ...
+  ```</p>
+<p>should be replaced by:</p>
+<p>```python
+  class TestParent(hunitest.TestCase):
+      @pytest.fixture(autouse=True)
+      def setup_teardown_test(self):
+          # Run before each test.
+          self.set_up_test()
+          yield
+          # Run after each test.
+          self.tear_down_test()</p>
+<pre><code>  def set_up_test(self) -&gt; None:
+      ...
+
+  def tear_down_test(self) -&gt; None:
+      ...
+
+  def test1(self) -&gt; None:
+      ...
+</code></pre>
+<p>class TestChild(TestParent):
+      def test1(self) -&gt; None:
+          ...
+  <code>``
+  - If TestParent only has one of the two, either</code>setUp()<code>or</code>tearDown()<code>,
+    then in both TestParent and TestChild, the test methods should run (from the
+    fixture), respectively, either</code>set_up_test()<code>or</code>tear_down_test()`, e.g.:</p>
+<pre><code>    ```python
+    class TestParent(hunitest.TestCase):
+        @pytest.fixture(autouse=True)
+        def setup_teardown_test(self):
+            # Run before each test.
+            self.set_up_test()
+            yield
+
+        def set_up_test(self) -&gt; None:
+            ...
+
+        def test1(self) -&gt; None:
+            ...
+
+    class TestChild(TestParent):
+        def test1(self) -&gt; None:
+            ...
+    ```
+</code></pre>
+<ul>
+<li>A combination of the previous two options: TestParent has <code>setUp()</code> and
+    <code>tearDown()</code>, and TestChild has one of them but not the other. Then, in
+    TestParent, <code>setUp()</code>/<code>tearDown()</code> should be replaced by
+    <code>set_up_test()</code>/<code>tear_down_test()</code> as described above. In TestChild, the
+    method that was present, <code>setUp()</code> or <code>tearDown()</code>, should be replaced by
+    <code>set_up_test2()</code> or <code>tear_down_test2()</code>, which should call <code>set_up_test()</code>
+    or <code>tear_down_test()</code> from TestParent; the other method from TestParent,
+    which was absent in TestChild, should be added directly to TestChild's
+    fixture to run in its test methods. For example, for the case when TestChild
+    has <code>setUp()</code> but not <code>tearDown()</code>:</li>
+</ul>
+<p>```python
+  class TestParent(hunitest.TestCase):
+      def setUp(self) -&gt; None:
+          super().setUp()
+          ...</p>
+<pre><code>  def tearDown(self) -&gt; None:
+      ...
+      super().tearDown()
+
+  def test1(self) -&gt; None:
+      ...
+</code></pre>
+<p>class TestChild(TestParent):
+      def setUp(self) -&gt; None:
+          super().setUp()
+          ...</p>
+<pre><code>  def test1(self) -&gt; None:
+      ...
+</code></pre>
+<p>```</p>
+<p>should be replaced by:</p>
+<p>```python
+  class TestParent(hunitest.TestCase):
+      @pytest.fixture(autouse=True)
+      def setup_teardown_test(self):
+          # Run before each test.
+          self.set_up_test()
+          yield
+          # Run after each test.
+          self.tear_down_test()</p>
+<pre><code>  def set_up_test(self) -&gt; None:
+      ...
+
+  def tear_down_test(self) -&gt; None:
+      ...
+
+  def test1(self) -&gt; None:
+      ...
+</code></pre>
+<p>class TestChild(TestParent):
+      @pytest.fixture(autouse=True)
+      def setup_teardown_test(self):
+          # Run before each test.
+          self.set_up_test2()
+          yield
+          # Run after each test.
+          self.tear_down_test()</p>
+<pre><code>  def set_up_test2(self) -&gt; None:
+      self.set_up_test()
+      ...
+
+  def test1(self) -&gt; None:
+      ...
+</code></pre>
+<p><code>``
+  - TestChild has</code>setUp()<code>and</code>tearDown()<code>(or just one of the two), while
+    TestParent does not. Then, in TestChild,</code>setUp()<code>/</code>tearDown()<code>should be
+    replaced by</code>set_up_test()<code>/</code>tear_down_test()` as described above;
+    TestParent undergoes no changes. For example:</p>
+<p>```python
+  class TestParent(hunitest.TestCase):
+      def test1(self) -&gt; None:
+          ...</p>
+<p>class TestChild(TestParent):
+      def setUp(self) -&gt; None:
+          super().setUp()
+          ...</p>
+<pre><code>  def tearDown(self) -&gt; None:
+      ...
+      super().tearDown()
+
+  def test1(self) -&gt; None:
+      ...
+</code></pre>
+<p>```</p>
+<p>should be replaced by:</p>
+<p>```python
+  class TestParent(hunitest.TestCase):
+      def test1(self) -&gt; None:
+          ...</p>
+<p>class TestChild(TestParent):
+      @pytest.fixture(autouse=True)
+      def setup_teardown_test(self):
+          # Run before each test.
+          self.set_up_test()
+          yield
+          # Run after each test.
+          self.tear_down_test()</p>
+<pre><code>  def set_up_test(self) -&gt; None:
+      ...
+
+  def tear_down_test(self) -&gt; None:
+      ...
+
+  def test1(self) -&gt; None:
+      ...
+</code></pre>
+<p>```</p>
+<h4 id="use-setupclass-teardownclass">Use setUpClass / tearDownClass</h4>
+<ul>
+<li>If you need some expensive code parts to be done once for the whole test
+  class, such as opening a database connection, opening a temporary file on the
+  filesystem, loading a shared library for testing, etc., you can use
+  <code>setUpClass/tearDownClass</code> methods:</li>
+<li>
+<p><code>setUpClass()</code></p>
+<p>A class method called before tests in an individual class are run.
+<code>setUpClass</code> is called with the class as the only argument and must be
+decorated as a
+<a href="https://docs.python.org/3/library/functions.html#classmethod">classmethod</a>:</p>
+<p><code>python
+@classmethod
+def setUpClass(cls):
+    ...</code>
+  - <code>tearDownClass()</code></p>
+<p>A class method called after tests in an individual class have run.
+<code>tearDownClass</code> is called with the class as the only argument and must be
+decorated as a
+<a href="https://docs.python.org/3/library/functions.html#classmethod">classmethod</a>:</p>
+<p><code>python
+@classmethod
+def tearDownClass(cls):
+    ...</code></p>
+</li>
+<li>
+<p>For more information, see
+  <a href="https://docs.python.org/3/library/unittest.html">official unittest docs</a></p>
+</li>
+</ul>
+<h2 id="update-test-tags">Update test tags</h2>
+<ul>
+<li>There are 2 files with the list of tests' tags:</li>
+<li><code>amp/pytest.ini</code></li>
+<li><code>.../pytest.ini (if</code>amp<code>is a submodule)</code></li>
+<li>In order to update the tags (do it in both files):</li>
+<li>In the <code>markers</code> section, add a name of a new tag</li>
+<li>After a <code>:</code> add a short description</li>
+<li>Keep tags in the alphabetical order</li>
+</ul>
+<h2 id="mocking">Mocking</h2>
+<h3 id="refs">Refs</h3>
+<ul>
+<li>Introductory article is
+  <a href="https://realpython.com/python-mock-library/">https://realpython.com/python-mock-library/ </a></li>
+<li>Official Python documentation for the mock package can be seen here
+  <a href="https://docs.python.org/3/library/unittest.mock.html">unit test mock</a></li>
+</ul>
+<h3 id="common-usage-samples">Common usage samples</h3>
+<p>It is best to apply on any part that is deemed unnecessary for specific test</p>
+<ul>
+<li>Complex functions</li>
+<li>Mocked functions can be tested separately</li>
+<li>3rd party provider calls</li>
+<li>CCXT</li>
+<li>AWS<ul>
+<li>S3</li>
+<li>See <code>helpers/hmoto.py</code> in <code>cmamp</code> repo</li>
+<li>Secrets</li>
+<li>Etc...</li>
+</ul>
+</li>
+<li>
+<p>DB calls</p>
+</li>
+<li>
+<p>Many more possible combinations can be seen in the official documentation.</p>
+</li>
+<li>Below are the most common ones for basic understanding.</li>
+</ul>
+<h3 id="philosophy-about-mocking">Philosophy about mocking</h3>
+<ol>
+<li>We want to mock the minimal surface of a class</li>
+<li>E.g., assume there is a class that is interfacing with an external provider
+     and our code places requests and gets values back</li>
+<li>We want to replace the provider with an object that responds to the
+     requests with the actual response of the provider</li>
+<li>In this way, we can leave all the code of our class untouched and tested</li>
+<li>We want to test public methods of our class (and a few private methods)</li>
+<li>In other words, we want to test the end-to-end behavior and not how things
+     are achieved</li>
+<li>Rationale: if we start testing "how" things are done and not "what" is
+     done, we can't change how we do things (even if it doesn't affect the
+     interface and its behavior), without updating tons of methods</li>
+<li>We want to test the minimal amount of behavior that enforces what we care
+     about</li>
+</ol>
+<h3 id="some-general-suggestions-about-testing">Some general suggestions about testing</h3>
+<h4 id="test-from-the-outside-in">Test from the outside-in</h4>
+<ul>
+<li>We want to start testing from the end-to-end methods towards the constructor
+  of an object</li>
+<li>Rationale: often, we start testing the constructor very carefully and then we
+  get tired / run out of time when we finally get to test the actual behavior</li>
+<li>Also, testing the important behavior automatically tests building the objects</li>
+<li>Use the code coverage to see what's left to test once you have tested the
+  "most external" code</li>
+</ul>
+<h4 id="we-dont-need-to-test-all-the-assertions">We don't need to test all the assertions</h4>
+<ul>
+<li>E.g., testing carefully that we can't pass a value to a constructor doesn't
+  really test much besides the fact that <code>dassert</code> works (which, surprisingly
+  works!)</li>
+<li>We don't care about line coverage or checking boxes for the sake of checking
+  boxes</li>
+</ul>
+<h4 id="use-strings-to-compare-output-instead-of-data-structures">Use strings to compare output instead of data structures</h4>
+<ul>
+<li>Often, it's easier to do a check like:</li>
+</ul>
+<p>```python
+  # Better:
+  expected = str(...)
+  expected = pprint.pformat(...)</p>
+<p># Worse:
+  expected = ["a", "b", { ... }]
+  ```</p>
+<p>rather than building the data structure</p>
+<ul>
+<li>Some purists might not like this, but</li>
+<li>It's much faster to use a string (which is or should be one-to-one to the
+    data structure), rather than the data structure itself<ul>
+<li>By extension, many of the more complex data structure have a built-in
+  string representation</li>
+</ul>
+</li>
+<li>It is often more readable and easier to diff (e.g., <code>self.assertEqual</code> vs
+    <code>self.assert_equal</code>)</li>
+<li>In case of mismatch, it's easier to update the string with copy-paste rather
+    than creating a data structure that matches what was created</li>
+</ul>
+<h4 id="use-selfcheck_string-for-things-that-we-care-about-not-changing-or-are-too-big-to-have-as-strings-in-the-code">Use <code>self.check_string()</code> for things that we care about not changing (or are too big to have as strings in the code)</h4>
+<ul>
+<li>Use <code>self.assert_equal()</code> for things that should not change (e.g., 1 + 1 = 2)</li>
+<li>When using <code>check_string</code> still try to add invariants that force the code to
+  be correct</li>
+<li>E.g., if we want to check the PnL of a model, we can freeze the output with
+  <code>check_string()</code>, but we want to add a constraint like there are more
+  timestamps than 0 to avoid the situation where we update the string to
+  something malformed</li>
+</ul>
+<h4 id="each-test-method-should-test-a-single-test-case">Each test method should test a single test case</h4>
+<ul>
+<li>Rationale: we want each test to be clear, simple, fast</li>
+<li>If there is repeated code we should factor it out (e.g., builders for objects)</li>
+</ul>
+<h4 id="each-test-should-be-crystal-clear-on-how-it-is-different-from-the-others">Each test should be crystal clear on how it is different from the others</h4>
+<ul>
+<li>Often, you can factor out all the common logic into a helper method</li>
+<li>Copy-paste is not allowed in unit tests in the same way it's not allowed in
+  production code</li>
+</ul>
+<h4 id="in-general-you-want-to-budget-the-time-to-write-unit-tests">In general, you want to budget the time to write unit tests</h4>
+<ul>
+<li>E.g., "I'm going to spend 3 hours writing unit tests". This is going to help
+  you focus on what's important to test and force you to use an iterative
+  approach rather than incremental (remember the Monalisa)</li>
+</ul>
+<p><img alt="alt_image" src="figs/unit_tests/image_4.png" /></p>
+<h4 id="write-a-skeleton-of-unit-tests-and-ask-for-a-review-if-you-are-not-sure-how-what-to-test">Write a skeleton of unit tests and ask for a review if you are not sure how what to test</h4>
+<ul>
+<li>Aka "testing plan"</li>
+</ul>
+<h3 id="object-patch-with-return-value">Object patch with return value</h3>
+<pre><code class="language-python">import unittest.mock as umock
+import im_v2.ccxt.data.extract.extractor as ivcdexex
+
+@umock.patch.object(ivcdexex.hsecret, &quot;get_secret&quot;)
+def test_function_call1(self, mock_get_secret: umock.MagicMock):
+    mock_get_secret.return_value = &quot;dummy&quot;
+</code></pre>
+<ul>
+<li>Function <code>get_secret</code> in <code>helpers/hsecret.py</code> is mocked</li>
+<li>Pay attention on where is <code>get_secret</code> mocked:<ul>
+<li>It is mocked in im_v2.ccxt.data.extract.extractor as “get_secret” is
+  called there in function that is being tested</li>
+</ul>
+</li>
+<li><code>@umock.patch.object(hsecret, "get_secret")</code> will not work as mocks are
+    applied after all modules are loaded, hence the reason for using exact
+    location<ul>
+<li>If we import s module in test itself it will work as mock is applied</li>
+<li>For modules outside of test function it is too late as they are loaded
+  before mocks for test are applied</li>
+</ul>
+</li>
+<li>On every call, it returns string "dummy"</li>
+</ul>
+<h3 id="path-patch-with-multiple-return-values">Path patch with multiple return values</h3>
+<pre><code class="language-python">import unittest.mock as umock
+
+@umock.patch(&quot;helpers.hsecret.get_secret&quot;)
+def test_function_call1(self, mock_get_secret: umock.MagicMock):
+
+mock_get_secret.side_effect = [&quot;dummy&quot;, Exception]
+</code></pre>
+<ul>
+<li>On first call, string <code>dummy</code> is returned</li>
+<li>On second, <code>Exception</code> is raised</li>
+</ul>
+<h3 id="ways-of-calling-patch-and-patchobject">Ways of calling <code>patch</code> and <code>patch.object</code></h3>
+<ul>
+<li>Via decorator
+  <code>python
+  @umock.patch("helpers.hsecret.get_secret")
+  def test_function_call1(self, mock_get_secret: umock.MagicMock):
+      pass</code></li>
+<li>In actual function
+  <code>python
+  get_secret_patch = umock.patch("helpers.hsecret.get_secret")
+  get_secret_mock = get_secret_patch.start()</code></li>
+<li>This is the only approach in which you need to start/stop patch!<ul>
+<li>The actual mock is returned as the return value of <code>start()</code> method!</li>
+</ul>
+</li>
+<li>In other two approaches, start/stop is handled under the hood and we are
+    always interacting with <code>MagicMock</code> object</li>
+<li>Via <code>with</code> statement (also in function)
+  <code>python
+  with umock.patch(""helpers.hsecret.get_secret"") as get_secret_mock:
+      pass</code></li>
+<li>One of the use cases for this is if we are calling a different function
+    inside a function that is being mocked<ul>
+<li>Mostly because it is easy for an eye if there are to much patches via
+  decorator and we do not need to worry about reverting the patch changes as
+  that is automatically done at the end of with statement</li>
+</ul>
+</li>
+</ul>
+<h3 id="mock-object-state-after-test-run">Mock object state after test run</h3>
+<pre><code class="language-python">@umock.patch.object(exchange_class._exchange, &quot;fetch_ohlcv&quot;)
+def test_function_call1(self, fetch_ohlcv_mock: umock.MagicMock):
+    self.assertEqual(fetch_ohlcv_mock.call_count, 1)
+    actual_args = tuple(fetch_ohlcv_mock.call_args)
+    expected_args = (
+            (&quot;BTC/USDT&quot;,),
+            {&quot;limit&quot;: 2, &quot;since&quot;: 1, &quot;timeframe&quot;: &quot;1m&quot;},
+    )
+    self.assertEqual(actual_args, expected_args)
+</code></pre>
+<ul>
+<li>After <code>fetch_ohlcv</code> is patched, <code>Mock</code> object is passed to test</li>
+<li>In this case, it is <code>fetch_ohlcv_mock</code></li>
+<li>From sample we can see that function is called once</li>
+<li>First value in a tuple are positional args passed to <code>fetch_ohlcv</code> function</li>
+<li>Second value in a tuple are keyword args passed to <code>fetch_ohlcv</code> function</li>
+<li>
+<p>As an alternative, <code>fetch_ohlcv_mock.call_args.args</code> and
+    <code>fetch_ohlcv_mock.call_args.kwargs</code> can be called for separate results of
+    args/kwargs</p>
+<p><code>python
+self.assertEqual(fetch_ohlcv_mock.call_count, 3)
+actual_args = str(fetch_ohlcv_mock.call_args_list)
+expected_args = r"""
+[call('BTC/USDT', since=1645660800000, bar_per_iteration=500),
+call('BTC/USDT', since=1645690800000, bar_per_iteration=500),
+call('BTC/USDT', since=1645720800000, bar_per_iteration=500)]
+"""
+self.assert_equal(actual_args, expected_args, fuzzy_match=True)</code></p>
+</li>
+<li>
+<p>In sample above, that is continuation of previous sample,
+  <code>fetch_ohlcv_mock.call_args_list</code> is called that returns all calls to mocked
+  function regardless of how many times it is called</p>
+</li>
+<li>Useful for verifying that args passed are changing as expected</li>
+</ul>
+<h3 id="mock-common-external-calls-in-hunitesttestcase-class">Mock common external calls in <code>hunitest.TestCase</code> class</h3>
+<pre><code class="language-python">class TestCcxtExtractor1(hunitest.TestCase):
+    # Mock calls to external providers.
+    get_secret_patch = umock.patch.object(ivcdexex.hsecret, &quot;get_secret&quot;)
+    ccxt_patch = umock.patch.object(ivcdexex, &quot;ccxt&quot;, spec=ivcdexex.ccxt)
+
+    def set_up_test(self) -&gt; None:
+        self.get_secret_mock: umock.MagicMock = self.get_secret_patch.start()
+        self.ccxt_mock: umock.MagicMock = self.ccxt_patch.start()
+        # Set dummy credentials for all tests.
+        self.get_secret_mock.return_value = {&quot;apiKey&quot;: &quot;test&quot;, &quot;secret&quot;: &quot;test&quot;}
+
+    def tear_down_test(self) -&gt; None:
+        self.get_secret_patch.stop()
+        self.ccxt_patch.stop()
+</code></pre>
+<ul>
+<li>For every unit test we want to isolate external calls and replace them with
+  mocks</li>
+<li>This way tests are much faster and not influenced by external factors we can
+    not control</li>
+<li>Mocking them in <code>set_up_test()</code> (which is run at the beginning of the test
+    methods) will make the tests using this class simpler and ready out of the
+    box</li>
+<li>In current sample we are mocking AWS secrets and <code>ccxt</code> library</li>
+<li><code>umock.patch.object</code> is creating <code>patch</code> object that is not yet activated<ul>
+<li><code>patch.start()/stop()</code> is activating/deactivating patch for each test
+  where <code>set_up_test()</code> and <code>tear_down_test()</code> are run</li>
+<li><code>patch.start()</code> is returning a standard <code>MagicMock</code> object we can use to
+  check various states as mentioned in previous examples and control return
+  values</li>
+<li>Call_args, call_count, return_value, side_effect, etc.</li>
+</ul>
+</li>
+<li>Note: Although patch initialization in static variables belongs to
+  <code>set_up_test()</code>, when this code is moved there patch is created for each test
+  separately. We want to avoid that and only start/stop same patch for each
+  test.</li>
+</ul>
+<h3 id="mocks-with-specs">Mocks with specs</h3>
+<pre><code class="language-python">## Regular mock and external library `ccxt` is replaced with `MagicMock`
+@umock.patch.object(ivcdexex, &quot;ccxt&quot;)
+## Only `ccxt` is spec'd, not actual components that are &quot;deeper&quot; in the `ccxt` library.
+@umock.patch.object(ivcdexex, &quot;ccxt&quot;, spec=ivcdexex.ccxt)
+## Everything is spec'd recursively , including returning values/instances of `ccxt`
+## functions and returned values/instances of returned values/instances, etc.
+@umock.patch.object(ivcdexex, &quot;ccxt&quot;, autospec=True)
+</code></pre>
+<ul>
+<li>First mock is not tied to any spec and we can call any attribute/function
+  against the mock and the call will be memorized for inspection and the return
+  value is new <code>MagicMock</code>.</li>
+<li><code>ccxt_mock.test(123)</code> returns new <code>MagicMock</code> and raises no error</li>
+<li>In second mock <code>ccxt.test(123)</code> would fail as such function does not exists</li>
+<li>We can only call valid exchange such as <code>ccxt_mock.binance()</code> that will
+    return <code>MagicMock</code>, as exchange is not part of the spec</li>
+<li>In third mock everything needs to be properly called</li>
+<li><code>ccxt_mock.binance()</code> will return <code>MagicMock</code> with <code>ccxt.Exchange</code> spec_id
+    (in mock instance as meta)<ul>
+<li>As newly <code>exchange</code> instance is with spec, we can only call real
+  functions/attributes of <code>ccxt.Exchange</code> class</li>
+</ul>
+</li>
+</ul>
+<h3 id="caveats">Caveats</h3>
+<pre><code class="language-python">## `datetime.now` cannot be patched directly, as it is a built-in method.
+## Error: &quot;can't set attributes of built-in/extension type 'datetime.datetime'&quot;
+datetime_patch = umock.patch.object(imvcdeexut, &quot;datetime&quot;, spec=imvcdeexut.datetime)
+</code></pre>
+<ul>
+<li>Python built-in methods can not be patched</li>
+</ul>
+<p><code>python
+  class TestExtractor1(hunitest.TestCase):
+      # Mock `Extractor`'s abstract functions.
+      abstract_methods_patch = umock.patch.object(
+          imvcdexex.Extractor, "__abstractmethods__", new=set()
+      )
+      ohlcv_patch = umock.patch.object(
+          imvcdexex.Extractor,
+          "_download_ohlcv",
+          spec=imvcdexex.Extractor._download_ohlcv,
+      )</code></p>
+<ul>
+<li>Patching <code>__abstractmethods__</code> function of an abstract class enables us to
+  instantiate and test abstract class as any regular class</li>
+</ul>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    <script id="__config" type="application/json">{"base": "..", "features": [], "search": "../assets/javascripts/workers/search.07f07601.min.js", "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}}</script>
+    
+    
+      <script src="../assets/javascripts/bundle.56dfad97.min.js"></script>
+      
+    
+  </body>
+</html>
