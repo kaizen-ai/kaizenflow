@@ -1,20 +1,22 @@
+# Writing Docs
+
 <!-- toc -->
 <!-- tocstop -->
 
-# Conventions
+## Conventions
 
-## Make no assumptions on the user's knowledge
+### Make no assumptions on the user's knowledge
 
 - Nothing is obvious to somebody who doesn't know
 
-## Verify that things worked
+### Verify that things worked
 
 - Add ways to verify if a described process worked
   - E.g., "do this and that, if this and that is correct should see this"
 - Have a trouble-shooting procedure
   - One approach is to always start from scratch
 
-## Always use the linter
+### Always use the linter
 
 - Most cosmetic lints described further can be taken care automatically by our
   markdown linter, so make sure to run it after implementing the changes
@@ -24,7 +26,7 @@
 - If the linter messes up the text, file an issue with examples of what the
   linter does incorrectly
 
-## Add a table of content
+### Add a table of content
 
 - Unfortunately both markdown and GitHub don't support automatically generating
   a TOC for a document
@@ -35,13 +37,19 @@
   ```
   - Run `i lint` to build the TOC automatically
 
+##
+
+- Make sure the headings structure contains exactly one level 1 heading
+  (`# This one`)
+  - This is important for displaying MkDocs documentation correctly via browser
+
 ## Use 80 columns formatting for md files
 
 - Our markdown linter takes care of reflowing the text
 - Vim has a `:gq` command to reflow the comments
 - There are plugins for PyCharm and VisualStudio
 
-## Use good vs bad
+### Use good vs bad
 
 - Make examples of "good" ways of doing something and contrast them with "bad"
   ways
@@ -58,7 +66,7 @@
   ...
   ```
 
-## Use an empty line after heading
+### Use an empty line after heading
 
 - Leave an empty line after a heading to make it more visible, e.g.,
 
@@ -78,7 +86,7 @@
 
 - Our linter automatically takes care of this
 
-## Bullet lists
+### Bullet lists
 
 - We like using bullet list since they represent the thought process, force
   people to focus on short sentences (instead of rambling wall-of-text), and
@@ -94,7 +102,7 @@
 - We use `-` instead of `*` or circles
 - The linter automatically enforces this
 
-## Use the right syntax highlighting
+### Use the right syntax highlighting
 
 - When using a block of code use the write syntax highlighting
   - Code (```python)
@@ -119,18 +127,18 @@
     ....
     ```
 
-## Indent `code` style
+### Indent `code` style
 
 - GitHub / Pandoc seems to render incorrectly a code block unless it's indented
   over the previous line
 
-## Embed screenshots only when strictly necessary
+### Embed screenshots only when strictly necessary
 
 - Avoid to use screenshots whenever possible and use copy-paste of text with the
   right highlighting
 - However, sometimes we need to use screenshots (e.g., plots, website interface)
 
-## Improve your written English
+### Improve your written English
 
 - Use English spell-checker, but unfortunately this is not enough
 - Type somewhere where you can use several choices:
@@ -141,7 +149,7 @@
   correction
   - Otherwise you will keep making the same mistakes forever
 
-## Make sure your markdown looks good
+### Make sure your markdown looks good
 
 - Compare your markdown with other already published
 
@@ -149,18 +157,18 @@
   - Check in the code a branch and use GitHub to render it
   - Use Pycharm to edit, which also renders it side-by-side
 
-## Do not overcapitalize headings
+### Do not overcapitalize headings
 
 - Paragraph titles should be like `Data schema` not `Data Schema`
 
-## Update the `Last review` tag
+### Update the `Last review` tag
 
 - When you read/refresh a file update the last line of the text
   ```verbatim
   Last review: GP on 2024-04-20, Paul on 2024-03-10
   ```
 
-## Comment the code structure
+### Comment the code structure
 
 - When you want to describe and comment the code structure do something like
   this
@@ -182,7 +190,7 @@
     Script to test a schema
   ```
 
-## Convention for file names
+### Convention for file names
 
 - Each file name should have a format like
   `docs/{component}/{audience}.{topic}.{diataxis_tag}.md`
@@ -198,7 +206,7 @@
 
 // From https://opensource.com/article/20/3/documentation
 
-## Use active voice
+### Use active voice
 
 - Use the active voice most of th time and use the passive voice sparingly
 - Active voice is shorter than passive voice
@@ -212,39 +220,39 @@
 
 - There configurations can be changed by ...
 
-## Use simple short sentences
+### Use simple short sentences
 
 - Use Grammarly/ChatGPT
 
-## Format for easy reading
+### Format for easy reading
 
 - Use headings, bullet points, and links to break up information into chunks
   instead of long explanatory paragraphs
 
-## Keep it visual
+### Keep it visual
 
 - Use tables and diagrams, together with text, whenever possible
 
-## Mind your spelling
+### Mind your spelling
 
 - Always, always, always spell check for typos and grammar check
 - Use Grammarly/ChatGPT
 
-## Be efficient
+### Be efficient
 
 - Nobody wants to read meandering paragraphs in documentation
 - Engineers want to get technical information as efficiently as possible
 - Do not add "fluff"
 - Do not explain things in a repetitive way
 
-## Do not add fluff
+### Do not add fluff
 
 - Always point to documentation on the web instead of summarizing it
 - If you want to summarize some doc (e.g., so that people don't have to read too
   much) add it to a different document instead of mixing with our documentation
 - Focus on how we do, why we do, rather than writing AI-generated essays
 
-# Resources
+## Resources
 
 - [https://opensource.com/article/20/3/documentation]
 - [Markdown cheatsheet](https://github.com/adam-p/markdown-here/wiki/Markdown-Cheatsheet)

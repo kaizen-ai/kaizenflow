@@ -1,4 +1,4 @@
-
+# Code Organization
 
 <!-- toc -->
 
@@ -23,9 +23,9 @@
 
 <!-- tocstop -->
 
-# Code organization of `amp`
+## Code organization of `amp`
 
-## Conventions
+### Conventions
 
 - In this code organization files we use the following conventions:
   - Comments: `"""foobar is ..."""`
@@ -64,14 +64,14 @@
     - Needs to go in `//lime/dataflow_lime/system`
     - Can be called `eg_historical_data_source.py`
 
-## Finding deps
+### Finding deps
 
-### Using `invoke find_dependency`
+#### Using `invoke find_dependency`
 ```
 > i find_dependency --module-name "amp.dataflow.model" --mode "find_lev2_deps" --ignore-helpers --only-module dataflow
 ```
 
-### Using grep
+#### Using grep
 
 - To check for dependencies between one module (e.g., `dataflow/model`) and
   another (e.g., `dataflow/system`):
@@ -79,7 +79,7 @@
   > (cd dataflow/model/; jackpy "import ") | grep -v notebooks | grep -v test | grep -v __init__ | grep "import dataflow.system" | sort
   ```
 
-### Using Pydeps
+#### Using Pydeps
 
 - Install
   ```
@@ -97,7 +97,7 @@
   > helpers.telegram_notify -vv --show-dot -o deps.html --max-bacon 2 --reverse
   ```
 
-## Component dirs
+### Component dirs
 
 Useful utilities are:
 ```
@@ -113,12 +113,12 @@ im_v2/ccxt/data/
 4 directories, 1 file
 ```
 
-### `helpers/`
+#### `helpers/`
 
 - `helpers/`
   - """Low-level helpers that are general and not specific of this project"""
 
-### `core/`
+#### `core/`
 
 - `core/`
   - """Low-level helpers that are specific of this project"""
@@ -132,17 +132,17 @@ im_v2/ccxt/data/
   - `signal_processing.py`
   - `statistics.py`
 
-### `devops/`
+#### `devops/`
 
 - `devops/`
   - TODO(gp): reorg
 
-### `dev_scripts/`
+#### `dev_scripts/`
 
 - `/dev_scripts`
   - TODO(gp): reorg
 
-### `im/`
+#### `im/`
 
 - `sorrentum_sandbox/`
   - `common/`
@@ -203,7 +203,7 @@ im_v2/ccxt/data/
   - `kibot/`
   - `mock1/`
 
-### `market_data/`
+#### `market_data/`
 
 - `market_data/`
   - """Interface to read price data"""
@@ -213,7 +213,7 @@ im_v2/ccxt/data/
   - `ReplayedMarketData`
   - TODO(gp): Move market_data to `datapull/market_data`
 
-### `dataflow/`
+#### `dataflow/`
 
 - `dataflow/`
   - """DataFlow module"""
@@ -283,7 +283,7 @@ im_v2/ccxt/data/
 
 - `/research_amp`
 
-## dataflow dependencies
+### dataflow dependencies
 
 - `dataflow/core`
   - Should not depend on anything in `dataflow`
@@ -303,7 +303,7 @@ im_v2/ccxt/data/
 
 - TODO(gp): Move backtest up
 
-## Top level dirs
+### Top level dirs
 
 ```text
 (cd amp; tree -L 1 -d --charset=ascii -I "*test*|*notebooks*" 2>&1 | tee /tmp/tmp)
@@ -320,7 +320,7 @@ im_v2/ccxt/data/
 `-- research_amp
 ```
 
-# Invariants
+## Invariants
 
 - We assume that there is no file with the same name either in the same repo or
   across different repos
@@ -342,7 +342,7 @@ im_v2/ccxt/data/
   - Note that this rule makes the naming of files depending on the history, but
     it minimizes churn of names
 
-# Misc
+## Misc
 
 - To execute a vim command, go on the line
 

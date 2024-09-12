@@ -1,4 +1,4 @@
-
+# Trading Run Summary Sheet
 
 <!-- toc -->
 
@@ -7,7 +7,7 @@
 
 <!-- tocstop -->
 
-# Document description
+## Document description
 
 Gsheet:
 [2024Q2/Q3 - Scheduled trading](https://docs.google.com/spreadsheets/d/1abvqin3UXJUYmaOD999IBZDoOFGYjUk-4sP7Bd37Ukw/)
@@ -18,7 +18,7 @@ available.
 
 The data is entered into the Gsheet every day before 8:30 AM ET.
 
-# Field descriptions
+## Field descriptions
 
 - **Date:** the date of the DAG run in YYYY-MM-DD format
 

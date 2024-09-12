@@ -1,4 +1,4 @@
-
+# Conda Environment Obsolete
 
 <!-- toc -->
 
@@ -28,16 +28,16 @@
 
 _THIS IS OBSOLETE AFTER DOCKER DEV CONTAINER_
 
-# Conda flow
+## Conda flow
 
-## (optional) Install anaconda
+### (optional) Install anaconda
 
 - For the AWS machine there is already a central conda, so there is no need for
   users to install
 - For a laptop you need to install it yourself
   - You need _anaconda3_
 
-## Configure anaconda
+### Configure anaconda
 
 - Configure anaconda for your shell using:
   ```bash
@@ -45,7 +45,7 @@ _THIS IS OBSOLETE AFTER DOCKER DEV CONTAINER_
   ```
 - Anaconda3 adds a snippet of code in your `.bashrc`
 
-## Create conda environment
+### Create conda environment
 
 - This is needed to install all the packages that are required for development:
   ```bash
@@ -58,7 +58,7 @@ _THIS IS OBSOLETE AFTER DOCKER DEV CONTAINER_
   server `research`, for your laptop)
 - You can reuse the same environment for multiple Git clients
 
-## Check conda environment
+### Check conda environment
 
 - Check that your conda environment exists:
   ```bash
@@ -69,7 +69,7 @@ _THIS IS OBSOLETE AFTER DOCKER DEV CONTAINER_
   develop            *  /home/<USER>/.conda/envs/develop
   ```
 
-## Configure conda environment
+### Configure conda environment
 
 - Every time you open a shell you need to activate the development environment
   run:
@@ -83,9 +83,9 @@ _THIS IS OBSOLETE AFTER DOCKER DEV CONTAINER_
   - Sets environment variables
   - Makes sure things are working properly
 
-## Delete / recreate environment
+### Delete / recreate environment
 
-### Overwrite a conda environment with `create_conda.py`
+#### Overwrite a conda environment with `create_conda.py`
 
 - You can use the option `--delete_env_if_exists` to overwrite a conda env,
   creating it from scratch
@@ -100,7 +100,7 @@ _THIS IS OBSOLETE AFTER DOCKER DEV CONTAINER_
   > create_conda.py -h
   ```
 
-### Manually delete a conda environment
+#### Manually delete a conda environment
 
 - You can delete a conda environment by simply deleting the corresponding
   directory
@@ -126,7 +126,7 @@ _THIS IS OBSOLETE AFTER DOCKER DEV CONTAINER_
   - Note that `develop.OLD` might not work anymore since all the links are
     broken by the move
 
-### To delete the entire conda installation (advanced users)
+#### To delete the entire conda installation (advanced users)
 
 - This is a dangerous operation, since it deletes the executable `conda`
   - You want to do this only when your environment is screwed up: a more expert
@@ -140,7 +140,7 @@ _THIS IS OBSOLETE AFTER DOCKER DEV CONTAINER_
 - Run `rm -rf /anaconda3`
 - A good idea is to move it so you can resume the state
 
-## Update anaconda
+### Update anaconda
 
 - To update anaconda (i.e., the framework that manages conda packages and
   `conda` executable)
@@ -163,7 +163,7 @@ _THIS IS OBSOLETE AFTER DOCKER DEV CONTAINER_
   /Users/saggese/.conda/envs/amp_develop/bin/python
   ```
 
-## Configure user credentials
+### Configure user credentials
 
 - For now this topic is obsolete. All development with AWS is running on a
   server side (or locally) in a docker container. Here you can find the
@@ -175,7 +175,7 @@ _THIS IS OBSOLETE AFTER DOCKER DEV CONTAINER_
 - Typically you can just copy-paste a portion of the configuration of another
   user
 
-## Be patient
+### Be patient
 
 - The `create_conda.py` flow is designed to make our projects portable across:
   - Platforms (e.g., macOS, Linux)
@@ -193,7 +193,7 @@ _THIS IS OBSOLETE AFTER DOCKER DEV CONTAINER_
   - If you hit a problem, be patient, ping GP / Paul, and we will extend the
     script to handle the quirks of your set-up
 
-# Conda bloat
+## Conda bloat
 
 - "Conda bloat" refers to the situation when there are more packages in the
   conda recipe than what strictly needed to allow us to make progress.
@@ -211,7 +211,7 @@ _THIS IS OBSOLETE AFTER DOCKER DEV CONTAINER_
 - On the one side, we want to minimize "conda bloat".
 - On the other side, we want to be able to experiment with packages.
 
-## Minimize conda bloat
+### Minimize conda bloat
 
 - To minimize conda bloat, our process consists of adding a package to the conda
   recipe when a new package is actually needed by code and to run unit tests
@@ -221,9 +221,9 @@ _THIS IS OBSOLETE AFTER DOCKER DEV CONTAINER_
     it should not be in the repo at all"
   - Thus a corollary is that all code in the repo should be tested
 
-# Conda environment lifecycle
+## Conda environment lifecycle
 
-## Experimental conda environment
+### Experimental conda environment
 
 - On the other side we want to be free to experiment with a package that can
   save us tons of development time.
@@ -244,7 +244,7 @@ _THIS IS OBSOLETE AFTER DOCKER DEV CONTAINER_
 - We can make this process more automated by generalizing the scripts we already
   have.
 
-## Releasing a new conda environment
+### Releasing a new conda environment
 
 - Once the new package is added to the official conda environment, we should:
   - Test the new conda environment locally, by creating a fresh environment and
@@ -259,9 +259,9 @@ _THIS IS OBSOLETE AFTER DOCKER DEV CONTAINER_
 - Typically GP takes care of getting all this fun stuff to work, but you are
   welcome to try locally to minimize surprises.
 
-# Conda maintenance (only for admins)
+## Conda maintenance (only for admins)
 
-## Updating conda itself
+### Updating conda itself
 
 - To update conda itself you can run:
 
@@ -277,7 +277,7 @@ _THIS IS OBSOLETE AFTER DOCKER DEV CONTAINER_
 3.8.0
 ```
 
-## Cleaning conda packages
+### Cleaning conda packages
 
 - One can clean up the entire cache of packages with:
 

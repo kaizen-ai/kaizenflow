@@ -7,6 +7,11 @@
   * [Implement historical downloader](#implement-historical-downloader)
   * [Automated AKA Scheduled downloader](#automated-aka-scheduled-downloader)
   * [Quality Assurance](#quality-assurance)
+    + [1. Check for Existing QA DAGs](#1-check-for-existing-qa-dags)
+    + [2. Create a New QA DAG (if necessary)](#2-create-a-new-qa-dag-if-necessary)
+      - [2.1. Create and Test QA Notebook](#21-create-and-test-qa-notebook)
+      - [2.2. Run QA Notebook via Invoke Command](#22-run-qa-notebook-via-invoke-command)
+    + [2.3. Create a New DAG File](#23-create-a-new-dag-file)
 
 <!-- tocstop -->
 
@@ -92,13 +97,34 @@ From `docs/datapull/all.dataset_onboarding_checklist.reference.md`
 
 ## Quality Assurance
 
-- [ ] If a QA flow for a similar data type exists, evaluate if it can be
-      directly re-used by simply adding a new Airflow DAG/task. If it's
-      insufficient, file an issue to add a new QA check/flow (using a Jupyter
-      Notebook)
-- [ ] Schedule the QA flow to Airflow by choosing one of the following options:
-  - Creating a new DAG
-  - Extending existing DAG to include a new task (preferred, if no large
-    modifications are needed)
+### 1. Check for Existing QA DAGs
+
+- [ ] **Verify if there is already a similar QA DAG running.**
+  - [ ] Check for existing QA DAGs (e.g., bid_ask/OHLCV, Cross QA for OHLCV
+        comparing real-time with historical data).
+  - [ ] Action: If the new QA is just a change in the universe or vendor, append
+        a new task to the existing running DAGs. Reference:
+        [Link to Relevant Section](https://github.com/cryptokaizen/cmamp/blob/6f6feec46704c96b9929fb174e6d66f7e94e6776/docs/datapull/ck.create_airflow_dag.tutorial.md?plain=1#L219)].
+
+### 2. Create a New QA DAG (if necessary)
+
+#### 2.1. Create and Test QA Notebook
+
+- [ ] **Develop a notebook to test the QA process.**
+  - [ ] Test over a small period to ensure it functions as expected.
+  - [ ] Tip: Use a small dataset or limited time frame for quick testing.
+
+#### 2.2. Run QA Notebook via Invoke Command
+
+- [ ] **Execute the QA notebook using the invoke command to validate
+      functionality.**
+  - [ ] Example:
+        [Invoke Command Example](https://github.com/cryptokaizen/cmamp/blob/6f6feec46704c96b9929fb174e6d66f7e94e6776/dev_scripts/lib_tasks_data_qa.py#L266)
+
+### 2.3. Create a New DAG File
+
+- [ ] **Create a new DAG file after QA process validation.**
+  - [ ] Follow the standard procedure for DAG creation. Reference:
+        [DAG Creation Tutorial](https://github.com/cryptokaizen/cmamp/blob/6f6feec46704c96b9929fb174e6d66f7e94e6776/docs/datapull/ck.create_airflow_dag.tutorial.md).
 
 Last review: GP on 2024-04-20

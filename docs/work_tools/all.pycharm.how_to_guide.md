@@ -1,8 +1,11 @@
-# PyCharm
+# Pycharm
+
+## PyCharm
 
 <!-- toc -->
 
 - [Current situation](#current-situation)
+- [Current situation](#current-situation-1)
 - [How to run our cmamp container directly from PyCharm](#how-to-run-our-cmamp-container-directly-from-pycharm)
 - [How to review a PR inside Pycharm](#how-to-review-a-pr-inside-pycharm)
 - [How to edit remote code](#how-to-edit-remote-code)
@@ -12,21 +15,22 @@
 - [PUDB - remote debugging - ToDo](#pudb---remote-debugging---todo)
 - [How to run tests inside a container](#how-to-run-tests-inside-a-container)
 - [Installing PyCharm Professional](#installing-pycharm-professional)
-  - [Windows](#windows)
-  - [macOS](#macos)
-  - [Linux](#linux)
+  * [Windows](#windows)
+  * [macOS](#macos)
+  * [Linux](#linux)
 - [Connecting via PyCharm gateway (SSH)](#connecting-via-pycharm-gateway-ssh)
-  - [Connecting via VNC](#connecting-via-vnc)
+  * [Connecting via VNC](#connecting-via-vnc)
 - [Configuration](#configuration)
-  - [Reflow](#reflow)
+  * [Reflow](#reflow)
 - [Some recommended plug-ins](#some-recommended-plug-ins)
 
 <!-- tocstop -->
-# Current situation
+
+## Current situation
+
 There are multiple ways to develop on a remote server using PyCharm
 
 1.  VNC approach
-
     - PyCharm runs locally on the server using a "virtual screen"
     - Your laptop interacts with a VNC server to get the GUI locally
     - Pros:
@@ -37,7 +41,6 @@ There are multiple ways to develop on a remote server using PyCharm
       - Without enough bandwidth it's slow and not snappy enough
 
 2.  X11 approach
-
     - Same as VNC, but instead of sending bitmaps through VNC, a "compressed"
       version of the GUI is sent to the local computer directly
     - Pros:
@@ -49,7 +52,6 @@ There are multiple ways to develop on a remote server using PyCharm
       - One needs to tunnel X11 traffic, set things up, and so on
 
 3.  PyCharm Gateway
-
     - New client-server architecture for PyCharm
       - A "headless" PyCharm runs on the server
       - A GUI client PyCharm runs on your laptop
@@ -68,7 +70,7 @@ There are multiple ways to develop on a remote server using PyCharm
     - Cons
       - You can't run / debug remotely
 
-# Current situation
+## Current situation
 
 - Approach 1) seems to require lots of memory and CPU and it's not really fast.
 
@@ -79,7 +81,7 @@ There are multiple ways to develop on a remote server using PyCharm
   - TODO(gp): @Juraj understand if it works, if it's fast, and if it requires
     less memory
 
-# How to run our cmamp container directly from PyCharm
+## How to run our cmamp container directly from PyCharm
 
 - PyCharm allows to run commands directly inside a container
   - See
@@ -89,13 +91,13 @@ There are multiple ways to develop on a remote server using PyCharm
 
 - TODO(gp): @Juraj Let's both try this. There are some notes below about it
 
-# How to review a PR inside Pycharm
+## How to review a PR inside Pycharm
 
 - CTRL + SHIFT + A -> View Pull Request
 
 - <img src="figs/pycharm/image13.png" style="width:3.612198162729659in;height:4.932292213473316in" />
 
-# How to edit remote code
+## How to edit remote code
 
 - You need to use a certain local directory (e.g.,
   /Users/saggese/src/commodity_research1) and a remote directory (e.g.,
@@ -129,23 +131,18 @@ pycharm
 
 - Run application remotely inside Docker
 
-# General ssh config
+## General ssh config
 
 - File | Settings | Tools | SSH Configurations
-
   - <img src="figs/pycharm/image7.png" style="width:3.802863079615048in;height:1.4626399825021872in" />
 
 - Once setup, ssh config can be used for all tools in PyCharm.
-
   - Remote Interpreter
-
   - DataGrip
-
   - Deployment
-
   - Etc.
 
-# DB connection via ssh
+## DB connection via ssh
 
 Note: PyCharm Professional DataGrip is used as an example. There are numerous
 open source alternatives such as [Beaver](https://dbeaver.io/). Config below
@@ -153,24 +150,20 @@ should apply to them also.
 
 - To add a new data source in DataGrip, go to the database section in the lower
   left corner.
-
   - <img src="figs/pycharm/image4.png" style="width:2.7734372265966756in;height:2.7734372265966756in" />
 
 - Then pick your desired data source from the dropdown in the upper right
   corner.
-
   - <img src="figs/pycharm/image6.png" style="width:4.164062773403325in;height:2.028646106736658in" />
 
 - You will be presented with a dummy config that needs to be replaced with
   proper data as shown below.
-
   - <img src="figs/pycharm/image8.png" style="width:4.158922790901137in;height:3.0320844269466316in" />
-  
-- Before that is done, be sure that proper ssh info is added in SSH/SSL section.
 
+- Before that is done, be sure that proper ssh info is added in SSH/SSL section.
   - <img src="figs/pycharm/image11.png" style="width:2.776042213473316in;height:0.598069772528434in" />
 
-# Deployment with remote repository (through sync)
+## Deployment with remote repository (through sync)
 
 Note: Before setting up deployment, pull the cmamp repo on EC2 instance and use
 the same name as on your local machine (example: cmamp1). Always try to keep
@@ -178,26 +171,22 @@ both repos in sync via git. For more subtle and simpler changes use File |
 Reload All From Disk . This will upload changes to the remote repo.
 
 - Tools | Deployment | Configuration
-
   - <img src="figs/pycharm/image1.png" style="width:4.893396762904637in;height:2.0781255468066493in" />
-
   - <img src="figs/pycharm/image12.png" style="width:4.838542213473316in;height:1.1398490813648294in" />
-  
+
 - Tools | Deployment | Options
   - <img src="figs/pycharm/image2.png" style="width:4.671411854768154in;height:3.2864588801399823in" />
-
     - Uncheck "Skip external changes" and check "Delete remote files"
 
 - Tools | Deployment | Automatic Upload
-
   - Check it
 
 - Tools | Deployment | Browse Remote Host
   - <img src="figs/pycharm/image5.png" style="width:5.394192913385827in;height:1.765625546806649in" />
 
-# PUDB - remote debugging - ToDo
+## PUDB - remote debugging - ToDo
 
-# How to run tests inside a container
+## How to run tests inside a container
 
 - [https://www.jetbrains.com/help/pycharm/using-docker-compose-as-a-remote-interpreter.html#docker-compose-remote](https://www.jetbrains.com/help/pycharm/using-docker-compose-as-a-remote-interpreter.html#docker-compose-remote)
 
@@ -205,9 +194,9 @@ Reload All From Disk . This will upload changes to the remote repo.
   Professional Edition, while the terminal itself is available in both
   Professional and Community editions.
 
-# Installing PyCharm Professional
+## Installing PyCharm Professional
 
-## Windows
+### Windows
 
 1. Download the installer using this
    [link](https://www.jetbrains.com/pycharm/download/#section=windows)
@@ -215,7 +204,7 @@ Reload All From Disk . This will upload changes to the remote repo.
 3. To run PyCharm, find it in the Windows Start menu or use the desktop
    shortcut.
 
-## macOS
+### macOS
 
 There are separate disk images for Intel and Apple Silicon processors.
 
@@ -226,7 +215,7 @@ There are separate disk images for Intel and Apple Silicon processors.
 
 3. Run the PyCharm app from the Applications directory, Launchpad, or Spotlight.
 
-## Linux
+### Linux
 
 **Using tar archives **
 
@@ -235,7 +224,6 @@ There are separate disk images for Intel and Apple Silicon processors.
 
 2. Unpack the pycharm-\*.tar.gz file to a different folder, if your current
    Download folder doesn't support file execution:
-
    ```
    > tar xzf pycharm-*.tar.gz -C <new_archive_folder>
    ``
@@ -244,13 +232,11 @@ There are separate disk images for Intel and Apple Silicon processors.
 The recommended installation location according to the filesystem hierarchy
 standard (FHS) is `/opt`. To install PyCharm into this directory, enter the
 following command:
-
 ```
 > sudo tar xzf pycharm-\*.tar.gz -C /opt/
 ```
 
 3. Switch to the **bin** subdirectory:
-
    ```
    > cd <new archive folder>/pycharm-\*/bin
    # E.g.,
@@ -265,7 +251,6 @@ following command:
 **Using snap packages**
 
 1. For Ubuntu 16.04 and later, you can use snap packages to install PyCharm.
-
    ```
    > sudo snap install pycharm-professional --classic
    # or
@@ -281,7 +266,7 @@ following command:
    > pycharm-educational
    ```
 
-# Connecting via PyCharm gateway (SSH)
+## Connecting via PyCharm gateway (SSH)
 
 The first thing you need to do is sign up for a free
 [trial license](https://www.jetbrains.com/ru-ru/remote-development/gateway/) or
@@ -300,7 +285,7 @@ Then make sure you have a VPN connection to our VPC
 8.  Locate your directory. Example: /data/richard
 9.  Click on Download and Start IDE.
 
-## Connecting via VNC
+### Connecting via VNC
 
 - Make sure you have a VPN connection.
 
@@ -312,8 +297,8 @@ Then make sure you have a VPN connection to our VPC
 Sysadmin has sent you:
 
 - `os_password.txt`
-- your username `$USER`
-- a key `crypto.pub` that looks like:
+- Your username `$USER`
+- A key `crypto.pub` that looks like:
   ```
   -----BEGIN OPENSSH PRIVATE KEY-----
   b3BlbnNzaC1rZXktdjEAAAAABG5vbmUAAAAEbm9uZQAAAAAAAAABAAABlwAAAAdzc2gtcn
@@ -326,21 +311,20 @@ Let's say you are connected via VNC.
 
 1. Login into the OS.
 2. Run pycharm.sh using terminal (should be there)
-
    ```
    > bash /opt/pycharm-community-2021.2.3/bin/pycharm.sh
    ```
 
-# Configuration
+## Configuration
 
-## Reflow
+### Reflow
 
 - Set the reflow to reindent
   - <img src="figs/pycharm/image15.png" style="width:6.5in;height:4.486111111111111in" />
 
-# Some recommended plug-ins
+## Some recommended plug-ins
 
-- vim
+- Vim
 - Grazie
 - [Wrap-to-column](https://plugins.jetbrains.com/plugin/7234-wrap-to-column)
 - GitHub Copilot

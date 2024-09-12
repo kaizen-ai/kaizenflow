@@ -1,4 +1,6 @@
-# Imports and packages
+# Imports And Packages
+
+## Imports and packages
 
 <!-- toc -->
 
@@ -14,10 +16,9 @@
 
 - TODO(gp): Consolidate here any other rule from other gdoc
 
-# Goals of packages
+## Goals of packages
 
 - The goal of creating packages is to:
-
   - Simplify the import from clients
   - Hide in which file the actual code is, so that we can reorganize the code
     without having to change all the client code
@@ -36,7 +37,7 @@
   dtfsysonod.ArmaGenerator(...)
   ```
 
-## Circular dependency (aka import cycle, import loop)
+### Circular dependency (aka import cycle, import loop)
 
 - The simplest case of circular import is a situation when in lib `A` we have
   `import B`, and in lib B we have `import A`
@@ -45,26 +46,21 @@
   a couple of minutes, but it will provide the most reliable and thorough check
   for circular imports
 
-## Rules for imports
+### Rules for imports
 
 - We follow rules to avoid import loops:
-
   - Code inside a package should import directly a file in the same package and
     not use the package
-
     - E.g., `im_v2/common/data/client/data_frame_im_clients.py`
-
       - Good
 
         ```python
         import im_v2.common.data.client.abstract_im_clients as imvcdcaimcl
         ```
-
       - Bad
         ```python
         import im_v2.common.data.client as icdc
         ```
-
   - Code from a package should import other packages, instead of importing
     directly the file
   - We don't allow any import loop that can be detected statically (i.e., by
@@ -82,7 +78,6 @@
         want to pay the overhead only if we get enough benefit from this
   - We specify a short import in the `__init__.py` file for a package manually
     because the linter cannot do it automatically yet
-
     - We use the first letters to build a short import and try to keep it less
       than 8 chars long, e.g., `im_v2.talos.data.client` -> `itdcl`
     - We insert an import docstring in the `__init__.py` file manually and then
@@ -94,7 +89,7 @@
       import im_v2.talos.data.client as itdcl
       ```
 
-## How to import code from unit tests
+### How to import code from unit tests
 
 - To avoid churning client code when code is moved among files, we allow unit
   tests to both:
@@ -122,7 +117,7 @@
 
 - Given that both explanations are valid, we allow both styles
 
-### Common unit test code
+#### Common unit test code
 
 - Unit tests should not import from each other
   - If there is common code, it should go in libraries inside or outside `test`
@@ -132,7 +127,7 @@
     - E.g., we use `test/foobar_test_case.py` or `test/foobar_utils.py`
   - In other terms, test files are always leaves of the import graph
 
-# Package/lib hierarchy and cycle prevention
+## Package/lib hierarchy and cycle prevention
 
 - Static import cycles can be detected by the invoke `lint_detect_cycles`
 - To prevent import cycles, we want to enforce that certain packages don't
@@ -164,7 +159,7 @@
   - Any time we can break a file into smaller pieces, we should do that since
     this helps control the dependencies
 
-# Anatomy of a package
+## Anatomy of a package
 
 - TODO(gp): Let's use `dataflow` as a running example
 - A package has a special `__init__.py` exporting public methods

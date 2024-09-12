@@ -205,7 +205,7 @@ some helpful tips and resources to guide you through your first review.
   - What the problem is
   - Why the outcome is different from what you expected
   - E.g. on how to report any issues
-    - https://github.com/kaizen-ai/kaizenflow/issues/370#issue-1782574355
+    - Https://github.com/kaizen-ai/kaizenflow/issues/370#issue-1782574355
 
 ## Talk through code and not GitHub
 
@@ -223,8 +223,8 @@ some helpful tips and resources to guide you through your first review.
   idea of what common issues are and how to address them.
 - Here are some links to a few "painful" first reviews:
   - Adding unit tests:
-    - https://github.com/kaizen-ai/kaizenflow/pull/166
-    - https://github.com/kaizen-ai/kaizenflow/pull/186
+    - Https://github.com/kaizen-ai/kaizenflow/pull/166
+    - Https://github.com/kaizen-ai/kaizenflow/pull/186
   - Writing scripts:
-    - https://github.com/kaizen-ai/kaizenflow/pull/267
-    - https://github.com/kaizen-ai/kaizenflow/pull/276
+    - Https://github.com/kaizen-ai/kaizenflow/pull/267
+    - Https://github.com/kaizen-ai/kaizenflow/pull/276

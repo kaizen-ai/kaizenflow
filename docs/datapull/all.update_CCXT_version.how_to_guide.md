@@ -1,21 +1,23 @@
+# Update Ccxt Version
+
 <!-- toc -->
 
-- [Testing CCXT Stability Before Docker Container Update](#testing-ccxt-stability-before-docker-container-update)
-  * [Steps for Performing CCXT API Tests:](#steps-for-performing-ccxt-api-tests)
-  * [Failure Handling:](#failure-handling)
-- [Reading [CCXT Exchange Timestamp Interpretation](amp/docs/datapull/ck.ccxt_exchange_timestamp_interpretation.reference.md)](#reading-ccxt-exchange-timestamp-interpretationampdocsdatapullckccxt_exchange_timestamp_interpretationreferencemd)
-  * [Steps to Confirm Timestamp Representation](#steps-to-confirm-timestamp-representation)
+- [Testing CCXT stability before docker container update](#testing-ccxt-stability-before-docker-container-update)
+  * [Steps for performing CCXT API tests:](#steps-for-performing-ccxt-api-tests)
+  * [Failure handling](#failure-handling)
+- [Read CCXT exchange timestamp interpretation](#read-ccxt-exchange-timestamp-interpretation)
+  * [Steps to confirm timestamp representation](#steps-to-confirm-timestamp-representation)
 
 <!-- tocstop -->
 
-# Testing CCXT stability before docker container update
+## Testing CCXT stability before docker container update
 
-In order to ensure the stability of our code following a CCXT update, a
-thorough testing process is required. Prior to constructing a new container, we
-will update the CCXT version locally and execute tests on the actual API to
-verify the reliability of our codebase.
+In order to ensure the stability of our code following a CCXT update, a thorough
+testing process is required. Prior to constructing a new container, we will
+update the CCXT version locally and execute tests on the actual API to verify
+the reliability of our codebase.
 
-## Steps for performing CCXT API tests:
+### Steps for performing CCXT API tests:
 
 1. Update CCXT version locally in the container using the following command:
 
@@ -52,17 +54,18 @@ verify the reliability of our codebase.
 5. Verify that all test results are marked as "green" before proceeding with the
    update of the Docker container.
 
-## Failure handling
+### Failure handling
 
-In the event that any test fails to pass successfully, an issue should be
-filed. The issue report must include details regarding
-the failure, allowing for an accurate diagnosis of the problem.
+In the event that any test fails to pass successfully, an issue should be filed.
+The issue report must include details regarding the failure, allowing for an
+accurate diagnosis of the problem.
 
-# Read CCXT exchange timestamp interpretation
+## Read CCXT exchange timestamp interpretation
 
-Read [CCXT Exchange Timestamp Interpretation](amp/docs/datapull/ck.ccxt_exchange_timestamp_interpretation.reference.md)
+Read
+[CCXT Exchange Timestamp Interpretation](amp/docs/datapull/ck.ccxt_exchange_timestamp_interpretation.reference.md)
 
-## Steps to confirm timestamp representation
+### Steps to confirm timestamp representation
 
 In order to ensure accurate and up-to-date information regarding the
 interpretation of timestamps in the CCXT exchange library, follow these detailed

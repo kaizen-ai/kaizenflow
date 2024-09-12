@@ -1,4 +1,6 @@
-# EpicMeister Process
+# Epicmeister
+
+## EpicMeister Process
 
 <!-- toc -->
 
@@ -9,34 +11,37 @@
 
 <!-- tocstop -->
 
-# General
+## General
 
 - EpicMeister ensures that Epics and issues are well-organized and updated,
   providing the team with a clear overview of project progress and priorities
 - By assigning Epics to an issue, the EpicMeister establishes a clear
   relationship between the larger project goals and the specific tasks,
   facilitating a holistic view of project progress and alignment
-- Refer to this [doc](https://github.com/cryptokaizen/cmamp/blob/master/docs/work_organization/all.use_github_and_zenhub.how_to_guide.md) to have a clear
-  understanding of the workflow using GitHub and ZenHub
+- Refer to this
+  [doc](https://github.com/cryptokaizen/cmamp/blob/master/docs/work_organization/all.use_github_and_zenhub.how_to_guide.md)
+  to have a clear understanding of the workflow using GitHub and ZenHub
 
-# Responsibilities
+## Responsibilities
 
-## Epic Management
+### Epic Management
 
-- Keep this [document](https://github.com/cryptokaizen/cmamp/blob/master/docs/work_organization/all.use_github_and_zenhub.how_to_guide.md#list-of-epics) that lists
-  all existing Epics updated
+- Keep this
+  [document](https://github.com/cryptokaizen/cmamp/blob/master/docs/work_organization/all.use_github_and_zenhub.how_to_guide.md#list-of-epics)
+  that lists all existing Epics updated
 - When a new Epic is required, after discussion
   - Create it within ZenHub
-    - Make sure the Epics are alphabetically organized on the ZenHub by right-click
-      and select to sort them
-  - Update the [document](https://github.com/cryptokaizen/cmamp/blob/master/docs/work_organization/all.use_github_and_zenhub.how_to_guide.md)
+    - Make sure the Epics are alphabetically organized on the ZenHub by
+      right-click and select to sort them
+  - Update the
+    [document](https://github.com/cryptokaizen/cmamp/blob/master/docs/work_organization/all.use_github_and_zenhub.how_to_guide.md)
   - Provide a concise title that reflects the nature of the Epic
   - Craft a description that outlines the goals and scope of the Epic
 - Every two weeks create a checklist of the team members in
-  [this](https://github.com/cryptokaizen/cmamp/issues/5668) issues to make sure team
-  members are cleaning up the board.
+  [this](https://github.com/cryptokaizen/cmamp/issues/5668) issues to make sure
+  team members are cleaning up the board.
 
-## Issue Organization
+### Issue Organization
 
 - Ensure that all Issues in GitHub/ZenHub are well-organized
 - Each Issue should:

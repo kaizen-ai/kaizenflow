@@ -1,4 +1,15 @@
-- -> room, -> = "let’s go to the conference room" (typically the one pinned in the chat)
+
+
+<!-- toc -->
+
+- [Common abbreviations](#common-abbreviations)
+
+<!-- tocstop -->
+
+# Common abbreviations
+
+- -> room, -> = "let’s go to the conference room" (typically the one pinned in
+  the chat)
 - AFAIK = as far as I know
 - AFK, AFTK = away from (the) keyboard
 - BM = Build-meister
@@ -7,7 +18,7 @@
 - GH = GitHub
 - IMO = in my opinion
 - KG = knowledge graph
-- KG-OG = KG Original Gangsta 
+- KG-OG = KG Original Gangsta
 - KG-fication = The process of turning something in a KG
 - KOTH = King Of The Hill (the best model so far)
 - OOO, OOTO = Out Of The Office
@@ -23,6 +34,6 @@
 - WIP = work in progress
 - Windows = the worst OS ever made
 - ZH = ZenHub
-- np = no problem
-- sg = sounds good
-- vim = the best editor ever made
+- Np = no problem
+- Sg = sounds good
+- Vim = the best editor ever made

@@ -1,12 +1,10 @@
-
+# DataFlow Data Format
 
 <!-- toc -->
 
-- [DataFlow Data Format](#dataflow-data-format)
+
 
 <!-- tocstop -->
-
-## DataFlow Data Format
 
 As explained in
 [/docs/datapull/all.datapull_client_stack.explanation.md](/docs/datapull/all.datapull_client_stack.explanation.md),

@@ -2,16 +2,11 @@
 
 <!-- toc -->
 
-  * [Config](#config)
-    + [Config representation and properties](#config-representation-and-properties)
-    + [Assigning and getting Config items](#assigning-and-getting-config-items)
-  * [Time semantics](#time-semantics)
-  * [Different views of System components](#different-views-of-system-components)
-  * [Architecture](#architecture)
-    + [Component invariants](#component-invariants)
-  * [DataFlow computing](#dataflow-computing)
-    + [Template configs](#template-configs)
-  * [DataFlow Computation Semantics](#dataflow-computation-semantics)
+- [Different views of System components](#different-views-of-system-components)
+- [Architecture](#architecture)
+  * [Component invariants](#component-invariants)
+- [DataFlow computing](#dataflow-computing)
+  * [Template configs](#template-configs)
 
 <!-- tocstop -->
 
@@ -52,17 +47,17 @@ data became available to that component) in terms of current time.
 
 Each component has a way to know:
 
-- what is the current time (e.g., the real-time machine time or the simulated
+- What is the current time (e.g., the real-time machine time or the simulated
   one)
-- the timestamp of the current data bar it's working on
+- The timestamp of the current data bar it's working on
 
 Each component
 
-- should print its state so that one can inspect how exactly it has been
+- Should print its state so that one can inspect how exactly it has been
   initialized
-- can be serialized and deserialized from disk
-- can be mocked for simulating
-- should save data in a directory as it executes to make the system observable
+- Can be serialized and deserialized from disk
+- Can be mocked for simulating
+- Should save data in a directory as it executes to make the system observable
 
 Models are described in terms of DAGs using the DataFlow framework
 
@@ -88,7 +83,6 @@ vwap_approach_2.head(3)
 
 - TODO(gp): Explain this piece of code
 
-
 ### Template configs
 
 - Are incomplete configs, with some "mandatory" parameters unspecified but
@@ -107,9 +101,9 @@ in sync.
 
 The client:
 
-- calls `get_config_template()` to receive the template config
-- fills / modifies the config
-- uses the final config to call `get_dag(config)` and get a fully built DAG
+- Calls `get_config_template()` to receive the template config
+- Fills / modifies the config
+- Uses the final config to call `get_dag(config)` and get a fully built DAG
 
 A `DagBuilder` can be passed to other objects instead of `Dag` when the template
 config is fully specified and thus the `Dag` can be constructed from it.
@@ -124,5 +118,3 @@ e.g.,
   rolling pattern
 - `IncrementalDagRunner`: allows to run one step at a time like in real-time
 - `RealTimeDagRunner`: allows to run using nodes that have a real-time semantic
-
-

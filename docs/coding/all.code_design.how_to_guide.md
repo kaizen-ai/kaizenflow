@@ -1,4 +1,4 @@
-
+# Code Design
 
 <!-- toc -->
 
@@ -22,9 +22,9 @@
 
 <!-- tocstop -->
 
-# Design Philosophy
+## Design Philosophy
 
-## Measure seven times, cut once (Russian proverb)
+### Measure seven times, cut once (Russian proverb)
 
 - Before doing any work, sit down and plan
   - Describe somewhere _in writing_ your high-level plan. Put it in a Google doc
@@ -76,13 +76,13 @@
   - Do not disappear for one week and come back with something that makes sense
     only to you, or that you didn’t get buy-in from others on
 
-## Hacker laws
+### Hacker laws
 
 - A list of interesting "laws" (some are more rule of thumbs / heuristics)
   related to computing:
   - [hacker-laws](https://github.com/dwmkerr/hacker-laws)
 
-## Keep it simple
+### Keep it simple
 
 - Follow the [KISS principle](https://en.wikipedia.org/wiki/KISS_principle).
 - Pursue simple, elegant solutions. Some things are inherently complex, but even
@@ -92,7 +92,7 @@
   - Modify
   - Debug
 
-## Tips from a pro
+### Tips from a pro
 
 - Adapted from
   [these slides](https://www.slideshare.net/adrianionel/software-engineering-advice-from-googles-jeff-dean-for-big-distributed-systems)
@@ -100,7 +100,7 @@
   [Jeff Dean](<https://en.wikipedia.org/wiki/Jeff_Dean_(computer_scientist)>)
   (the Chuck Norris of SWE)
 
-### Designing software systems is tricky
+#### Designing software systems is tricky
 
 - Need to balance:
   - Simplicity [note that this comes first!]
@@ -110,7 +110,7 @@
   - Generality
   - Features [note that this comes last!]
 
-### Get Advice Early!
+#### Get Advice Early!
 
 - Get advice
   - Before you write any code
@@ -121,7 +121,7 @@
   - Chat about the design with colleagues
   - Consider discussing multiple potential designs
 
-### Interfaces
+#### Interfaces
 
 - Think carefully about interfaces in your system!
   - Imagine other hypothetical clients trying to use your interface
@@ -129,9 +129,9 @@
   - Get feedback on your interfaces before implementing!
   - The best way to learn is to look at well-designed interfaces
 
-# Architecture
+## Architecture
 
-## Use design patterns
+### Use design patterns
 
 - [Design patterns](https://en.wikipedia.org/wiki/Software_design_pattern) are
   idioms or recipes for solving problems that commonly appear in software
@@ -152,9 +152,9 @@
   - Simplify the high-level picture of your code
   - Make it easier for other people to understand your code
 
-# Functions
+## Functions
 
-## Avoid modifying the function input
+### Avoid modifying the function input
 
 - If, for example, a function `f` accepts a dataframe `df` as its (sole)
   argument, then, ideally, `f(df)` will not modify `df`. If modifications are
@@ -179,7 +179,7 @@
   code in a notebook that will return the same results when re-executed out of
   order.
 
-## Prefer pure functions by default
+### Prefer pure functions by default
 
 - [Pure functions](https://en.wikipedia.org/wiki/Pure_function) have two key
   properties:
@@ -200,7 +200,7 @@
   pragmatic to dogmatically insist upon a functional style (especially in our
   domain and when using Python).
 
-# Invariants
+## Invariants
 
 From ./oms/architecture.md
 
@@ -235,9 +235,9 @@ Invariants and conventions
 
 - The Optimizer only thinks in terms of dollar
 
-## Our approach to doing things
+### Our approach to doing things
 
-### Roles and responsibilities
+#### Roles and responsibilities
 
 - How to communicate
   - Telegram for urgent stuff or interactive things (ideally on a small group
@@ -266,7 +266,7 @@ Invariants and conventions
     - E.g., `i gh_create_pr`
   - We like draft PRs to discuss architecture before unit testing
 
-### Good practices
+#### Good practices
 
 - Good Issue reports
   - What are you trying to achieve

@@ -1,4 +1,6 @@
-# Jupyter notebook best practices
+# Jupyter Notebook
+
+## Jupyter notebook best practices
 
 <!-- toc -->
 
@@ -50,7 +52,7 @@
 
 <!-- tocstop -->
 
-# When to use a Jupyter notebook
+## When to use a Jupyter notebook
 
 - A notebook can be used for various goals:
   - Tutorial / gallery
@@ -68,13 +70,12 @@
       base
     - We might want to add unit tests for it
 
-# General structure of a notebook
+## General structure of a notebook
 
-## Description
+### Description
 
 - At the top of the notebook add a description section explaining a notebook's
   goal and what it does, e.g.,
-
   ```
   # Description
 
@@ -85,7 +86,7 @@
   by selecting a cell and then at Jupyter interface do
   `Cell -> Cell Type -> Markdown`
 
-## Imports
+### Imports
 
 - Add a code section importing the needed libraries
   - Autoreload modules to keep Jupyter and local code updated in real-time
@@ -94,7 +95,6 @@
   - Local imports from our lib
 - It's better to put all the imports in one cell and separate different import
   types by 1 empty line, e.g.:
-
   ```
   # Imports
 
@@ -117,12 +117,11 @@
 
 - In this way executing one cell is enough to configure the notebook
 
-## Configuration
+### Configuration
 
 - You can configure the notebooks with some utils, logging, and report info on
   how the notebook was executed (e.g., Git commit, libs, etc.) by using the
   following cell:
-
   ```
   # Configure logger.
   hdbg.init_logger(verbosity=logging.INFO)
@@ -161,7 +160,7 @@
   statsmodels: 0.13.5
   ```
 
-# Make the notebook flow clear
+## Make the notebook flow clear
 
 - Each notebook needs to follow a clear and logical flow, e.g:
   - Load data
@@ -184,11 +183,11 @@
     big)
   - You can collapse the cells and don't scroll back and forth too much
 
-# General best practices
+## General best practices
 
-## Update calls only for Master/Gallery notebooks
+### Update calls only for Master/Gallery notebooks
 
-### Convention:
+#### Convention:
 
 - We do our best to update the calls in the Master/Gallery notebooks but we
   don't guarantee that the fix is correct
@@ -196,14 +195,14 @@
   and tweak the call to enforce the old behavior, or even not do anything if
   there are too many changes
 
-### Rationale:
+#### Rationale:
 
 - We have dozens of ad-hoc research notebooks
 - When a piece of code is updated (e.g., `ImClient`) the change should be
   propagated everywhere in the code base, including the notebooks
 - This results in excessive amount of maintenance work which we want to avoid
 
-## Keep code that belongs together in one cell
+### Keep code that belongs together in one cell
 
 - It's often useful to keep in a cell computation that needs to be always
   executed together
@@ -213,7 +212,7 @@
   once we are more confident that it works correctly we can merge it in a cell
   (or even better in a function)
 
-## Write beautiful code, even in notebooks
+### Write beautiful code, even in notebooks
 
 - Follow the conventions and suggestions for
   [Python code style](Coding_Style_Guide.md)
@@ -222,17 +221,17 @@
 - In our opinion it's just better to always do write robust and readable code:
   it doesn't buy much time to cut corners
 
-## Show how data is transformed as you go
+### Show how data is transformed as you go
 
 - Print a few lines of data structures (e.g., `df.head(3)`) so one can see how
   data is transformed through the cells
 
-## Use keyboard shortcuts
+### Use keyboard shortcuts
 
 - Learn the default keyboard shortcuts to edit efficiently
 - You can use the vim plug-in (see below) and become 3x more ninja
 
-## Strive for simplicity
+### Strive for simplicity
 
 - Always make the notebook easy to be understood and run by somebody else
 - Explain what happens
@@ -240,7 +239,7 @@
 - Use decent variable names
 - Comment the results, when possible / needed
 
-## Dependencies among cells
+### Dependencies among cells
 
 - Try to avoid dependencies between cells
 - Even better avoid any dependency between cells, e.g.:
@@ -251,7 +250,7 @@
     re-initialize the notebook
 - For the same reason group functions in one cell that you can easily re-execute
 
-## Re-execute from scratch
+### Re-execute from scratch
 
 - Once in a while (e.g., once a day)
 - Commit your changes
@@ -261,7 +260,7 @@
   state or dependency in the code
 - Before a commit (and definitively before a PR) do a clean run
 
-## Add comments for complex cells
+### Add comments for complex cells
 
 - When a cell is too long, explain in a comment what a cell does, e.g.,
   ```
@@ -275,18 +274,18 @@
 - Another approach is to factor out the code in functions with clear names and
   simplify the flow
 
-## Do not cut & paste code
+### Do not cut & paste code
 
 - Cutting + paste + modify is _NEVER_ a good idea
 - It takes more time to clean up cut & paste code than doing right in the first
   place
 - Just make a function out of the code and call it!
 
-## Avoid "wall-of-code" cell
+### Avoid "wall-of-code" cell
 
 - Obvious
 
-## Avoid data biases
+### Avoid data biases
 
 - Try to compute statistics on the entire data set so that results are
   representative and not dependent on a particular slice of the data
@@ -294,19 +293,19 @@
 - If it takes too long to compute the statistics on the entire data set, report
   the problem and we can think of how to speed it up
 
-## Avoid hardwired constants
+### Avoid hardwired constants
 
 - Don't use hardwired constants
 - Try to parametrize the code
 
-## Explain where data is coming from
+### Explain where data is coming from
 
 - If you are using data from a file (e.g., `/data/wd/RP_1yr_13_companies.pkl`),
   explain in a comment how the file was generated
   - Ideally report a command line to regenerate the data
 - The goal is for other people to be able to re-run the notebook from scratch
 
-## Fix warnings
+### Fix warnings
 
 - A notebook should run without warnings
 - Warnings can't be ignored since they indicate that the code is relying on a
@@ -344,7 +343,7 @@
   - If it's not obvious how to interpret or fix a warning file a bug, file a bug
     reporting clearly a repro case and the error message
 
-## Make cells idempotent
+### Make cells idempotent
 
 - Try to make a notebook cell able of being executed multiple times without
   changing its output value, e.g.,
@@ -378,7 +377,7 @@
   df_without_1s = df[df["id"] != 1].copy()
   ```
 
-## Always look at the discarded data
+### Always look at the discarded data
 
 - Filtering the data is a risky operation since once the data is dropped, nobody
   is going to go back and double check what exactly happened
@@ -407,7 +406,7 @@
 - Make absolutely sure you are not dropping important data
   - E.g., has the distribution of the data changed in the way you would expect?
 
-## Use a progress bar
+### Use a progress bar
 
 - Always use progress bars (even in notebooks) so that user can see how long it
   will take for a certain computation.
@@ -417,7 +416,7 @@
   from tqdm.autonotebook import tqdm
   ```
 
-# Notebooks and libraries
+## Notebooks and libraries
 
 - It's ok to use functions in notebooks when building the analysis to leverage
   notebook interactivity
@@ -431,7 +430,7 @@
   - Otherwise, if you change a function in the lib, the notebook will not pull
     this change and use the old version of the function
 
-## Pros
+### Pros
 
 - The same notebook code can be used for different notebooks
   - E.g., the function to read the data from disk is an obvious example
@@ -448,30 +447,30 @@
     wants to run on the entire large dataset
 - The exploratory analysis can be moved towards modeling and then production
 
-## Cons
+### Cons
 
 - One have to scroll back and forth between notebook and the libraries to
   execute the cell with the functions and fix all the possible mistakes
 
-# Recommendations for plots
+## Recommendations for plots
 
-## Use the proper y-scale
+### Use the proper y-scale
 
 - If one value can vary from -1.0 to 1.0, force the y-scale between those limits
   so that the values are absolutes, unless this would squash the plot
 
-## Make each plot self-explanatory
+### Make each plot self-explanatory
 
 - Make sure that each plot has a descriptive title, x and y label
 - Explain the set-up of a plot / analysis
   - E.g., what is the universe of stocks used? What is the period of time?
   - Add this information also to the plots
 
-## Avoid wall-of-text tables
+### Avoid wall-of-text tables
 
 - Try to use plots summarizing the results besides the raw results in a table
 
-## Use common axes to allow visual comparisons
+### Use common axes to allow visual comparisons
 
 - Try to use same axes for multiple graphs when possible to allow visual
   comparison between graphs
@@ -479,49 +478,49 @@
   scales and add a plot with multiple graphs inside on the same axis (e.g., with
   y-log)
 
-## Use the right plot
+### Use the right plot
 
 - Pick the right type of graph to make your point
   - `pandas`, `seaborn`, `matplotlib` are your friends
 
-# Useful plugins
+## Useful plugins
 
 - You can access the extensions menu:
   - `Edit -> nbextensions config`
   - `http://localhost:XYZ/nbextensions/`
 
-## Vim bindings
+### Vim bindings
 
 - [VIM binding](https://github.com/lambdalisue/jupyter-vim-binding/wiki/Installation)
   will change your life
 
-## Table of content
+### Table of content
 
 - To see the entire logical flow of the notebook, when you use the headers
   properly
 
-## ExecuteTime
+### ExecuteTime
 
 - To see how long each cell takes to execute
 
-## Spellchecker
+### Spellchecker
 
 - To improve your English!
 
-## AutoSaveTime
+### AutoSaveTime
 
 - To save the code automatically every minute
 
-## Notify
+### Notify
 
 - Show a browser notification when kernel becomes idle
 
-## Jupytext
+### Jupytext
 
 - We use Jupytext as standard part of our development flow
 - See `docs/work_tools/all.jupytext.how_to_guide.md`
 
-## Gspread
+### Gspread
 
 - Allow to read g-sheets in Jupyter Notebook
 - First, one needs to configure Google API, just follow the instructions from

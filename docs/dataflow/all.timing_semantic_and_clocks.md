@@ -1,4 +1,4 @@
-
+# Timing Semantic And Clocks
 
 <!-- toc -->
 
@@ -19,7 +19,7 @@
 
 <!-- tocstop -->
 
-# Time semantics
+## Time semantics
 
 **Time semantics**. Any DataFlow component can be executed in real-time or
 simulated accounting for different ways to represent the passing of time.
@@ -92,9 +92,9 @@ TODO(Grisha): add an example.
 same "format" and with the same timing as it would be provided in real-time, but
 the clock type is "replayed clock".
 
-# How clock is handled
+## How clock is handled
 
-## Asynchronous mode
+### Asynchronous mode
 
 - In asynchronous mode there are multiple things happening at the same time
   - E.g., DAG computes, orders are sent to the market, some components wait
@@ -104,12 +104,12 @@ the clock type is "replayed clock".
   - E.g, one CPU executes/simulates the DAG, another CPU executes/simulates the
     `Portfolio`, etc.
 
-## Synchronous mode
+### Synchronous mode
 
 - In synchronous mode only one thing happens at the same time
   - E.g., executing a piece of code using Pandas
 
-## Async vs sync simulation
+### Async vs sync simulation
 
 - We can simulate the same system in sync or async mode
 
@@ -124,7 +124,7 @@ the clock type is "replayed clock".
   - Under certain constraints (e.g., when I/O overlaps with computation) a
     single CPU can run/simulate a truly asynchronous system
 
-## Some cross-products of the 3 directions
+### Some cross-products of the 3 directions
 
 - Not all the combinations are possible of mixing:
   - Historical vs replayed vs real-time
@@ -173,7 +173,7 @@ A system is composed of
 - In fact we have a loop that does exactly that
 - We can run the portfolio in "debug mode" where we have a precomputed df
 
-## Research mode
+### Research mode
 
 - Run the DAG without `process_forecast`
 - Save ResultBundles
@@ -182,29 +182,29 @@ A system is composed of
   - Dot product + volatility normalization + target GMV + other magic
   - TODO(Paul): to formally defined
 
-## Real-time mode
+### Real-time mode
 
 - Run DAG one step at the time using RealTimeDataSource and MarketDataInterface
 - Save ResultBundle / intermediate state
 - Compute rolling pnl
 
-## Historical
+### Historical
 
 - Do all the predictions and then run the SimulatedPortfolio
   (DataFramePortfolio) one step at the time
 - Maybe useful for "looping" around the Optimizer
 
-# Flows
+## Flows
 
 - Evaluating a model requires computing forecasts and then the corresponding PnL
 
-## Forecast flow
+### Forecast flow
 
 - = compute forecasts from data using the DAG
 - It can be historical, replayed, real-time
 - The outcome is a data frame with all the forecasts
 
-## Pnl (profit and loss) flow
+### Pnl (profit and loss) flow
 
 - = given forecasts and prices compute the corresponding PnL
 - It can be computed using:
@@ -217,12 +217,12 @@ A system is composed of
 Some configurations are used more often than others, and so we give them a
 specific name
 
-## Research flow
+### Research flow
 
 - = historical flow for computing + dot product
 - We use it to assess the presence of alpha
 
-## Real-time flow
+### Real-time flow
 
 - All components are:
   - Vendor-specific implemented (e.g., TalosImClient, TalosBroker)

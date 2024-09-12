@@ -1,4 +1,4 @@
-
+# Reading Other People Code
 
 <!-- toc -->
 
@@ -17,7 +17,7 @@
 
 <!-- tocstop -->
 
-# Reading other people code
+## Reading other people code
 
 - People don't like reading other people's code
   - Still reading existing code needs to be done
@@ -27,9 +27,9 @@
   actually learn and improve as a coder
   - E.g., writers read and study other writers' book to improve
 
-# What not to do
+## What not to do
 
-## Rewrite coding
+### Rewrite coding
 
 - You think "This code is a complete ugly mess. It needs to be rewritten"
   - The answer is: ABSOLUTELY NO!
@@ -42,7 +42,7 @@
 - In other terms, there is no reason to believe that you are going to do a
   better job than others did
 
-## Incremental renovation
+### Incremental renovation
 
 - The first thing that programmers want to do is to bulldoze the place flat and
   build something great
@@ -54,7 +54,7 @@
   - Adding unit tests
 - In reality, 99.9% of work is incremental
 
-## It's harder to read code than to write it
+### It's harder to read code than to write it
 
 - For this reason code reuse is hard
 - For this reason, everybody on the team has the same function to do the same
@@ -62,7 +62,7 @@
 - It's easier and more fun to write new code than figuring out how the old code
   works
 
-## Respect old code!
+### Respect old code!
 
 - When you think "the old code is a mess", you are probably wrong
 
@@ -78,7 +78,7 @@
 - When you throw away code and start from scratch, you are throwing away all the
   knowledge, all the bug fixes, all the hard thinking
 
-## What makes code a mess?
+### What makes code a mess?
 
 - What makes the code a "mess" (at least according to your expert opinion as
   world-class coder):
@@ -99,9 +99,9 @@
 
 - All these problems can be easily fixed in 100x less time than rewriting
 
-# What to do
+## What to do
 
-## Get into the right attitude
+### Get into the right attitude
 
 1. Assume that whoever wrote the code knew what he/she was doing
    - If that's not the case, he/she would have already been fired from the team
@@ -115,7 +115,7 @@
    - There is no reason to believe that you can write the code in a simpler way
    - The complexity is almost always needed to solve the complex problem we have
 
-## Reading other people code is painful
+### Reading other people code is painful
 
 - The problem is that code reflects the thought process of the person who wrote
   the code
@@ -134,7 +134,7 @@
 - Maybe a hack solution needed to be added to ship and get the \$1m from the
   customers
 
-## Suggestions on how to read code
+### Suggestions on how to read code
 
 - Use `git blame` to understand who wrote the code and over what period of time
   - Knowing the author can help you ask him/her questions directly
@@ -198,7 +198,7 @@
 
 - The more code you read, the more comfortable you will become
 
-# Refs
+## Refs
 
 - [How to Read Code (Eight Things to Remember)](https://spin.atomicobject.com/2017/06/01/how-to-read-code`)
 - [Things you should never do](https://www.joelonsoftware.com/2000/04/06/things-you-should-never-do-part-i)

@@ -1,25 +1,26 @@
-
+# Gsheet Into Pandas
 
 <!-- toc -->
 
 - [Connecting Google Sheets to Pandas](#connecting-google-sheets-to-pandas)
-  * [Installing gspread-pandas](#installing-gspread-pandas)
-  * [Configuring gspread-pandas](#configuring-gspread-pandas)
-  * [Using `gspread` on the server](#using-gspread-on-the-server)
-- [Using gspread-pandas](#using-gspread-pandas)
+  * [Installing libraries](#installing-libraries)
+  * [Check installation](#check-installation)
+  * [Authentication](#authentication)
+    + [In short](#in-short)
+- [Testing gspread-pandas](#testing-gspread-pandas)
 
 <!-- tocstop -->
 
-# Connecting Google Sheets to Pandas
+## Connecting Google Sheets to Pandas
 
 - There are two layers of the API
   - [gspread](https://docs.gspread.org/)
     - This allows to connect to Google Sheets API
   - [gspread-pandas](https://gspread-pandas.readthedocs.io)
-    - This allows to interact with Google Sheets through Pandas DataFrames, using
-      `gspread`
+    - This allows to interact with Google Sheets through Pandas DataFrames,
+      using `gspread`
 
-## Installing libraries
+### Installing libraries
 
 - The library should be automatically installed in the Dev container
 
@@ -33,10 +34,11 @@
   docker> sudo /bin/bash -c "(source /venv/bin/activate; pip install gspread)"
   ```
 
-## Check installation
+### Check installation
 
 - To check that the library is installed
   - In a notebook
+
     ```bash
     import gspread
     print(gspread.__version__)
@@ -52,13 +54,12 @@
     5.10.0
     ```
 
-## Authentication
+### Authentication
 
 - It's best to access Google API using a "Service Account", which is used for a
   bots
-- Since `gspread-pandas` leverages `gspread`, you can follow the instructions for
-  gspread
-  https://docs.gspread.org/en/v6.0.0/oauth2.html
+- Since `gspread-pandas` leverages `gspread`, you can follow the instructions
+  for gspread https://docs.gspread.org/en/v6.0.0/oauth2.html
 
 - There are two ways to authenticate
   - OAuth Client ID
@@ -66,9 +67,11 @@
 
 - More details are in
   - `gspread`: https://docs.gspread.org/en/latest/oauth2.html
-  - `gspread-pandas`: https://gspread-pandas.readthedocs.io/en/latest/configuration.html
+  - `gspread-pandas`:
+    https://gspread-pandas.readthedocs.io/en/latest/configuration.html
 
-### In short
+#### In short
+
 - Go to Google Developers Console and create a new project or select one you
   already have
   - E.g., name "gp-gspread", and ID "gp-gspread-426713"
@@ -79,12 +82,13 @@
 - Service account details
   - Service account name: gspread
   - Service account ID: gspread
-  - Email address: gspread@gp-gspread-426713.iam.gserviceaccount.com 
+  - Email address: gspread@gp-gspread-426713.iam.gserviceaccount.com
   - Role: owner
 - Click on `gspread`
   - Keys -> Create new key -> JSON
 - A file is downloaded
-> more ~/Downloads/gspread-gp-94afb83adb02.json
+
+  > more ~/Downloads/gspread-gp-94afb83adb02.json
   ```
   {
     "type": "service_account",
@@ -99,6 +103,7 @@
     "client_x509_cert_url": "https://www.googleapis.com/robot/v1/metadata/x509/gp-gspread%40gspread-gp.iam.gserviceaccount.com",
     "universe_domain": "googleapis.com"
   }
+  ```
 
 - Move the key in the right place
   ```
@@ -115,7 +120,7 @@
   exception when trying to access this spreadsheet from your application or a
   script.
 
-# Testing gspread-pandas
+## Testing gspread-pandas
 
 - The notebook with the usage example is located at
   `amp/core/notebooks/gsheet_into_pandas_example.ipynb`.

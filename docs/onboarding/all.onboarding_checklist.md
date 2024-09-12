@@ -1,4 +1,4 @@
-
+# Onboarding Checklist
 
 <!-- toc -->
 
@@ -14,21 +14,22 @@
   * [The first day!](#the-first-day)
     + [Team member info](#team-member-info)
     + [NDA](#nda)
+    + [Hubstaff](#hubstaff)
     + [IT setup](#it-setup)
-- [Checklists to verify that everything works](#checklists-to-verify-that-everything-works)
+- [Quick checklists to verify that everything works](#quick-checklists-to-verify-that-everything-works)
   * [The second day](#the-second-day)
 
 <!-- tocstop -->
 
-# Onboarding process for a new team member
+## Onboarding process for a new team member
 
-## Meta
+### Meta
 
-### Make on-boarding automatic
+#### Make on-boarding automatic
 
 - We want to make the onboarding process as automatic as possible
 
-### Be patient
+#### Be patient
 
 - Let's use all the communication tools we have (screen sharing, Google Meet,
   phone, Telegram, email) to keep the process smooth and personal
@@ -36,7 +37,7 @@
   inevitably go wrong
   - Let's all be patient with each other
 
-### Ask for confirmation
+#### Ask for confirmation
 
 - Use checklists any time to make sure things get done
 - Ask for confirmation of all the actions, e.g.,
@@ -46,7 +47,7 @@
 - Make the new team member follow the instructions so that they can get familiar
   with the systems
 
-### Make on-boarding similar to our work routine
+#### Make on-boarding similar to our work routine
 
 - Provide tools for interacting with the team
   - During the process the new teammate will ask questions and he / she should
@@ -63,7 +64,7 @@
   - He / she should put his / her notes in the GH issue while proceeding during
     the onboarding process
 
-### Improve on-boarding process
+#### Improve on-boarding process
 
 - Review, improve, clarify process
   - We want to point the new team member to a document rather than explaining
@@ -78,7 +79,7 @@
   - Open the first GitHub bug on the first day
   - Open the first PR by the second day
 
-## People involved in the on-boarding
+### People involved in the on-boarding
 
 - Each task is performed by one of the persons involved in the on-boarding
   - Team leader (e.g., GP, Paul, Grisha, Samarth)
@@ -86,7 +87,7 @@
   - IT (e.g., Shayan)
   - HR (e.g., Rose)
 
-## Before the start date
+### Before the start date
 
 - [ ] **Team leader**: talk to the teams about the new team member joining
 
@@ -102,9 +103,9 @@
   - What is going to work on initially
   - LinkedIn link
 
-## The first day!
+### The first day!
 
-### Team member info
+#### Team member info
 
 - [ ] **Team member**: send needed information to your team leader
   - Full name:
@@ -117,9 +118,9 @@
   - User's SSH public key
 
 - [ ] **Team leader**: update the
-  [Team member info gdoc](https://docs.google.com/document/d/1gmcmLzaopYWEycx1AbBMupG9hJhcxPCxN85l23_fZGk)
+      [Team member info gdoc](https://docs.google.com/document/d/1gmcmLzaopYWEycx1AbBMupG9hJhcxPCxN85l23_fZGk)
 
-### NDA
+#### NDA
 
 - [ ] **HR**: send the team member an NDA to sign
       [NDAs Development Team](https://drive.google.com/drive/u/0/folders/1lcHmu14jz_bXscZPIatbbMTwfwA6e3eV)
@@ -128,7 +129,7 @@
 - [ ] **HR**: store in
       [signed directory](https://drive.google.com/drive/u/0/folders/17T2IdKOMAmyfU3hkmMo3Eo6qiejBFy3r)
 
-### Hubstaff
+#### Hubstaff
 
 - [ ] **HR**: Update Hubstaff
   - Add user [here](https://app.hubstaff.com/organizations/398809/invites)
@@ -141,7 +142,7 @@
   - Read
     [Tools - Hubstaff](/docs/onboarding/all.track_time_with_hubstaff.how_to_guide.md)
 
-### IT setup
+#### IT setup
 
 - [ ] **Team leader**: File an issue with this checklist
   - The title is "Onboarding {{Name}}"
@@ -198,10 +199,10 @@
   - [ ] [Kaizen-ai](https://github.com/kaizen-ai/kaizenflow)
   - [ ] [dev_tools](https://github.com/kaizen-ai/dev_tools)
   - [ ] [cmamp](https://github.com/cryptokaizen/cmamp/settings/access)
-  - (On per-need basis)
-    [ ] [orange](https://github.com/cryptokaizen/orange/settings/access)
-  - (On per-need basis)
-    [ ] [UMD_data605](https://github.com/gpsaggese/umd_data605/settings/access)
+  - (On per-need basis) [ ]
+    [orange](https://github.com/cryptokaizen/orange/settings/access)
+  - (On per-need basis) [ ]
+    [UMD_data605](https://github.com/gpsaggese/umd_data605/settings/access)
 
 - [ ] **Team member**: Confirm access to GitHub repos
 
@@ -210,7 +211,7 @@
   - [Invite](https://app.zenhub.com/workspaces/cm-615371012ed326001e044788/board?invite=true)
 
 - [ ] **Team member**: Confirm access to ZenHub
-  [here](https://app.zenhub.com/workspaces/cm-615371012ed326001e044788/board?invite=true)
+      [here](https://app.zenhub.com/workspaces/cm-615371012ed326001e044788/board?invite=true)
 
 - [ ] **IT**: Server set-up
   - We use the personal laptop as a thin client only to connect to the servers,
@@ -239,48 +240,41 @@
     one of your face, so we can virtually get to know each other
 
 - [ ] **Team member**: Make sure you have access to the
-  [vacation/OOTO calendar](https://calendar.google.com/calendar/u/0?cid=Y19kYWRlOGU0NTUwMzhiMDllMmUzNDk1OWM2YzFkYWNhYTVmMTAzYjdjZmNiODQ1MDkzOWZhMTBkZDY2NWI3ZjJhQGdyb3VwLmNhbGVuZGFyLmdvb2dsZS5jb20).
+      [vacation/OOTO calendar](https://calendar.google.com/calendar/u/0?cid=Y19kYWRlOGU0NTUwMzhiMDllMmUzNDk1OWM2YzFkYWNhYTVmMTAzYjdjZmNiODQ1MDkzOWZhMTBkZDY2NWI3ZjJhQGdyb3VwLmNhbGVuZGFyLmdvb2dsZS5jb20).
   - The link should be accessible and you should see the calendar in the list of
     calendars at calendar.google.com (when accessing via your corporate email)
 
-- [ ] **Team member**: Add your usual working hours by going to calendar.google.com
-  (using your corporate email), heading to the settings section by clicking the
-  gear icon on top right
+- [ ] **Team member**: Add your usual working hours by going to
+      calendar.google.com (using your corporate email), heading to the settings
+      section by clicking the gear icon on top right
   - <img src="figs/google_calendar/Fig1_google_calendar_working_hour.png"
     style="width:6in" />
 
 - [ ] **Team member**: Confirm you can access the anonymous form to ask anything
-  [https://forms.gle/KMQgobqbyxhoTR9n6](https://forms.gle/KMQgobqbyxhoTR9n6)
+      [https://forms.gle/KMQgobqbyxhoTR9n6](https://forms.gle/KMQgobqbyxhoTR9n6)
 
 - [ ] **Team member**: File first Issue on GitHub
   - It should be called "Document review while onboarding $TEAM_MEMBER"
   - Track what is not clear in the onboarding process / documentation and what
     should / could be improved
 
-# Quick checklists to verify that everything works
+## Quick checklists to verify that everything works
 
 - **Team member**
   - [ ] VPN to dev server
-
   - [ ] ssh into the dev server
-
   - [ ] Check access to AWS on the server (refer to instructions above)
-
   - [ ] Clone the code from Git
-
   - [ ] Connect to server with VisualStudio Code or PyCharm
     - There is an extension for VSCode, which allows to develop remotely
       [Remote - SSH](https://marketplace.visualstudio.com/items?itemName=ms-vscode-remote.remote-ssh)
     - Follow this instruction on how to set it up in your
       [Visual Studio Code](/docs/work_tools/all.visual_studio_code.how_to_guide.md)
-
   - [ ] Run the unit tests and make sure they all pass
-
   - [ ] Run a docker container
     ```
     > i docker_bash
     ```
-
   - [ ] Run a jupyter notebook
     - Follow this
       [instruction](/docs/work_tools/all.visual_studio_code.how_to_guide.md#how-to-access-the-jupyter-server-running-on-the-remote-server-through-your-local-machine)
@@ -290,10 +284,10 @@
     > i docker_jupyter
     ```
 
-## The second day
+### The second day
 
 - [ ] **Team member**: carefully study all the documents in:
-  [docs/onboarding](https://github.com/cryptokaizen/cmamp/tree/master/docs/onboarding)
+      [docs/onboarding](https://github.com/cryptokaizen/cmamp/tree/master/docs/onboarding)
   - Read it carefully one by one
   - Ask questions
   - Memorize / internalize all the information
@@ -307,8 +301,8 @@
 - [ ] **Team member**: exercise all the important parts of the systems
   - [ ] Create a GitHub issue
   - [ ] Get familiar with
-    [ZenHub](https://app.zenhub.com/workspaces/cm-615371012ed326001e044788/board)
-    [doc](https://github.com/cryptokaizen/cmamp/blob/master/docs/work_organization/all.use_github_and_zenhub.how_to_guide.md)
+        [ZenHub](https://app.zenhub.com/workspaces/cm-615371012ed326001e044788/board)
+        [doc](https://github.com/cryptokaizen/cmamp/blob/master/docs/work_organization/all.use_github_and_zenhub.how_to_guide.md)
   - Check out the code on server
   - Run all regressions on server
   - Create a branch
