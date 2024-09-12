@@ -28,5 +28,5 @@ jobs:
           restore-keys: |
             mkdocs-material-
       - run: pip install mkdocs-material
-      - run: pip install -e mkdocs/mkdocs-toc-tag-filter 
-      - run: mkdocs gh-deploy --force
+      #- run: pip install -e mkdocs/mkdocs-toc-tag-filter 
+      - run: pip install -e mkdocs/mkdocs-toc-tag-filter && mkdocs gh-deploy --force
