@@ -1,0 +1,4699 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+      
+      
+      
+        <link rel="prev" href="all.run_jupyter_notebook.how_to_guide.html">
+      
+      
+        <link rel="next" href="all.str_to_df.how_to_guide.html">
+      
+      
+      <link rel="icon" href="../mkdocs/assets/favicon.ico">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.5.34">
+    
+    
+      
+        <title>Run Unit Tests - KaizenAI Documentation</title>
+      
+    
+    
+      <link rel="stylesheet" href="../assets/stylesheets/main.35f28582.min.css">
+      
+        
+        <link rel="stylesheet" href="../assets/stylesheets/palette.06af60db.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+      <link rel="stylesheet" href="../mkdocs/styles/styles.css">
+    
+    <script>__md_scope=new URL("..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+    
+  </head>
+  
+  
+    
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="black" data-md-color-accent="cyan">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#run-unit-tests" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+  
+
+<header class="md-header md-header--shadow" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href=".." title="KaizenAI Documentation" class="md-header__button md-logo" aria-label="KaizenAI Documentation" data-md-component="logo">
+      
+  <img src="../mkdocs/assets/logo.png" alt="logo">
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            KaizenAI Documentation
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Run Unit Tests
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+    
+    
+    
+    
+      <label class="md-header__button md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+      </label>
+      <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+    
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+
+<nav class="md-nav md-nav--primary" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href=".." title="KaizenAI Documentation" class="md-nav__button md-logo" aria-label="KaizenAI Documentation" data-md-component="logo">
+      
+  <img src="../mkdocs/assets/logo.png" alt="logo">
+
+    </a>
+    KaizenAI Documentation
+  </label>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../all.code_organization.reference.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Code Organization
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../all.documentation_meta.reference.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Documentation Meta
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../all.software_components.reference.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Software Components
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../all.workflow.explanation.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Workflow
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../meta.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Files
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_6" >
+        
+          
+          <label class="md-nav__link" for="__nav_6" id="__nav_6_label" tabindex="0">
+            
+  
+  <span class="md-ellipsis">
+    Build
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_6_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_6">
+            <span class="md-nav__icon md-icon"></span>
+            Build
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../build/all.linter_gh_workflow.explanation.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Linter Gh Workflow
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../build/all.pytest_allure.explanation.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Pytest Allure
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../build/all.pytest_allure.how_to_guide.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Pytest Allure
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../build/all.semgrep_workflow.explanation.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Semgrep Integration in GitHub Actions
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_7" checked>
+        
+          
+          <label class="md-nav__link" for="__nav_7" id="__nav_7_label" tabindex="0">
+            
+  
+  <span class="md-ellipsis">
+    Coding
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_7_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_7">
+            <span class="md-nav__icon md-icon"></span>
+            Coding
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="all.asyncio.explanation.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Asyncio Best Practices
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="all.code_design.how_to_guide.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Code Design
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="all.code_like_pragmatic_programmer.how_to_guide.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Code Like Pragmatic Programmer
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="all.code_review.how_to_guide.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Code Review
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="all.coding_style.how_to_guide.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Coding Style
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="all.gsheet_into_pandas.how_to_guide.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Gsheet Into Pandas
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="all.hcache.explanation.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Cache
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="all.hplayback.how_to_guide.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Playback
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="all.imports_and_packages.how_to_guide.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Imports And Packages
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="all.integrate_repos.how_to_guide.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Integrate Repos
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="all.jupyter_notebook.how_to_guide.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Jupyter Notebook
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="all.plotting.how_to_guide.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Best practices for writing plotting functions
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="all.profiling.how_to_guide.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Profiling
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="all.publish_notebook.how_to_guide.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Publishing a notebook
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="all.qgrid.how_to_guide.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Qgrid
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="all.reading_other_people_code.how_to_guide.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Reading Other People Code
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="all.run_jupyter_notebook.how_to_guide.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Run Jupyter notebook
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  <span class="md-ellipsis">
+    Run Unit Tests
+  </span>
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="all.run_unit_tests.how_to_guide.html" class="md-nav__link md-nav__link--active">
+        
+  
+  <span class="md-ellipsis">
+    Run Unit Tests
+  </span>
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#run-unit-tests_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      Run unit tests
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Run unit tests">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#test-lists" class="md-nav__link">
+    <span class="md-ellipsis">
+      Test lists
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#using-invoke" class="md-nav__link">
+    <span class="md-ellipsis">
+      Using invoke
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Using invoke">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#docker-image-stage-and-version" class="md-nav__link">
+    <span class="md-ellipsis">
+      Docker image stage and version
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#specifying-pytest-options" class="md-nav__link">
+    <span class="md-ellipsis">
+      Specifying pytest options
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#running-in-debug-mode" class="md-nav__link">
+    <span class="md-ellipsis">
+      Running in debug mode
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#save-test-output-to-a-file" class="md-nav__link">
+    <span class="md-ellipsis">
+      Save test output to a file
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#show-the-tests-but-do-not-run" class="md-nav__link">
+    <span class="md-ellipsis">
+      Show the tests but do not run
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#skip-submodules" class="md-nav__link">
+    <span class="md-ellipsis">
+      Skip submodules
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#compute-test-coverage" class="md-nav__link">
+    <span class="md-ellipsis">
+      Compute test coverage
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#timeout" class="md-nav__link">
+    <span class="md-ellipsis">
+      Timeout
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#rerunning-timeout-ed-tests" class="md-nav__link">
+    <span class="md-ellipsis">
+      Rerunning timeout-ed tests
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#compute-test-coverage_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      Compute test coverage
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Compute test coverage">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#an-example-coverage-session" class="md-nav__link">
+    <span class="md-ellipsis">
+      An example coverage session
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#an-example-with-customized-pytest-cov-html-run" class="md-nav__link">
+    <span class="md-ellipsis">
+      An example with customized pytest-cov html run
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#generate-coverage-report-with-invoke" class="md-nav__link">
+    <span class="md-ellipsis">
+      Generate coverage report with invoke
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Generate coverage report with invoke">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#common-usage" class="md-nav__link">
+    <span class="md-ellipsis">
+      Common usage
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#publishing-html-report-on-s3" class="md-nav__link">
+    <span class="md-ellipsis">
+      Publishing HTML report on S3
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#running-pytest-directly" class="md-nav__link">
+    <span class="md-ellipsis">
+      Running pytest directly
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Running pytest directly">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#usage-and-invocations-reference" class="md-nav__link">
+    <span class="md-ellipsis">
+      Usage and Invocations reference
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#custom-pytest-options-behaviors" class="md-nav__link">
+    <span class="md-ellipsis">
+      Custom pytest options behaviors
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Custom pytest options behaviors">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#enable-logging" class="md-nav__link">
+    <span class="md-ellipsis">
+      Enable logging
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#update-golden-outcomes" class="md-nav__link">
+    <span class="md-ellipsis">
+      Update golden outcomes
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#incremental-test-mode" class="md-nav__link">
+    <span class="md-ellipsis">
+      Incremental test mode
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#debugging-notebooks" class="md-nav__link">
+    <span class="md-ellipsis">
+      Debugging Notebooks
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#running-tests-on-gh-actions" class="md-nav__link">
+    <span class="md-ellipsis">
+      Running tests on GH Actions
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Running tests on GH Actions">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#how-to-run-a-single-test-on-gh-action" class="md-nav__link">
+    <span class="md-ellipsis">
+      How to run a single test on GH Action
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="all.str_to_df.how_to_guide.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Converting a string into a Pandas df
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="all.submit_code_for_review.how_to_guide.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    First Review Process
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="all.type_hints.how_to_guide.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Type Hints
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="all.write_unit_tests.how_to_guide.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Write Unit Tests
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_8" >
+        
+          
+          <label class="md-nav__link" for="__nav_8" id="__nav_8_label" tabindex="0">
+            
+  
+  <span class="md-ellipsis">
+    Dataflow
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_8_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_8">
+            <span class="md-nav__icon md-icon"></span>
+            Dataflow
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../dataflow/all.batch_and_streaming_mode_using_tiling.explanation.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Batch And Streaming Mode Using Tiling
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../dataflow/all.best_practice_for_building_dags.explanation.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Best Practice For Building Dags
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../dataflow/all.computation_as_graphs.explanation.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Computation As Graphs
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../dataflow/all.dag.explanation.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Debug information
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../dataflow/all.dataflow.explanation.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    DataFlow
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../dataflow/all.dataflow_data_format.explanation.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    DataFlow Data Format
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../dataflow/all.simulation_output.reference.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    All.simulation output.reference
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../dataflow/all.time_series.explanation.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Time series
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../dataflow/all.timing_semantic_and_clocks.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Timing Semantic And Clocks
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../dataflow/all.train_and_predict_phases.explanation.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Phases of evaluation of Dag
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_9" >
+        
+          
+          <label class="md-nav__link" for="__nav_9" id="__nav_9_label" tabindex="0">
+            
+  
+  <span class="md-ellipsis">
+    Datapull
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_9_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_9">
+            <span class="md-nav__icon md-icon"></span>
+            Datapull
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../datapull/all.data_schema.explanation.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Data Schema
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../datapull/all.datapull_client_stack.explanation.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Data client stack
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../datapull/all.datapull_derived_data.explanation.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Derived data workflows
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../datapull/all.datapull_qa_flow.explanation.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Data QA workflows
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../datapull/all.datapull_sandbox.explanation.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    DataPull sandbox
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../datapull/all.dataset_onboarding_checklist.reference.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Dataset onboarding checklist
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../datapull/all.update_CCXT_version.how_to_guide.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Update Ccxt Version
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_10" >
+        
+          
+          <label class="md-nav__link" for="__nav_10" id="__nav_10_label" tabindex="0">
+            
+  
+  <span class="md-ellipsis">
+    Dev tools
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_10_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_10">
+            <span class="md-nav__icon md-icon"></span>
+            Dev tools
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_10_1" >
+        
+          
+          <label class="md-nav__link" for="__nav_10_1" id="__nav_10_1_label" tabindex="0">
+            
+  
+  <span class="md-ellipsis">
+    Thin env
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_10_1_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_10_1">
+            <span class="md-nav__icon md-icon"></span>
+            Thin env
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../dev_tools/thin_env/all.gh_and_thin_env_requirements.reference.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Required Packages for the thin environment and GH Actions
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../dev_tools/thin_env/all.gh_thin_env_dependencies.how_to_guide.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    All.gh thin env dependencies.how to guide
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_11" >
+        
+          
+          <label class="md-nav__link" for="__nav_11" id="__nav_11_label" tabindex="0">
+            
+  
+  <span class="md-ellipsis">
+    Documentation meta
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_11_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_11">
+            <span class="md-nav__icon md-icon"></span>
+            Documentation meta
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../documentation_meta/all.architecture_diagrams.explanation.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Architecture Diagrams
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../documentation_meta/all.diataxis.explanation.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Diataxis
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../documentation_meta/all.gdocs.how_to_guide.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    All.gdocs.how to guide
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../documentation_meta/all.google_technical_writing.how_to_guide.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Google Technical Writing
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../documentation_meta/all.writing_docs.how_to_guide.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Writing Docs
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../documentation_meta/plotting_in_latex.how_to_guide.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Plotting in latex.how to guide
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_12" >
+        
+          
+          <label class="md-nav__link" for="__nav_12" id="__nav_12_label" tabindex="0">
+            
+  
+  <span class="md-ellipsis">
+    General background
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_12_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_12">
+            <span class="md-nav__icon md-icon"></span>
+            General background
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../general_background/all.common_abbreviations.reference.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Common abbreviations
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../general_background/all.glossary.reference.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Glossary
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../general_background/all.literature_review.reference.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Literature Review
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../general_background/all.reading_list.reference.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Reading List
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_13" >
+        
+          
+          <label class="md-nav__link" for="__nav_13" id="__nav_13_label" tabindex="0">
+            
+  
+  <span class="md-ellipsis">
+    Infra
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_13_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_13">
+            <span class="md-nav__icon md-icon"></span>
+            Infra
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../infra/all.auto_scaling.explanation.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Auto Scaling Explanation
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../infra/all.aws_iam_configuration.explanation.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    AWS IAM Configuration Best Practices Guide
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../infra/all.aws_scripts.reference.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Python Scripts Guide
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../infra/all.infrastructure_glossary.explanation.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Infrastructure Glossary
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../infra/all.infrastructure_update_rollout.how_to_guide.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Standardized Update Rollout Checklist
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../infra/all.rds.comparison.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Comparison of AWS RDS Instance Types and Storage Performance
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_14" >
+        
+          
+          <label class="md-nav__link" for="__nav_14" id="__nav_14_label" tabindex="0">
+            
+  
+  <span class="md-ellipsis">
+    Kaizenflow
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_14_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_14">
+            <span class="md-nav__icon md-icon"></span>
+            Kaizenflow
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../kaizenflow/all.dev_scripts_catalogue.reference.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Dev Scripts Catalogue
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../kaizenflow/all.devops_code_organization.reference.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    All.devops code organization.reference
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../kaizenflow/all.install_helpers.how_to_guide.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Install Helpers
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../kaizenflow/all.run_Mock2_in_batch_mode.how_to_guide.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Run Mock2 In Batch Mode
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../kaizenflow/all.run_end_to_end_Mock2_system.tutorial.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Run End To End Mock2 System
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_15" >
+        
+          
+          <label class="md-nav__link" for="__nav_15" id="__nav_15_label" tabindex="0">
+            
+  
+  <span class="md-ellipsis">
+    Onboarding
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_15_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_15">
+            <span class="md-nav__icon md-icon"></span>
+            Onboarding
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../onboarding/admin.onboarding_process.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    On-boarding Process
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../onboarding/all.communicate_in_telegram.how_to_guide.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Communicate In Telegram
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../onboarding/all.development_documents.reference.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Development Documents
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../onboarding/all.onboarding_checklist.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Onboarding Checklist
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../onboarding/all.organize_email.how_to_guide.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Organize Email
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../onboarding/all.receive_crypto_payment.how_to_guide.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Receive Crypto Payment
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../onboarding/all.track_time_with_hubstaff.how_to_guide.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Track Time With Hubstaff
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../onboarding/kaizenflow.hiring_meister.how_to_guide.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    General
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../onboarding/kaizenflow.set_up_development_environment.how_to_guide.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Set up KaizenFlow development environment
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../onboarding/kaizenflow.signing_up.how_to_guide.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Signing up to the project
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_16" >
+        
+          
+          <label class="md-nav__link" for="__nav_16" id="__nav_16_label" tabindex="0">
+            
+  
+  <span class="md-ellipsis">
+    Trading ops
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_16_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_16">
+            <span class="md-nav__icon md-icon"></span>
+            Trading ops
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../trading_ops/all.how_to_name_objects.explanation.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    How to name objects
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../trading_ops/all.scheduled_monitoring.explanation.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Scheduled trading monitoring
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../trading_ops/all.scheduled_trading.explanation.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Publishing Experiment Reports
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../trading_ops/all.shadow_monitoring.explanation.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Shadow trading monitoring
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../trading_ops/all.trading_run_summary_sheet.explanation.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Trading Run Summary Sheet
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_17" >
+        
+          
+          <label class="md-nav__link" for="__nav_17" id="__nav_17_label" tabindex="0">
+            
+  
+  <span class="md-ellipsis">
+    Work organization
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_17_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_17">
+            <span class="md-nav__icon md-icon"></span>
+            Work organization
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../work_organization/Hiring_process.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    HiringMeister
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../work_organization/all.buildmeister.how_to_guide.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Buildmeister
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../work_organization/all.contributor_scoring.how_to_guide.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Contributor Scoring
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../work_organization/all.datapull_DAGmeister.how_to_guide.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Datapull Dagmeister
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../work_organization/all.epicmeister.how_to_guide.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Epicmeister
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../work_organization/all.rollout.how_to_guide.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Rollout
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../work_organization/all.scrum.explanation.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Scrum
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../work_organization/all.team_collaboration.how_to_guide.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Team Collaboration
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../work_organization/all.use_github_and_zenhub.how_to_guide.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Use Github And Zenhub
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../work_organization/kaizenflow.organize_your_work.how_to_guide.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Golden rules
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_18" >
+        
+          
+          <label class="md-nav__link" for="__nav_18" id="__nav_18_label" tabindex="0">
+            
+  
+  <span class="md-ellipsis">
+    Work tools
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_18_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_18">
+            <span class="md-nav__icon md-icon"></span>
+            Work tools
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../work_tools/all.add_toc_to_notebook.how_to_guide.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Adding a table of contents to a notebook
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../work_tools/all.bfg_repo_cleaner.how_to_guide.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    BFG Repo-Cleaner
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../work_tools/all.chatgpt_api.how_to_guide.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Chatgpt Api
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../work_tools/all.codebase_clean_up.how_to_guide.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Codebase Clean Up
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../work_tools/all.conda_environment_obsolete.how_to_guide.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Conda Environment Obsolete
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../work_tools/all.development.how_to_guide.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Development
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../work_tools/all.dind_and_sibling_containers.how_to_guide.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Docker-in-docker (dind)
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../work_tools/all.docker.how_to_guide.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Docker
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../work_tools/all.docker.tutorial.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Docker
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../work_tools/all.docker_dev_tools_container.how_to_guide.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Dev tools container
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../work_tools/all.docker_optimizer_container.how_to_guide.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Optimizer container
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../work_tools/all.dockerhub.how_to_guide.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Dockerhub
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../work_tools/all.gh_and_thin_env_requirements.reference.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Required Packages for the thin environment and GH Actions
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../work_tools/all.gh_thin_env_dependencies.how_to_guide.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Thin environment dependencies
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../work_tools/all.git.how_to_guide.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Git
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../work_tools/all.invoke_workflows.how_to_guide.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Invoke Workflows
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../work_tools/all.jupytext.how_to_guide.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Jupytext
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../work_tools/all.latex_toolchain.how_to_guide.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Latex Toolchain
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../work_tools/all.parquet.explanation.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Pyarrow Parquet management
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../work_tools/all.pycharm.how_to_guide.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Pycharm
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../work_tools/all.python_package_upgrade_and_troubleshooting.how_to_guide.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Python package upgrade &amp; troubleshooting
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../work_tools/all.ssh.how_to_guide.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Ssh
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../work_tools/all.telegram_notify_bot.how_to_guide.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    telegram-notify
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../work_tools/all.visual_studio_code.how_to_guide.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Visual Studio Code
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#run-unit-tests_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      Run unit tests
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Run unit tests">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#test-lists" class="md-nav__link">
+    <span class="md-ellipsis">
+      Test lists
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#using-invoke" class="md-nav__link">
+    <span class="md-ellipsis">
+      Using invoke
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Using invoke">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#docker-image-stage-and-version" class="md-nav__link">
+    <span class="md-ellipsis">
+      Docker image stage and version
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#specifying-pytest-options" class="md-nav__link">
+    <span class="md-ellipsis">
+      Specifying pytest options
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#running-in-debug-mode" class="md-nav__link">
+    <span class="md-ellipsis">
+      Running in debug mode
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#save-test-output-to-a-file" class="md-nav__link">
+    <span class="md-ellipsis">
+      Save test output to a file
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#show-the-tests-but-do-not-run" class="md-nav__link">
+    <span class="md-ellipsis">
+      Show the tests but do not run
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#skip-submodules" class="md-nav__link">
+    <span class="md-ellipsis">
+      Skip submodules
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#compute-test-coverage" class="md-nav__link">
+    <span class="md-ellipsis">
+      Compute test coverage
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#timeout" class="md-nav__link">
+    <span class="md-ellipsis">
+      Timeout
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#rerunning-timeout-ed-tests" class="md-nav__link">
+    <span class="md-ellipsis">
+      Rerunning timeout-ed tests
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#compute-test-coverage_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      Compute test coverage
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Compute test coverage">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#an-example-coverage-session" class="md-nav__link">
+    <span class="md-ellipsis">
+      An example coverage session
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#an-example-with-customized-pytest-cov-html-run" class="md-nav__link">
+    <span class="md-ellipsis">
+      An example with customized pytest-cov html run
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#generate-coverage-report-with-invoke" class="md-nav__link">
+    <span class="md-ellipsis">
+      Generate coverage report with invoke
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Generate coverage report with invoke">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#common-usage" class="md-nav__link">
+    <span class="md-ellipsis">
+      Common usage
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#publishing-html-report-on-s3" class="md-nav__link">
+    <span class="md-ellipsis">
+      Publishing HTML report on S3
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#running-pytest-directly" class="md-nav__link">
+    <span class="md-ellipsis">
+      Running pytest directly
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Running pytest directly">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#usage-and-invocations-reference" class="md-nav__link">
+    <span class="md-ellipsis">
+      Usage and Invocations reference
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#custom-pytest-options-behaviors" class="md-nav__link">
+    <span class="md-ellipsis">
+      Custom pytest options behaviors
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Custom pytest options behaviors">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#enable-logging" class="md-nav__link">
+    <span class="md-ellipsis">
+      Enable logging
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#update-golden-outcomes" class="md-nav__link">
+    <span class="md-ellipsis">
+      Update golden outcomes
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#incremental-test-mode" class="md-nav__link">
+    <span class="md-ellipsis">
+      Incremental test mode
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#debugging-notebooks" class="md-nav__link">
+    <span class="md-ellipsis">
+      Debugging Notebooks
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#running-tests-on-gh-actions" class="md-nav__link">
+    <span class="md-ellipsis">
+      Running tests on GH Actions
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Running tests on GH Actions">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#how-to-run-a-single-test-on-gh-action" class="md-nav__link">
+    <span class="md-ellipsis">
+      How to run a single test on GH Action
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+<h1 id="run-unit-tests">Run Unit Tests</h1>
+<h2 id="run-unit-tests_1">Run unit tests</h2>
+<ul>
+<li>We use <code>pytest</code> and <code>unittest</code> as testing framework</li>
+<li>Before any PR (and ideally after a few commits), we want to run all the unit
+  tests to make sure we didn't introduce any new bugs</li>
+</ul>
+<h3 id="test-lists">Test lists</h3>
+<ul>
+<li>We have different test set lists:</li>
+<li><code>fast</code><ul>
+<li>Tests that are quick to execute (typically less than 5 secs per test
+  class)</li>
+<li>We want to run these tests before/after every commit/PR to make sure
+  things are not broken</li>
+</ul>
+</li>
+<li><code>slow</code><ul>
+<li>Tests that we don't want to run all the times because they are:</li>
+<li>Slow (typically less than 20 seconds per test)</li>
+<li>They are related to pieces of code that don't change often<ul>
+<li>E.g., external APIs we don't want to hit continuously</li>
+</ul>
+</li>
+</ul>
+</li>
+<li><code>superslow</code><ul>
+<li>Tests that run long workload, e.g., running a production model, a long
+  simulation</li>
+<li>No time limit but we need to be judicious with length</li>
+<li>Anything above 5-15 mins is problematic</li>
+</ul>
+</li>
+</ul>
+<h3 id="using-invoke">Using <code>invoke</code></h3>
+<ul>
+<li><a href="https://www.pyinvoke.org/"><code>invoke</code></a> is a task execution framework which
+  allows to execute some typical workflows in a simple way</li>
+<li>In our config script <code>invoke</code> is aliased to <code>i</code> to reduce typing</li>
+<li>E.g., we use it to run the test suites:</li>
+</ul>
+<p>```bash
+  # Run only fast tests.</p>
+<blockquote>
+<p>i run_fast_tests
+  # Run only slow tests.
+i run_slow_test
+  # Run only superslow tests.
+i run_superslow_tests
+  ```</p>
+</blockquote>
+<ul>
+<li>To see the options use <code>--help</code> option, e.g. <code>i --help run_fast_tests</code>:</li>
+</ul>
+<p>```bash
+  Usage: inv[oke] [--core-opts] run_fast_tests [--options] [other tasks here ...]</p>
+<p>Docstring:
+    Run fast tests.
+    :param stage: select a specific stage for the Docker image
+    :param pytest_opts: option for pytest
+    :param skip_submodules: ignore all the dir inside a submodule
+    :param coverage: enable coverage computation
+    :param collect_only: do not run tests but show what will be executed
+    :param tee_to_file: save output of pytest in <code>tmp.pytest.log</code>
+    :param kwargs: kwargs for <code>ctx.run</code></p>
+<p>Options:
+    -c, --coverage
+    -k, --skip-submodules
+    -o, --collect-only
+    -p STRING, --pytest-opts=STRING
+    -s STRING, --stage=STRING
+    -t, --tee-to-file
+    -v STRING, --version=STRING
+  ```</p>
+<h4 id="docker-image-stage-and-version">Docker image stage and version</h4>
+<ul>
+<li>To select a specific stage for Docker image use the <code>--stage</code> option. E.g.,
+  this might be useful when a user wants to run regressions on the local Docker
+  image to verify that nothing is broken before promoting it to <code>dev</code> image.</li>
+</ul>
+<p>```bash</p>
+<blockquote>
+<p>i run_fast_tests --stage local
+  ```</p>
+</blockquote>
+<ul>
+<li>To run the tests on the specific version of a Docker image, use the
+  <code>--version</code> option.</li>
+<li>E.g., this might be useful when releasing a new version of an image.
+    <code>bash
+    &gt; i run_fast_tests --stage local --version 1.0.4</code></li>
+</ul>
+<h4 id="specifying-pytest-options">Specifying <code>pytest</code> options</h4>
+<ul>
+<li>With the option <code>--pytest-opts</code> it is possible to pass any <code>pytest</code> option to
+  <code>invoke</code>.</li>
+</ul>
+<h4 id="running-in-debug-mode">Running in debug mode</h4>
+<ul>
+<li>If a user wants to run the tests in debug mode to show the output
+  ```bash<blockquote>
+<p>i run_fast_tests -s --dbg
+  ```</p>
+</blockquote>
+</li>
+<li>This is equivalent to specifying <code>-v DEBUG</code> through the command line of one of
+  the executables</li>
+</ul>
+<h4 id="save-test-output-to-a-file">Save test output to a file</h4>
+<ul>
+<li>To save the output of <code>pytest</code> to <code>tmp.pytest.log</code> use the <code>--tee-to-file</code>
+  option.
+  ```bash<blockquote>
+<p>i run_fast_tests --tee-to-file
+  ```</p>
+</blockquote>
+</li>
+</ul>
+<h4 id="show-the-tests-but-do-not-run">Show the tests but do not run</h4>
+<ul>
+<li>To list, but not run, the tests that will be executed, use <code>--collect-only</code>.
+  ```bash<blockquote>
+<p>i run_fast_test --collect-only
+  ```</p>
+</blockquote>
+</li>
+</ul>
+<h4 id="skip-submodules">Skip submodules</h4>
+<ul>
+<li>To skip running tests in submodules, use the <code>--skip-submodules</code> option.</li>
+<li>This option is useful in repos with Git submodules so that you can run only
+  the tests specific to the repo, skipping the tests in the submodule</li>
+<li>E.g., to run only the tests in <code>dev_tools</code> but not in <code>cmamp</code> (which is a
+    submodule)
+    <code>bash
+    &gt; cd dev_tools1
+    &gt; i run_fast_tests --skip-submodules</code></li>
+</ul>
+<h4 id="compute-test-coverage">Compute test coverage</h4>
+<ul>
+<li>To compute test coverage use the <code>--coverage</code> option</li>
+</ul>
+<p>```bash</p>
+<blockquote>
+<p>i run_fast_tests --coverage
+  ```</p>
+</blockquote>
+<h3 id="timeout">Timeout</h3>
+<ul>
+<li>We use the <a href="https://pypi.org/project/pytest-timeout/"><code>pytest-timeout</code></a>
+  package to limit durations of fast, slow, and superslow tests</li>
+<li>The timeout durations for each test type are listed
+  <a href="#running-unit-tests">here</a></li>
+<li>The timeout restricts the running time of the test methods, including
+  <code>set_up_test()</code> and <code>tear_down_test()</code> time, if they are run at the
+  beginning/end of the methods</li>
+</ul>
+<h3 id="rerunning-timeout-ed-tests">Rerunning timeout-ed tests</h3>
+<ul>
+<li>Running tests can take different amounts of time depending on workload and
+  machine</li>
+<li>Because of this, we rerun failing tests using
+  <a href="https://pypi.org/project/pytest-rerunfailures/"><code>pytest-rerunfailures</code></a></li>
+<li><code>pytest-rerunfailures</code> is not completely compatible with <code>pytest-timeout</code>.
+  This is why we have to add the <code>-o timeout_func_only=true</code> flag to
+  <code>pytest-timeout</code>. See
+  <a href="https://github.com/pytest-dev/pytest-rerunfailures/issues/99">https://github.com/pytest-dev/pytest-rerunfailures/issues/99</a><code></code>for
+  more information</li>
+<li>We rerun time outed fast tests twice and time outed slow and superslow tests
+  once</li>
+<li>There is a
+  <a href="https://pypi.org/project/pytest-rerunfailures/#re-run-individual-failures">way</a>
+  to provide a rerun delay for individual tests. However, we can’t use it for
+  now due to
+  <a href="https://github.com/cryptokaizen/cmamp/issues/693#issuecomment-989456031">#693 (comment)</a></li>
+</ul>
+<h3 id="compute-test-coverage_1">Compute test coverage</h3>
+<ul>
+<li>
+<p>The documentation for <code>coverage</code> is
+  <a href="https://coverage.readthedocs.io/en/latest/cmd.html#reporting">here</a>.</p>
+</li>
+<li>
+<p>Run a set of unit tests enabling coverage:</p>
+</li>
+</ul>
+<p>```bash
+  # Run the coverage for a single test:</p>
+<blockquote>
+<p>i run_fast_tests --coverage -p oms/test/test_broker.py::TestSimulatedBroker1</p>
+</blockquote>
+<p># Run coverage for an entire module like <code>oms</code>:</p>
+<blockquote>
+<p>i run_fast_tests --coverage -p oms
+  ```</p>
+</blockquote>
+<ul>
+<li>This generates and runs a pytest command inside Docker like:</li>
+</ul>
+<p><code>bash
+  docker&gt; /venv/bin/pytest -m "not slow and not superslow" oms/test/test_broker.py::TestSimulatedBroker1 --cov=. --cov-branch --cov-report term-missing --cov-report html</code></p>
+<ul>
+<li>Which generates:</li>
+<li>A default coverage report</li>
+<li>A binary <code>.coverage</code> file that contains the coverage information</li>
+<li>
+<p>An <code>htmlcov</code> dir with a browsable code output to inspect the coverage for
+    the files</p>
+</li>
+<li>
+<p>One can post-process the coverage report in different ways using the command
+  <code>coverage</code> inside a docker container, since the code was run (as always)
+  inside the Docker container that contains all the dependencies.</p>
+</li>
+</ul>
+<p>```bash</p>
+<blockquote>
+<p>coverage -h</p>
+</blockquote>
+<p>Coverage.py, version 5.5 with C extension
+  Measure, collect, and report on code coverage in Python programs.</p>
+<p>usage: coverage <command> [options] [args]</p>
+<p>Commands:
+      annotate    Annotate source files with execution information.
+      combine     Combine a number of data files.
+      debug       Display information about the internals of coverage.py
+      erase       Erase previously collected coverage data.
+      help        Get help on using coverage.py.
+      html        Create an HTML report.
+      json        Create a JSON report of coverage results.
+      report      Report coverage stats on modules.
+      run         Run a Python program and measure code execution.
+      xml         Create an XML report of coverage results.</p>
+<p>Use "coverage help <command>" for detailed help on any command.
+  Full documentation is at https://coverage.readthedocs.io
+  ```</p>
+<p>```bash</p>
+<blockquote>
+<p>coverage report -h</p>
+</blockquote>
+<p>Usage: coverage report [options] [modules]</p>
+<p>Report coverage statistics on modules.</p>
+<p>Options:
+    --contexts=REGEX1,REGEX2,...
+                          Only display data from lines covered in the given
+                          contexts. Accepts Python regexes, which must be
+                          quoted.
+    --fail-under=MIN      Exit with a status of 2 if the total coverage is less
+                          than MIN.
+    -i, --ignore-errors   Ignore errors while reading source files.
+    --include=PAT1,PAT2,...
+                          Include only files whose paths match one of these
+                          patterns. Accepts shell-style wildcards, which must be
+                          quoted.
+    --omit=PAT1,PAT2,...  Omit files whose paths match one of these patterns.
+                          Accepts shell-style wildcards, which must be quoted.
+    --precision=N         Number of digits after the decimal point to display
+                          for reported coverage percentages.
+    --sort=COLUMN         Sort the report by the named column: name, stmts,
+                          miss, branch, brpart, or cover. Default is name.
+    -m, --show-missing    Show line numbers of statements in each module that
+                          weren't executed.
+    --skip-covered        Skip files with 100% coverage.
+    --no-skip-covered     Disable --skip-covered.
+    --skip-empty          Skip files with no code.
+    --debug=OPTS          Debug options, separated by commas. [env:
+                          COVERAGE_DEBUG]
+    -h, --help            Get help on this command.
+    --rcfile=RCFILE       Specify configuration file. By default '.coveragerc',
+                          'setup.cfg', 'tox.ini', and 'pyproject.toml' are
+                          tried. [env: COVERAGE_RCFILE]
+  ```</p>
+<p>```bash</p>
+<blockquote>
+<p>i docker_bash</p>
+</blockquote>
+<p># Report the coverage for all the files under <code>oms</code> using the workload above (i.e., the fast tests under <code>oms/test/test_broker.py::TestSimulatedBroker1</code>)
+  docker&gt; coverage report --include="oms/*"</p>
+<p>Name                                    Stmts   Miss Branch BrPart  Cover</p>
+<hr />
+<p>oms/<strong>init</strong>.py                             0      0      0      0   100%
+  oms/api.py                                154     47     36      2    70%
+  oms/broker.py                             200     31     50      9    81%
+  oms/broker_example.py                      23      0      4      1    96%
+  oms/call_optimizer.py                      31      0      0      0   100%
+  oms/devops/<strong>init</strong>.py                      0      0      0      0   100%
+  oms/devops/docker_scripts/<strong>init</strong>.py       0      0      0      0   100%
+  oms/locates.py                              7      7      2      0     0%
+  oms/mr_market.py                           55      1     10      1    97%
+  oms/oms_db.py                              47      0     10      3    95%
+  oms/oms_lib_tasks.py                       64     39      2      0    38%
+  oms/oms_utils.py                           34     34      6      0     0%
+  oms/order.py                              101     30     22      0    64%
+  oms/order_example.py                       26      0      0      0   100%
+  oms/place_orders.py                       121      8     18      6    90%
+  oms/pnl_simulator.py                      326     42     68      8    83%
+  oms/portfolio.py                          309     21     22      0    92%
+  oms/portfolio_example.py                   32      0      0      0   100%
+  oms/tasks.py                                3      3      0      0     0%
+  oms/test/oms_db_helper.py                  29     11      2      0    65%
+  oms/test/test_api.py                      132     25     12      0    83%
+  oms/test/test_broker.py                    33      5      4      0    86%
+  oms/test/test_mocked_portfolio.py           0      0      0      0   100%
+  oms/test/test_mr_market.py                 46      0      2      0   100%
+  oms/test/test_oms_db.py                   114     75     14      0    38%
+  oms/test/test_order.py                     24      0      4      0   100%
+  oms/test/test_place_orders.py              77      0      4      0   100%
+  oms/test/test_pnl_simulator.py            235      6     16      0    98%
+  oms/test/test_portfolio.py                135      0      6      0   100%</p>
+<hr />
+<p>TOTAL                                    2358    385    314     30    82%
+  ```</p>
+<ul>
+<li>To exclude the test files, which could inflate the coverage</li>
+</ul>
+<p>```bash</p>
+<blockquote>
+<p>coverage report --include="oms/<em>" --omit="</em>/test_*.py"</p>
+</blockquote>
+<p>Name                                    Stmts   Miss Branch BrPart  Cover</p>
+<hr />
+<p>oms/<strong>init</strong>.py                             0      0      0      0   100%
+  oms/api.py                                154     47     36      2    70%
+  oms/broker.py                             200     31     50      9    81%
+  oms/broker_example.py                      23      0      4      1    96%
+  oms/call_optimizer.py                      31      0      0      0   100%
+  oms/devops/<strong>init</strong>.py                      0      0      0      0   100%
+  oms/devops/docker_scripts/<strong>init</strong>.py       0      0      0      0   100%
+  oms/locates.py                              7      7      2      0     0%
+  oms/mr_market.py                           55      1     10      1    97%
+  oms/oms_db.py                              47      0     10      3    95%
+  oms/oms_lib_tasks.py                       64     39      2      0    38%
+  oms/oms_utils.py                           34     34      6      0     0%
+  oms/order.py                              101     30     22      0    64%
+  oms/order_example.py                       26      0      0      0   100%
+  oms/place_orders.py                       121      8     18      6    90%
+  oms/pnl_simulator.py                      326     42     68      8    83%
+  oms/portfolio.py                          309     21     22      0    92%
+  oms/portfolio_example.py                   32      0      0      0   100%
+  oms/tasks.py                                3      3      0      0     0%
+  oms/test/oms_db_helper.py                  29     11      2      0    65%</p>
+<hr />
+<p>TOTAL                                    1562    274    252     30    80%
+  ```</p>
+<ul>
+<li>To open the line coverage from outside Docker, go with your browser to
+  <code>htmlcov/index.html</code>. The <code>htmlcov</code> is re-written with every coverage run with
+  the <code>--cov-report html</code> option. If you move out <code>index.html</code> from <code>htmlcov</code>
+  dir some html features (e.g., filtering) will not work.</li>
+</ul>
+<p>```bash
+  # On macOS:</p>
+<blockquote>
+<p>open htmlcov/index.html
+  ```</p>
+</blockquote>
+<p><img alt="alt_text" src="figs/unit_tests/image_1.png" /></p>
+<ul>
+<li>By clicking on a file you can see which lines are not covered</li>
+</ul>
+<p><img alt="alt_text" src="figs/unit_tests/image_2.png" /></p>
+<h4 id="an-example-coverage-session">An example coverage session</h4>
+<ul>
+<li>
+<p>We want to measure the unit test coverage of <code>oms</code> component from both fast
+  and slow tests</p>
+</li>
+<li>
+<p>We start by running the fast tests:</p>
+</li>
+</ul>
+<p>```bash
+  # Run fast unit tests</p>
+<blockquote>
+<p>i run_fast_tests --coverage -p oms
+  collected 66 items / 7 deselected / 59 selected
+  ...</p>
+</blockquote>
+<p># Compute the coverage for the module sorting by coverage
+  docker&gt; coverage report --include="oms/<em>" --omit="</em>/test_*.py" --sort=Cover</p>
+<p>Name                                    Stmts   Miss Branch BrPart  Cover</p>
+<hr />
+<p>oms/locates.py                              7      7      2      0     0%
+  oms/oms_utils.py                           34     34      6      0     0%
+  oms/tasks.py                                3      3      0      0     0%
+  oms/oms_lib_tasks.py                       64     39      2      0    38%
+  oms/order.py                              101     30     22      0    64%
+  oms/test/oms_db_helper.py                  29     11      2      0    65%
+  oms/api.py                                154     47     36      2    70%
+  oms/broker.py                             200     31     50      9    81%
+  oms/pnl_simulator.py                      326     42     68      8    83%
+  oms/place_orders.py                       121      8     18      6    90%
+  oms/portfolio.py                          309     21     22      0    92%
+  oms/oms_db.py                              47      0     10      3    95%
+  oms/broker_example.py                      23      0      4      1    96%
+  oms/mr_market.py                           55      1     10      1    97%
+  oms/<strong>init</strong>.py                             0      0      0      0   100%
+  oms/call_optimizer.py                      31      0      0      0   100%
+  oms/devops/<strong>init</strong>.py                      0      0      0      0   100%
+  oms/devops/docker_scripts/<strong>init</strong>.py       0      0      0      0   100%
+  oms/order_example.py                       26      0      0      0   100%
+  oms/portfolio_example.py                   32      0      0      0   100%</p>
+<hr />
+<p>TOTAL                                    1562    274    252     30    80%
+  ```</p>
+<ul>
+<li>
+<p>We see that specific files have low coverage, so we want to see what is not
+  covered.</p>
+</li>
+<li>
+<p>Generate the same report in a browsable format</p>
+</li>
+</ul>
+<p><code>``bash
+  docker&gt; rm -rf htmlcov; coverage html --include="oms/*" --omit="*/test_*.py"
+  # Wrote HTML report to</code>htmlcov/index.html`</p>
+<blockquote>
+<p>open htmlcov/index.html
+  ```</p>
+</blockquote>
+<ul>
+<li>
+<p>The low coverage for <code>tasks.py</code> and <code>oms_lib_tasks.py</code> is due to the fact that
+  we are running code through invoke that doesn't allow <code>coverage</code> to track it.</p>
+</li>
+<li>
+<p>Now, we run the coverage for the slow tests</p>
+</li>
+</ul>
+<p>```bash
+  # Save the coverage from the fast tests run</p>
+<blockquote>
+<p>cp .coverage .coverage_fast_tests</p>
+<p>i run_slow_tests --coverage -p oms
+  collected 66 items / 59 deselected / 7 selected</p>
+<p>cp .coverage .coverage_slow_tests</p>
+<p>coverage report --include="oms/<em>" --omit="</em>/test_*.py" --sort=Cover</p>
+</blockquote>
+<p>Name                                    Stmts   Miss Branch BrPart  Cover</p>
+<hr />
+<p>oms/locates.py                              7      7      2      0     0%
+  oms/oms_utils.py                           34     34      6      0     0%
+  oms/tasks.py                                3      3      0      0     0%
+  oms/pnl_simulator.py                      326    280     68      1    13%
+  oms/place_orders.py                       121    100     18      0    15%
+  oms/mr_market.py                           55     44     10      0    17%
+  oms/portfolio.py                          309    256     22      0    18%
+  oms/call_optimizer.py                      31     25      0      0    19%
+  oms/broker.py                             200    159     50      0    20%
+  oms/order.py                              101     78     22      0    20%
+  oms/order_example.py                       26     19      0      0    27%
+  oms/broker_example.py                      23     14      4      0    33%
+  oms/portfolio_example.py                   32     21      0      0    34%
+  oms/api.py                                154    107     36      0    36%
+  oms/oms_lib_tasks.py                       64     39      2      0    38%
+  oms/oms_db.py                              47      5     10      2    84%
+  oms/<strong>init</strong>.py                             0      0      0      0   100%
+  oms/devops/<strong>init</strong>.py                      0      0      0      0   100%
+  oms/devops/docker_scripts/<strong>init</strong>.py       0      0      0      0   100%
+  oms/test/oms_db_helper.py                  29      0      2      0   100%</p>
+<hr />
+<p>TOTAL                                    1562   1191    252      3    23%
+  ```</p>
+<ul>
+<li>We see that the coverage from the slow tests is only 23% for 7 tests</li>
+</ul>
+<p><code>bash
+  docker&gt; coverage combine .coverage_fast_tests .coverage_slow_tests
+  Combined data file .coverage_fast_tests
+  Combined data file .coverage_slow_tests</code></p>
+<h4 id="an-example-with-customized-pytest-cov-html-run">An example with customized <code>pytest-cov</code> html run</h4>
+<ul>
+<li>
+<p>We want to measure unit test coverage specifically for one test in
+  <code>im_v2/common/data/transform/</code> and to save generated <code>htmlcov</code> in the same
+  directory.</p>
+</li>
+<li>
+<p>Run the command below after <code>i docker_bash</code>:</p>
+</li>
+</ul>
+<p><code>bash
+  docker&gt; pytest --cov-report term-missing
+    --cov=im_v2/common/data/transform/ im_v2/common/data/transform/test/test_transform_utils.py
+    --cov-report html:im_v2/common/data/transform/htmlcov \</code></p>
+<ul>
+<li>Output sample:</li>
+</ul>
+<p>```bash
+  ---------- coverage: platform linux, python 3.8.10-final-0 -----------
+  Name                                                              Stmts Miss Cover Missing</p>
+<hr />
+<p>im_v2/common/data/transform/convert_csv_to_pq.py                  55    55   0%    2-159
+  im_v2/common/data/transform/extract_data_from_db.py               55    55   0%    2-125
+  im_v2/common/data/transform/pq_convert.py                         126   126  0%    3-248
+  im_v2/common/data/transform/transform_pq_by_date_to_by_asset.py   131   131  0%    2-437
+  im_v2/common/data/transform/transform_utils.py                    22    0    100%</p>
+<hr />
+<p>TOTAL                                                             389   367  6%
+  Coverage HTML written to dir im_v2/common/data/transform/htmlcov
+  ```</p>
+<h4 id="generate-coverage-report-with-invoke">Generate coverage report with <code>invoke</code></h4>
+<ul>
+<li>One can compute test coverage for a specified directory and generate text and
+  HTML reports automatically using <code>invoke task run_coverage_report</code></li>
+</ul>
+<p>```bash</p>
+<blockquote>
+<p>i --help run_coverage_report
+  INFO: &gt; cmd='/data/grisha/src/venv/amp.client_venv/bin/invoke --help run_coverage_report'</p>
+</blockquote>
+<p>Usage: inv[oke] [--core-opts] run_coverage_report [--options] [other tasks here ...]</p>
+<p>Docstring:</p>
+<pre><code>Compute test coverage stats.
+</code></pre>
+<p>:param target_dir: directory to compute coverage stats for running-unit-tests
+  :param generate_html_report: whether to generate HTML coverage report or not
+  :param publish_html_on_s3: whether to publish HTML coverage report or not
+  :param aws_profile: the AWS profile to use for publishing HTML report</p>
+<p>Options:
+    -a STRING, --aws-profile=STRING
+    -g, --[no-]generate-html-report
+    -p, --[no-]publish-html-on-s3
+    -t STRING, --target-dir=STRING
+  ```</p>
+<h5 id="common-usage">Common usage</h5>
+<ul>
+<li>Compute coverage for <code>market_data</code> dir, generate text and HTML reports and
+  publish HTML report on S3</li>
+</ul>
+<p>```bash</p>
+<blockquote>
+<p>i run_coverage_report --target-dir market_data
+  ...
+  Name                                   Stmts   Miss Branch BrPart  Cover</p>
+</blockquote>
+<hr />
+<p>market_data/real_time_market_data.py     100     81     32      0    16%
+  market_data/replayed_market_data.py      111     88     24      0    19%
+  market_data/abstract_market_data.py      177    141     24      0    19%
+  market_data/market_data_example.py       124     97     10      0    20%
+  market_data/market_data_im_client.py      66     50     18      0    21%
+  market_data/<strong>init</strong>.py                    5      0      0      0   100%</p>
+<hr />
+<p>TOTAL                                    583    457    108      0    19%
+  Wrote HTML report to htmlcov/index.html</p>
+<p>20:08:53 - INFO  lib_tasks.py _publish_html_coverage_report_on_s3:3679  HTML coverage report is published on S3: path=<code>s3://cryptokaizen-html/html_coverage/grisha_CmTask1038_Tool_to_extract_the_dependency_from_a_project</code>
+  ```</p>
+<h4 id="publishing-html-report-on-s3">Publishing HTML report on S3</h4>
+<ul>
+<li>To make a dir with the report unique, we decorate the dir with a linux user
+  and a Git branch name, e.g.,
+  <code>html_coverage/grisha_CmTask1038_Tool_to_extract_the_dependency_from_a_project</code></li>
+<li><code>html_coverage</code> is the common dir on S3 for coverage reports</li>
+<li>After publishing the report, one can easily open it via a local web browser</li>
+<li>See the details in
+    <a href="https://docs.google.com/document/d/1JWAbNLuwseLAleW1wQ0BH8gxHEA9Hb9ZRgAy-Ooj9-M/edit#heading=h.58pd2t5yyzlw">htmlcov server</a></li>
+<li>E.g.
+    <a href="http://172.30.2.44/html_coverage/grisha_CmTask1038_Tool_to_extract_the_dependency_from_a_project/">http://172.30.2.44/html_coverage/grisha_CmTask1038_Tool_to_extract_the_dependency_from_a_project/</a></li>
+</ul>
+<h2 id="running-pytest-directly">Running <code>pytest</code> directly</h2>
+<h3 id="usage-and-invocations-reference">Usage and Invocations reference</h3>
+<ul>
+<li>See <a href="http://doc.pytest.org/en/latest/usage.html"><code>pytest</code> documentation</a></li>
+<li>Some examples of useful command lines:</li>
+</ul>
+<p>```bash
+  # Stop at first failure</p>
+<blockquote>
+<p>pytest -x</p>
+</blockquote>
+<p># Run a single class</p>
+<blockquote>
+<p>pytest -k TestPcaFactorComputer1</p>
+</blockquote>
+<p># Run a single test method</p>
+<blockquote>
+<p>pytest core/test/test_core.py::TestPcaFactorComputer1::test_linearize_eigval_eigvec</p>
+</blockquote>
+<p># Remove cache artifacts</p>
+<blockquote>
+<p>find . -name "<strong>pycache</strong>" -o -name ".pytest_cache"
+  ./.pytest_cache
+  ./dev_scripts/test/Test_linter_py1.test_linter1/tmp.scratch/<strong>pycache</strong>
+  ./dev_scripts/test/<strong>pycache</strong>
+  ./dev_scripts/<strong>pycache</strong></p>
+<p>find . -name "<strong>pycache</strong>" -o -name ".pytest_cache" | xargs rm -rf</p>
+</blockquote>
+<p># Run with a clear cache</p>
+<blockquote>
+<p>pytest --cache-clear</p>
+</blockquote>
+<p># Run the tests that last failed (this data is stored in .pytest_cache/v/cache/lastfailed)</p>
+<blockquote>
+<p>pytest --last-failed
+  ```</p>
+</blockquote>
+<h3 id="custom-pytest-options-behaviors">Custom <code>pytest</code> options behaviors</h3>
+<h4 id="enable-logging">Enable logging</h4>
+<ul>
+<li>To enable logging of <code>_LOG.debug</code> for a single test run:</li>
+</ul>
+<p>```bash
+  # Enable debug info</p>
+<blockquote>
+<p>pytest oms/test/test_broker.py::TestSimulatedBroker1 -s --dbg
+  ```</p>
+</blockquote>
+<h4 id="update-golden-outcomes">Update golden outcomes</h4>
+<ul>
+<li>This switch allows to overwrite the golden outcomes that are used as reference
+  in the unit tests to detect failures</li>
+</ul>
+<p>```bash</p>
+<blockquote>
+<p>pytest --update_outcomes
+  ```</p>
+</blockquote>
+<h4 id="incremental-test-mode">Incremental test mode</h4>
+<ul>
+<li>
+<p>This switch allows to reuse artifacts in the test directory and to skip the
+  clean up phase</p>
+</li>
+<li>
+<p>It is used to rerun tests from the middle when they are very long and one
+  wants to debug them</p>
+</li>
+</ul>
+<p>```bash</p>
+<blockquote>
+<p>pytest --incremental
+  ```</p>
+</blockquote>
+<h3 id="debugging-notebooks">Debugging Notebooks</h3>
+<ol>
+<li>Run a failing test with <code>-s --dbg</code> to get detailed logs</li>
+<li>E.g., <code>&gt; pytest core/plotting/test/test_gallery_notebook.py -s --dbg</code></li>
+<li>From the logs take a <code>run_notebook.py</code> script command that was run by the
+   test</li>
+<li>E.g., starting like
+     <code>/app/dev_scripts/notebooks/run_notebook.py --notebook ...</code></li>
+<li>Append <code>--no_suppress_output</code> to this command and run it again directly from
+   the bash</li>
+<li>E.g., like
+     <code>&gt; /app/dev_scripts/notebooks/run_notebook.py --notebook ... --no_suppress_output</code></li>
+<li>Scroll up the logs and see a report about the problem, notebooks failures
+   will be displayed as well</li>
+<li>E.g.,
+     <img width="756" src="https://github.com/kaizen-ai/kaizenflow/assets/31514660/43a2854e-ae4e-450d-95fd-f16df0a53c79"></li>
+</ol>
+<h2 id="running-tests-on-gh-actions">Running tests on GH Actions</h2>
+<ul>
+<li>The official documentation is
+  <a href="https://docs.github.com/en/actions">https://docs.github.com/en/actions</a></li>
+</ul>
+<h3 id="how-to-run-a-single-test-on-gh-action">How to run a single test on GH Action</h3>
+<ul>
+<li>
+<p>Unfortunately, there is no way to log in and run interactively on GH machines.
+  This is a feature requested but not implemented by GH yet.</p>
+</li>
+<li>
+<p>All the code to run GH Actions is in the <code>.github</code> directory in <code>lemonade</code> and
+  <code>amp</code>.</p>
+</li>
+<li>
+<p>E.g., to run a single test in the fast test target, instead of the entire
+  regression suite</p>
+</li>
+<li>
+<p>You can modify <code>.github/workflows/fast_tests.yml</code>, by replacing</p>
+</li>
+</ul>
+<p><code>bash
+   # run: invoke run_fast_tests
+   run: invoke run_fast_tests --pytest-opts="helpers/test/test_git.py::Test_git_modified_files1::test_get_modified_files_in_branch1 -s --dbg"</code>
+   - Note that the indentation matters since it's a YAML file</p>
+<pre><code> ![alt_text](figs/unit_tests/image_3.png)
+</code></pre>
+<ul>
+<li>
+<p>The <code>-s --dbg</code> is to show <code>_LOG.debug</code> in case you care about that to get
+     more information</p>
+</li>
+<li>
+<p>Commit the code to your branch (not in master, please) since GH runs each
+   branch independently</p>
+</li>
+<li>Kick-off manually the fast test through the GH interface</li>
+<li>After debugging, you can revert the change from your branch to <code>master</code> and
+   move along with the usual PR flow</li>
+</ul>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    <script id="__config" type="application/json">{"base": "..", "features": [], "search": "../assets/javascripts/workers/search.07f07601.min.js", "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}}</script>
+    
+    
+      <script src="../assets/javascripts/bundle.56dfad97.min.js"></script>
+      
+    
+  </body>
+</html>

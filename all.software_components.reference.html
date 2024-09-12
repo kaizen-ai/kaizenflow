@@ -1,0 +1,6470 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+      
+      
+      
+        <link rel="prev" href="all.documentation_meta.reference.html">
+      
+      
+        <link rel="next" href="all.workflow.explanation.html">
+      
+      
+      <link rel="icon" href="mkdocs/assets/favicon.ico">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.5.34">
+    
+    
+      
+        <title>Software Components - KaizenAI Documentation</title>
+      
+    
+    
+      <link rel="stylesheet" href="assets/stylesheets/main.35f28582.min.css">
+      
+        
+        <link rel="stylesheet" href="assets/stylesheets/palette.06af60db.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+      <link rel="stylesheet" href="mkdocs/styles/styles.css">
+    
+    <script>__md_scope=new URL(".",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+    
+  </head>
+  
+  
+    
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="black" data-md-color-accent="cyan">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#software-components" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+  
+
+<header class="md-header md-header--shadow" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href="." title="KaizenAI Documentation" class="md-header__button md-logo" aria-label="KaizenAI Documentation" data-md-component="logo">
+      
+  <img src="mkdocs/assets/logo.png" alt="logo">
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            KaizenAI Documentation
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Software Components
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+    
+    
+    
+    
+      <label class="md-header__button md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+      </label>
+      <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+    
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+
+<nav class="md-nav md-nav--primary" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="." title="KaizenAI Documentation" class="md-nav__button md-logo" aria-label="KaizenAI Documentation" data-md-component="logo">
+      
+  <img src="mkdocs/assets/logo.png" alt="logo">
+
+    </a>
+    KaizenAI Documentation
+  </label>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="all.code_organization.reference.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Code Organization
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="all.documentation_meta.reference.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Documentation Meta
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  <span class="md-ellipsis">
+    Software Components
+  </span>
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="all.software_components.reference.html" class="md-nav__link md-nav__link--active">
+        
+  
+  <span class="md-ellipsis">
+    Software Components
+  </span>
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#conventions" class="md-nav__link">
+    <span class="md-ellipsis">
+      Conventions
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#datapull" class="md-nav__link">
+    <span class="md-ellipsis">
+      DataPull
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="DataPull">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#extract" class="md-nav__link">
+    <span class="md-ellipsis">
+      Extract
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Extract">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#extractor" class="md-nav__link">
+    <span class="md-ellipsis">
+      Extractor
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#qa" class="md-nav__link">
+    <span class="md-ellipsis">
+      QA
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="QA">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#qacheck" class="md-nav__link">
+    <span class="md-ellipsis">
+      QaCheck
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#datasetvalidator" class="md-nav__link">
+    <span class="md-ellipsis">
+      DataSetValidator
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#transform" class="md-nav__link">
+    <span class="md-ellipsis">
+      Transform
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#db" class="md-nav__link">
+    <span class="md-ellipsis">
+      DB
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="DB">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#dbconnectionmanager" class="md-nav__link">
+    <span class="md-ellipsis">
+      DbConnectionManager
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#testimdbhelper" class="md-nav__link">
+    <span class="md-ellipsis">
+      TestImDbHelper
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#universe" class="md-nav__link">
+    <span class="md-ellipsis">
+      Universe
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Universe">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#fullsymbol" class="md-nav__link">
+    <span class="md-ellipsis">
+      FullSymbol
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#client" class="md-nav__link">
+    <span class="md-ellipsis">
+      Client
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Client">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#imclient" class="md-nav__link">
+    <span class="md-ellipsis">
+      ImClient
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#dataframeimclient" class="md-nav__link">
+    <span class="md-ellipsis">
+      DataFrameImClient
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#historicalpqbytileclient" class="md-nav__link">
+    <span class="md-ellipsis">
+      HistoricalPqByTileClient
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#historicalpqbycurrencypairtileclient" class="md-nav__link">
+    <span class="md-ellipsis">
+      HistoricalPqByCurrencyPairTileClient
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#historicalpqbydateclient" class="md-nav__link">
+    <span class="md-ellipsis">
+      HistoricalPqByDateClient
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#realtimeimclient" class="md-nav__link">
+    <span class="md-ellipsis">
+      RealTimeImClient
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#sqlrealtimeimclient" class="md-nav__link">
+    <span class="md-ellipsis">
+      SqlRealTimeImClient
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#imclienttestcase" class="md-nav__link">
+    <span class="md-ellipsis">
+      ImClientTestCase
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#rawdatareaderread-data-from-a-table-of-an-sql-db" class="md-nav__link">
+    <span class="md-ellipsis">
+      RawDataReaderread data from a table of an SQL DB
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#market_data" class="md-nav__link">
+    <span class="md-ellipsis">
+      market_data
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="market_data">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#marketdata" class="md-nav__link">
+    <span class="md-ellipsis">
+      MarketData
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#imclientmarketdata" class="md-nav__link">
+    <span class="md-ellipsis">
+      ImClientMarketData
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#marketdata__testcase" class="md-nav__link">
+    <span class="md-ellipsis">
+      MarketData_*_TestCase
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#realtimemarketdata" class="md-nav__link">
+    <span class="md-ellipsis">
+      RealTimeMarketData
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#realtimemarketdata2" class="md-nav__link">
+    <span class="md-ellipsis">
+      RealTimeMarketData2
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#replayedmarketdata" class="md-nav__link">
+    <span class="md-ellipsis">
+      ReplayedMarketData
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#horizontalstitchedmarketdata" class="md-nav__link">
+    <span class="md-ellipsis">
+      HorizontalStitchedMarketData
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#igstitchedmarketdata" class="md-nav__link">
+    <span class="md-ellipsis">
+      IgStitchedMarketData
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#dataflow" class="md-nav__link">
+    <span class="md-ellipsis">
+      dataflow
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#dataflowcore" class="md-nav__link">
+    <span class="md-ellipsis">
+      dataflow/core
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="dataflow/core">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#node" class="md-nav__link">
+    <span class="md-ellipsis">
+      Node
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#dag" class="md-nav__link">
+    <span class="md-ellipsis">
+      DAG
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#dagbuilder" class="md-nav__link">
+    <span class="md-ellipsis">
+      DagBuilder
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#dagrunner" class="md-nav__link">
+    <span class="md-ellipsis">
+      DagRunner
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#fitpredictdagrunner" class="md-nav__link">
+    <span class="md-ellipsis">
+      FitPredictDagRunner
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#rollingfitpredictdagrunner" class="md-nav__link">
+    <span class="md-ellipsis">
+      RollingFitPredictDagRunner
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#resultbundle" class="md-nav__link">
+    <span class="md-ellipsis">
+      ResultBundle
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#dataflowcorenodes" class="md-nav__link">
+    <span class="md-ellipsis">
+      dataflow/core/nodes
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="dataflow/core/nodes">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#fitpredictnode" class="md-nav__link">
+    <span class="md-ellipsis">
+      FitPredictNode
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#datasource" class="md-nav__link">
+    <span class="md-ellipsis">
+      DataSource
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#transformer" class="md-nav__link">
+    <span class="md-ellipsis">
+      Transformer
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#yconnector" class="md-nav__link">
+    <span class="md-ellipsis">
+      YConnector
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#groupedcoldftodfcolprocessor" class="md-nav__link">
+    <span class="md-ellipsis">
+      GroupedColDfToDfColProcessor
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#crosssectionaldftodfcolprocessor" class="md-nav__link">
+    <span class="md-ellipsis">
+      CrossSectionalDfToDfColProcessor
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#seriestodfcolprocessor" class="md-nav__link">
+    <span class="md-ellipsis">
+      SeriesToDfColProcessor
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#seriestoseriescolprocessor" class="md-nav__link">
+    <span class="md-ellipsis">
+      SeriesToSeriesColProcessor
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#dfstacker" class="md-nav__link">
+    <span class="md-ellipsis">
+      DfStacker
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#dataflowsystem" class="md-nav__link">
+    <span class="md-ellipsis">
+      dataflow/system
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="dataflow/system">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#realtimedagrunner" class="md-nav__link">
+    <span class="md-ellipsis">
+      RealTimeDagRunner
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#processforecastsnode" class="md-nav__link">
+    <span class="md-ellipsis">
+      ProcessForecastsNode
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#historicaldatasource" class="md-nav__link">
+    <span class="md-ellipsis">
+      HistoricalDataSource
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#realtimedatasource" class="md-nav__link">
+    <span class="md-ellipsis">
+      RealTimeDataSource
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#system" class="md-nav__link">
+    <span class="md-ellipsis">
+      System
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#forecastsystem" class="md-nav__link">
+    <span class="md-ellipsis">
+      ForecastSystem
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#df_forecastsystem" class="md-nav__link">
+    <span class="md-ellipsis">
+      Df_ForecastSystem
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#nontime_forecastsystem" class="md-nav__link">
+    <span class="md-ellipsis">
+      NonTime_ForecastSystem
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#time_forecastsystem" class="md-nav__link">
+    <span class="md-ellipsis">
+      Time_ForecastSystem
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#forecastsystem_with_dataframeportfolio" class="md-nav__link">
+    <span class="md-ellipsis">
+      ForecastSystem_with_DataFramePortfolio
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#time_forecastsystem_with_dataframeportfolio" class="md-nav__link">
+    <span class="md-ellipsis">
+      Time_ForecastSystem_with_DataFramePortfolio
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#time_forecastsystem_with_databaseportfolio_and_orderprocessor" class="md-nav__link">
+    <span class="md-ellipsis">
+      Time_ForecastSystem_with_DatabasePortfolio_and_OrderProcessor
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#time_forecastsystem_with_databaseportfolio" class="md-nav__link">
+    <span class="md-ellipsis">
+      Time_ForecastSystem_with_DatabasePortfolio
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#dataflowbacktest" class="md-nav__link">
+    <span class="md-ellipsis">
+      dataflow/backtest
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="dataflow/backtest">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#forecaster" class="md-nav__link">
+    <span class="md-ellipsis">
+      Forecaster
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#marketoms" class="md-nav__link">
+    <span class="md-ellipsis">
+      MarketOms
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#orderprocessor" class="md-nav__link">
+    <span class="md-ellipsis">
+      OrderProcessor
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#omsdb" class="md-nav__link">
+    <span class="md-ellipsis">
+      OmsDb
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#implementedbroker" class="md-nav__link">
+    <span class="md-ellipsis">
+      ImplementedBroker
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#databasebroker" class="md-nav__link">
+    <span class="md-ellipsis">
+      DatabaseBroker
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#omsdb_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      OmsDb
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#omsfill" class="md-nav__link">
+    <span class="md-ellipsis">
+      oms/fill
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="oms/fill">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#fill" class="md-nav__link">
+    <span class="md-ellipsis">
+      Fill
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#omsorder" class="md-nav__link">
+    <span class="md-ellipsis">
+      oms/order
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="oms/order">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#order" class="md-nav__link">
+    <span class="md-ellipsis">
+      Order
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#omsbroker" class="md-nav__link">
+    <span class="md-ellipsis">
+      oms/broker
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="oms/broker">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#broker" class="md-nav__link">
+    <span class="md-ellipsis">
+      Broker
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#fakefillsbroker" class="md-nav__link">
+    <span class="md-ellipsis">
+      FakeFillsBroker
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#dataframebroker" class="md-nav__link">
+    <span class="md-ellipsis">
+      DataFrameBroker
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#databasebroker_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      DatabaseBroker
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#replayeddatareader" class="md-nav__link">
+    <span class="md-ellipsis">
+      ReplayedDataReader
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#replayedfillsdataframebroker" class="md-nav__link">
+    <span class="md-ellipsis">
+      ReplayedFillsDataFrameBroker
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#omsbrokerccxt" class="md-nav__link">
+    <span class="md-ellipsis">
+      oms/broker/ccxt
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="oms/broker/ccxt">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#abstractccxtbroker" class="md-nav__link">
+    <span class="md-ellipsis">
+      AbstractCcxtBroker
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#ccxtbroker" class="md-nav__link">
+    <span class="md-ellipsis">
+      CcxtBroker
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#omslimit_computer" class="md-nav__link">
+    <span class="md-ellipsis">
+      oms/limit_computer
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="oms/limit_computer">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#abstractlimitpricecomputer" class="md-nav__link">
+    <span class="md-ellipsis">
+      AbstractLimitPriceComputer
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#limitpricecomputerusingspread" class="md-nav__link">
+    <span class="md-ellipsis">
+      LimitPriceComputerUsingSpread
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#limitpricecomputerusingvolatility" class="md-nav__link">
+    <span class="md-ellipsis">
+      LimitPriceComputerUsingVolatility
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#omschild_order_quantity_computer" class="md-nav__link">
+    <span class="md-ellipsis">
+      oms/child_order_quantity_computer
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="oms/child_order_quantity_computer">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#abstractchildorderquantitycomputer" class="md-nav__link">
+    <span class="md-ellipsis">
+      AbstractChildOrderQuantityComputer
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#dynamicschedulingchildorderquantitycomputer" class="md-nav__link">
+    <span class="md-ellipsis">
+      DynamicSchedulingChildOrderQuantityComputer
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#staticschedulingchildorderquantitycomputer" class="md-nav__link">
+    <span class="md-ellipsis">
+      StaticSchedulingChildOrderQuantityComputer
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#omsportfolio" class="md-nav__link">
+    <span class="md-ellipsis">
+      oms/portfolio
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="oms/portfolio">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#portfolio" class="md-nav__link">
+    <span class="md-ellipsis">
+      Portfolio
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#dataframeportfolio" class="md-nav__link">
+    <span class="md-ellipsis">
+      DataFramePortfolio
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#databaseportfolio" class="md-nav__link">
+    <span class="md-ellipsis">
+      DatabasePortfolio
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#implementedportfolio" class="md-nav__link">
+    <span class="md-ellipsis">
+      ImplementedPortfolio
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#omsorder_processing" class="md-nav__link">
+    <span class="md-ellipsis">
+      oms/order_processing
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="oms/order_processing">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#orderprocessor_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      OrderProcessor
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#process_forecasts" class="md-nav__link">
+    <span class="md-ellipsis">
+      process_forecasts
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#targetpositionandordergenerator" class="md-nav__link">
+    <span class="md-ellipsis">
+      TargetPositionAndOrderGenerator
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#locates" class="md-nav__link">
+    <span class="md-ellipsis">
+      Locates
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#restrictions" class="md-nav__link">
+    <span class="md-ellipsis">
+      Restrictions
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#omsoptimizer" class="md-nav__link">
+    <span class="md-ellipsis">
+      oms/optimizer
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#omsdb_2" class="md-nav__link">
+    <span class="md-ellipsis">
+      oms/db
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#omsccxt" class="md-nav__link">
+    <span class="md-ellipsis">
+      oms/ccxt
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="all.workflow.explanation.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Workflow
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="meta.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Files
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_6" >
+        
+          
+          <label class="md-nav__link" for="__nav_6" id="__nav_6_label" tabindex="0">
+            
+  
+  <span class="md-ellipsis">
+    Build
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_6_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_6">
+            <span class="md-nav__icon md-icon"></span>
+            Build
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="build/all.linter_gh_workflow.explanation.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Linter Gh Workflow
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="build/all.pytest_allure.explanation.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Pytest Allure
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="build/all.pytest_allure.how_to_guide.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Pytest Allure
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="build/all.semgrep_workflow.explanation.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Semgrep Integration in GitHub Actions
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_7" >
+        
+          
+          <label class="md-nav__link" for="__nav_7" id="__nav_7_label" tabindex="0">
+            
+  
+  <span class="md-ellipsis">
+    Coding
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_7_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_7">
+            <span class="md-nav__icon md-icon"></span>
+            Coding
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="coding/all.asyncio.explanation.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Asyncio Best Practices
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="coding/all.code_design.how_to_guide.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Code Design
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="coding/all.code_like_pragmatic_programmer.how_to_guide.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Code Like Pragmatic Programmer
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="coding/all.code_review.how_to_guide.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Code Review
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="coding/all.coding_style.how_to_guide.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Coding Style
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="coding/all.gsheet_into_pandas.how_to_guide.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Gsheet Into Pandas
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="coding/all.hcache.explanation.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Cache
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="coding/all.hplayback.how_to_guide.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Playback
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="coding/all.imports_and_packages.how_to_guide.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Imports And Packages
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="coding/all.integrate_repos.how_to_guide.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Integrate Repos
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="coding/all.jupyter_notebook.how_to_guide.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Jupyter Notebook
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="coding/all.plotting.how_to_guide.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Best practices for writing plotting functions
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="coding/all.profiling.how_to_guide.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Profiling
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="coding/all.publish_notebook.how_to_guide.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Publishing a notebook
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="coding/all.qgrid.how_to_guide.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Qgrid
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="coding/all.reading_other_people_code.how_to_guide.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Reading Other People Code
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="coding/all.run_jupyter_notebook.how_to_guide.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Run Jupyter notebook
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="coding/all.run_unit_tests.how_to_guide.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Run Unit Tests
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="coding/all.str_to_df.how_to_guide.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Converting a string into a Pandas df
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="coding/all.submit_code_for_review.how_to_guide.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    First Review Process
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="coding/all.type_hints.how_to_guide.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Type Hints
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="coding/all.write_unit_tests.how_to_guide.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Write Unit Tests
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_8" >
+        
+          
+          <label class="md-nav__link" for="__nav_8" id="__nav_8_label" tabindex="0">
+            
+  
+  <span class="md-ellipsis">
+    Dataflow
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_8_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_8">
+            <span class="md-nav__icon md-icon"></span>
+            Dataflow
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="dataflow/all.batch_and_streaming_mode_using_tiling.explanation.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Batch And Streaming Mode Using Tiling
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="dataflow/all.best_practice_for_building_dags.explanation.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Best Practice For Building Dags
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="dataflow/all.computation_as_graphs.explanation.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Computation As Graphs
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="dataflow/all.dag.explanation.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Debug information
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="dataflow/all.dataflow.explanation.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    DataFlow
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="dataflow/all.dataflow_data_format.explanation.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    DataFlow Data Format
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="dataflow/all.simulation_output.reference.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    All.simulation output.reference
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="dataflow/all.time_series.explanation.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Time series
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="dataflow/all.timing_semantic_and_clocks.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Timing Semantic And Clocks
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="dataflow/all.train_and_predict_phases.explanation.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Phases of evaluation of Dag
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_9" >
+        
+          
+          <label class="md-nav__link" for="__nav_9" id="__nav_9_label" tabindex="0">
+            
+  
+  <span class="md-ellipsis">
+    Datapull
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_9_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_9">
+            <span class="md-nav__icon md-icon"></span>
+            Datapull
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="datapull/all.data_schema.explanation.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Data Schema
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="datapull/all.datapull_client_stack.explanation.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Data client stack
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="datapull/all.datapull_derived_data.explanation.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Derived data workflows
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="datapull/all.datapull_qa_flow.explanation.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Data QA workflows
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="datapull/all.datapull_sandbox.explanation.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    DataPull sandbox
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="datapull/all.dataset_onboarding_checklist.reference.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Dataset onboarding checklist
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="datapull/all.update_CCXT_version.how_to_guide.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Update Ccxt Version
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_10" >
+        
+          
+          <label class="md-nav__link" for="__nav_10" id="__nav_10_label" tabindex="0">
+            
+  
+  <span class="md-ellipsis">
+    Dev tools
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_10_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_10">
+            <span class="md-nav__icon md-icon"></span>
+            Dev tools
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_10_1" >
+        
+          
+          <label class="md-nav__link" for="__nav_10_1" id="__nav_10_1_label" tabindex="0">
+            
+  
+  <span class="md-ellipsis">
+    Thin env
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_10_1_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_10_1">
+            <span class="md-nav__icon md-icon"></span>
+            Thin env
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="dev_tools/thin_env/all.gh_and_thin_env_requirements.reference.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Required Packages for the thin environment and GH Actions
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="dev_tools/thin_env/all.gh_thin_env_dependencies.how_to_guide.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    All.gh thin env dependencies.how to guide
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_11" >
+        
+          
+          <label class="md-nav__link" for="__nav_11" id="__nav_11_label" tabindex="0">
+            
+  
+  <span class="md-ellipsis">
+    Documentation meta
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_11_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_11">
+            <span class="md-nav__icon md-icon"></span>
+            Documentation meta
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="documentation_meta/all.architecture_diagrams.explanation.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Architecture Diagrams
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="documentation_meta/all.diataxis.explanation.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Diataxis
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="documentation_meta/all.gdocs.how_to_guide.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    All.gdocs.how to guide
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="documentation_meta/all.google_technical_writing.how_to_guide.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Google Technical Writing
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="documentation_meta/all.writing_docs.how_to_guide.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Writing Docs
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="documentation_meta/plotting_in_latex.how_to_guide.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Plotting in latex.how to guide
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_12" >
+        
+          
+          <label class="md-nav__link" for="__nav_12" id="__nav_12_label" tabindex="0">
+            
+  
+  <span class="md-ellipsis">
+    General background
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_12_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_12">
+            <span class="md-nav__icon md-icon"></span>
+            General background
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="general_background/all.common_abbreviations.reference.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Common abbreviations
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="general_background/all.glossary.reference.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Glossary
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="general_background/all.literature_review.reference.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Literature Review
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="general_background/all.reading_list.reference.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Reading List
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_13" >
+        
+          
+          <label class="md-nav__link" for="__nav_13" id="__nav_13_label" tabindex="0">
+            
+  
+  <span class="md-ellipsis">
+    Infra
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_13_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_13">
+            <span class="md-nav__icon md-icon"></span>
+            Infra
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="infra/all.auto_scaling.explanation.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Auto Scaling Explanation
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="infra/all.aws_iam_configuration.explanation.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    AWS IAM Configuration Best Practices Guide
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="infra/all.aws_scripts.reference.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Python Scripts Guide
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="infra/all.infrastructure_glossary.explanation.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Infrastructure Glossary
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="infra/all.infrastructure_update_rollout.how_to_guide.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Standardized Update Rollout Checklist
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="infra/all.rds.comparison.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Comparison of AWS RDS Instance Types and Storage Performance
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_14" >
+        
+          
+          <label class="md-nav__link" for="__nav_14" id="__nav_14_label" tabindex="0">
+            
+  
+  <span class="md-ellipsis">
+    Kaizenflow
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_14_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_14">
+            <span class="md-nav__icon md-icon"></span>
+            Kaizenflow
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="kaizenflow/all.dev_scripts_catalogue.reference.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Dev Scripts Catalogue
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="kaizenflow/all.devops_code_organization.reference.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    All.devops code organization.reference
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="kaizenflow/all.install_helpers.how_to_guide.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Install Helpers
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="kaizenflow/all.run_Mock2_in_batch_mode.how_to_guide.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Run Mock2 In Batch Mode
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="kaizenflow/all.run_end_to_end_Mock2_system.tutorial.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Run End To End Mock2 System
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_15" >
+        
+          
+          <label class="md-nav__link" for="__nav_15" id="__nav_15_label" tabindex="0">
+            
+  
+  <span class="md-ellipsis">
+    Onboarding
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_15_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_15">
+            <span class="md-nav__icon md-icon"></span>
+            Onboarding
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="onboarding/admin.onboarding_process.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    On-boarding Process
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="onboarding/all.communicate_in_telegram.how_to_guide.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Communicate In Telegram
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="onboarding/all.development_documents.reference.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Development Documents
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="onboarding/all.onboarding_checklist.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Onboarding Checklist
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="onboarding/all.organize_email.how_to_guide.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Organize Email
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="onboarding/all.receive_crypto_payment.how_to_guide.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Receive Crypto Payment
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="onboarding/all.track_time_with_hubstaff.how_to_guide.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Track Time With Hubstaff
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="onboarding/kaizenflow.hiring_meister.how_to_guide.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    General
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="onboarding/kaizenflow.set_up_development_environment.how_to_guide.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Set up KaizenFlow development environment
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="onboarding/kaizenflow.signing_up.how_to_guide.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Signing up to the project
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_16" >
+        
+          
+          <label class="md-nav__link" for="__nav_16" id="__nav_16_label" tabindex="0">
+            
+  
+  <span class="md-ellipsis">
+    Trading ops
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_16_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_16">
+            <span class="md-nav__icon md-icon"></span>
+            Trading ops
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="trading_ops/all.how_to_name_objects.explanation.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    How to name objects
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="trading_ops/all.scheduled_monitoring.explanation.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Scheduled trading monitoring
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="trading_ops/all.scheduled_trading.explanation.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Publishing Experiment Reports
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="trading_ops/all.shadow_monitoring.explanation.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Shadow trading monitoring
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="trading_ops/all.trading_run_summary_sheet.explanation.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Trading Run Summary Sheet
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_17" >
+        
+          
+          <label class="md-nav__link" for="__nav_17" id="__nav_17_label" tabindex="0">
+            
+  
+  <span class="md-ellipsis">
+    Work organization
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_17_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_17">
+            <span class="md-nav__icon md-icon"></span>
+            Work organization
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="work_organization/Hiring_process.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    HiringMeister
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="work_organization/all.buildmeister.how_to_guide.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Buildmeister
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="work_organization/all.contributor_scoring.how_to_guide.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Contributor Scoring
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="work_organization/all.datapull_DAGmeister.how_to_guide.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Datapull Dagmeister
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="work_organization/all.epicmeister.how_to_guide.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Epicmeister
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="work_organization/all.rollout.how_to_guide.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Rollout
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="work_organization/all.scrum.explanation.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Scrum
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="work_organization/all.team_collaboration.how_to_guide.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Team Collaboration
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="work_organization/all.use_github_and_zenhub.how_to_guide.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Use Github And Zenhub
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="work_organization/kaizenflow.organize_your_work.how_to_guide.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Golden rules
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_18" >
+        
+          
+          <label class="md-nav__link" for="__nav_18" id="__nav_18_label" tabindex="0">
+            
+  
+  <span class="md-ellipsis">
+    Work tools
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_18_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_18">
+            <span class="md-nav__icon md-icon"></span>
+            Work tools
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="work_tools/all.add_toc_to_notebook.how_to_guide.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Adding a table of contents to a notebook
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="work_tools/all.bfg_repo_cleaner.how_to_guide.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    BFG Repo-Cleaner
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="work_tools/all.chatgpt_api.how_to_guide.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Chatgpt Api
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="work_tools/all.codebase_clean_up.how_to_guide.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Codebase Clean Up
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="work_tools/all.conda_environment_obsolete.how_to_guide.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Conda Environment Obsolete
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="work_tools/all.development.how_to_guide.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Development
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="work_tools/all.dind_and_sibling_containers.how_to_guide.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Docker-in-docker (dind)
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="work_tools/all.docker.how_to_guide.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Docker
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="work_tools/all.docker.tutorial.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Docker
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="work_tools/all.docker_dev_tools_container.how_to_guide.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Dev tools container
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="work_tools/all.docker_optimizer_container.how_to_guide.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Optimizer container
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="work_tools/all.dockerhub.how_to_guide.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Dockerhub
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="work_tools/all.gh_and_thin_env_requirements.reference.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Required Packages for the thin environment and GH Actions
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="work_tools/all.gh_thin_env_dependencies.how_to_guide.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Thin environment dependencies
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="work_tools/all.git.how_to_guide.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Git
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="work_tools/all.invoke_workflows.how_to_guide.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Invoke Workflows
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="work_tools/all.jupytext.how_to_guide.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Jupytext
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="work_tools/all.latex_toolchain.how_to_guide.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Latex Toolchain
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="work_tools/all.parquet.explanation.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Pyarrow Parquet management
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="work_tools/all.pycharm.how_to_guide.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Pycharm
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="work_tools/all.python_package_upgrade_and_troubleshooting.how_to_guide.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Python package upgrade &amp; troubleshooting
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="work_tools/all.ssh.how_to_guide.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Ssh
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="work_tools/all.telegram_notify_bot.how_to_guide.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    telegram-notify
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="work_tools/all.visual_studio_code.how_to_guide.html" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    Visual Studio Code
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#conventions" class="md-nav__link">
+    <span class="md-ellipsis">
+      Conventions
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#datapull" class="md-nav__link">
+    <span class="md-ellipsis">
+      DataPull
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="DataPull">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#extract" class="md-nav__link">
+    <span class="md-ellipsis">
+      Extract
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Extract">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#extractor" class="md-nav__link">
+    <span class="md-ellipsis">
+      Extractor
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#qa" class="md-nav__link">
+    <span class="md-ellipsis">
+      QA
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="QA">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#qacheck" class="md-nav__link">
+    <span class="md-ellipsis">
+      QaCheck
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#datasetvalidator" class="md-nav__link">
+    <span class="md-ellipsis">
+      DataSetValidator
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#transform" class="md-nav__link">
+    <span class="md-ellipsis">
+      Transform
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#db" class="md-nav__link">
+    <span class="md-ellipsis">
+      DB
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="DB">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#dbconnectionmanager" class="md-nav__link">
+    <span class="md-ellipsis">
+      DbConnectionManager
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#testimdbhelper" class="md-nav__link">
+    <span class="md-ellipsis">
+      TestImDbHelper
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#universe" class="md-nav__link">
+    <span class="md-ellipsis">
+      Universe
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Universe">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#fullsymbol" class="md-nav__link">
+    <span class="md-ellipsis">
+      FullSymbol
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#client" class="md-nav__link">
+    <span class="md-ellipsis">
+      Client
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Client">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#imclient" class="md-nav__link">
+    <span class="md-ellipsis">
+      ImClient
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#dataframeimclient" class="md-nav__link">
+    <span class="md-ellipsis">
+      DataFrameImClient
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#historicalpqbytileclient" class="md-nav__link">
+    <span class="md-ellipsis">
+      HistoricalPqByTileClient
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#historicalpqbycurrencypairtileclient" class="md-nav__link">
+    <span class="md-ellipsis">
+      HistoricalPqByCurrencyPairTileClient
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#historicalpqbydateclient" class="md-nav__link">
+    <span class="md-ellipsis">
+      HistoricalPqByDateClient
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#realtimeimclient" class="md-nav__link">
+    <span class="md-ellipsis">
+      RealTimeImClient
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#sqlrealtimeimclient" class="md-nav__link">
+    <span class="md-ellipsis">
+      SqlRealTimeImClient
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#imclienttestcase" class="md-nav__link">
+    <span class="md-ellipsis">
+      ImClientTestCase
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#rawdatareaderread-data-from-a-table-of-an-sql-db" class="md-nav__link">
+    <span class="md-ellipsis">
+      RawDataReaderread data from a table of an SQL DB
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#market_data" class="md-nav__link">
+    <span class="md-ellipsis">
+      market_data
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="market_data">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#marketdata" class="md-nav__link">
+    <span class="md-ellipsis">
+      MarketData
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#imclientmarketdata" class="md-nav__link">
+    <span class="md-ellipsis">
+      ImClientMarketData
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#marketdata__testcase" class="md-nav__link">
+    <span class="md-ellipsis">
+      MarketData_*_TestCase
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#realtimemarketdata" class="md-nav__link">
+    <span class="md-ellipsis">
+      RealTimeMarketData
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#realtimemarketdata2" class="md-nav__link">
+    <span class="md-ellipsis">
+      RealTimeMarketData2
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#replayedmarketdata" class="md-nav__link">
+    <span class="md-ellipsis">
+      ReplayedMarketData
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#horizontalstitchedmarketdata" class="md-nav__link">
+    <span class="md-ellipsis">
+      HorizontalStitchedMarketData
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#igstitchedmarketdata" class="md-nav__link">
+    <span class="md-ellipsis">
+      IgStitchedMarketData
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#dataflow" class="md-nav__link">
+    <span class="md-ellipsis">
+      dataflow
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#dataflowcore" class="md-nav__link">
+    <span class="md-ellipsis">
+      dataflow/core
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="dataflow/core">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#node" class="md-nav__link">
+    <span class="md-ellipsis">
+      Node
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#dag" class="md-nav__link">
+    <span class="md-ellipsis">
+      DAG
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#dagbuilder" class="md-nav__link">
+    <span class="md-ellipsis">
+      DagBuilder
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#dagrunner" class="md-nav__link">
+    <span class="md-ellipsis">
+      DagRunner
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#fitpredictdagrunner" class="md-nav__link">
+    <span class="md-ellipsis">
+      FitPredictDagRunner
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#rollingfitpredictdagrunner" class="md-nav__link">
+    <span class="md-ellipsis">
+      RollingFitPredictDagRunner
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#resultbundle" class="md-nav__link">
+    <span class="md-ellipsis">
+      ResultBundle
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#dataflowcorenodes" class="md-nav__link">
+    <span class="md-ellipsis">
+      dataflow/core/nodes
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="dataflow/core/nodes">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#fitpredictnode" class="md-nav__link">
+    <span class="md-ellipsis">
+      FitPredictNode
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#datasource" class="md-nav__link">
+    <span class="md-ellipsis">
+      DataSource
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#transformer" class="md-nav__link">
+    <span class="md-ellipsis">
+      Transformer
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#yconnector" class="md-nav__link">
+    <span class="md-ellipsis">
+      YConnector
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#groupedcoldftodfcolprocessor" class="md-nav__link">
+    <span class="md-ellipsis">
+      GroupedColDfToDfColProcessor
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#crosssectionaldftodfcolprocessor" class="md-nav__link">
+    <span class="md-ellipsis">
+      CrossSectionalDfToDfColProcessor
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#seriestodfcolprocessor" class="md-nav__link">
+    <span class="md-ellipsis">
+      SeriesToDfColProcessor
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#seriestoseriescolprocessor" class="md-nav__link">
+    <span class="md-ellipsis">
+      SeriesToSeriesColProcessor
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#dfstacker" class="md-nav__link">
+    <span class="md-ellipsis">
+      DfStacker
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#dataflowsystem" class="md-nav__link">
+    <span class="md-ellipsis">
+      dataflow/system
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="dataflow/system">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#realtimedagrunner" class="md-nav__link">
+    <span class="md-ellipsis">
+      RealTimeDagRunner
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#processforecastsnode" class="md-nav__link">
+    <span class="md-ellipsis">
+      ProcessForecastsNode
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#historicaldatasource" class="md-nav__link">
+    <span class="md-ellipsis">
+      HistoricalDataSource
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#realtimedatasource" class="md-nav__link">
+    <span class="md-ellipsis">
+      RealTimeDataSource
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#system" class="md-nav__link">
+    <span class="md-ellipsis">
+      System
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#forecastsystem" class="md-nav__link">
+    <span class="md-ellipsis">
+      ForecastSystem
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#df_forecastsystem" class="md-nav__link">
+    <span class="md-ellipsis">
+      Df_ForecastSystem
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#nontime_forecastsystem" class="md-nav__link">
+    <span class="md-ellipsis">
+      NonTime_ForecastSystem
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#time_forecastsystem" class="md-nav__link">
+    <span class="md-ellipsis">
+      Time_ForecastSystem
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#forecastsystem_with_dataframeportfolio" class="md-nav__link">
+    <span class="md-ellipsis">
+      ForecastSystem_with_DataFramePortfolio
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#time_forecastsystem_with_dataframeportfolio" class="md-nav__link">
+    <span class="md-ellipsis">
+      Time_ForecastSystem_with_DataFramePortfolio
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#time_forecastsystem_with_databaseportfolio_and_orderprocessor" class="md-nav__link">
+    <span class="md-ellipsis">
+      Time_ForecastSystem_with_DatabasePortfolio_and_OrderProcessor
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#time_forecastsystem_with_databaseportfolio" class="md-nav__link">
+    <span class="md-ellipsis">
+      Time_ForecastSystem_with_DatabasePortfolio
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#dataflowbacktest" class="md-nav__link">
+    <span class="md-ellipsis">
+      dataflow/backtest
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="dataflow/backtest">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#forecaster" class="md-nav__link">
+    <span class="md-ellipsis">
+      Forecaster
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#marketoms" class="md-nav__link">
+    <span class="md-ellipsis">
+      MarketOms
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#orderprocessor" class="md-nav__link">
+    <span class="md-ellipsis">
+      OrderProcessor
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#omsdb" class="md-nav__link">
+    <span class="md-ellipsis">
+      OmsDb
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#implementedbroker" class="md-nav__link">
+    <span class="md-ellipsis">
+      ImplementedBroker
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#databasebroker" class="md-nav__link">
+    <span class="md-ellipsis">
+      DatabaseBroker
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#omsdb_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      OmsDb
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#omsfill" class="md-nav__link">
+    <span class="md-ellipsis">
+      oms/fill
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="oms/fill">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#fill" class="md-nav__link">
+    <span class="md-ellipsis">
+      Fill
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#omsorder" class="md-nav__link">
+    <span class="md-ellipsis">
+      oms/order
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="oms/order">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#order" class="md-nav__link">
+    <span class="md-ellipsis">
+      Order
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#omsbroker" class="md-nav__link">
+    <span class="md-ellipsis">
+      oms/broker
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="oms/broker">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#broker" class="md-nav__link">
+    <span class="md-ellipsis">
+      Broker
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#fakefillsbroker" class="md-nav__link">
+    <span class="md-ellipsis">
+      FakeFillsBroker
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#dataframebroker" class="md-nav__link">
+    <span class="md-ellipsis">
+      DataFrameBroker
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#databasebroker_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      DatabaseBroker
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#replayeddatareader" class="md-nav__link">
+    <span class="md-ellipsis">
+      ReplayedDataReader
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#replayedfillsdataframebroker" class="md-nav__link">
+    <span class="md-ellipsis">
+      ReplayedFillsDataFrameBroker
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#omsbrokerccxt" class="md-nav__link">
+    <span class="md-ellipsis">
+      oms/broker/ccxt
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="oms/broker/ccxt">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#abstractccxtbroker" class="md-nav__link">
+    <span class="md-ellipsis">
+      AbstractCcxtBroker
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#ccxtbroker" class="md-nav__link">
+    <span class="md-ellipsis">
+      CcxtBroker
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#omslimit_computer" class="md-nav__link">
+    <span class="md-ellipsis">
+      oms/limit_computer
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="oms/limit_computer">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#abstractlimitpricecomputer" class="md-nav__link">
+    <span class="md-ellipsis">
+      AbstractLimitPriceComputer
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#limitpricecomputerusingspread" class="md-nav__link">
+    <span class="md-ellipsis">
+      LimitPriceComputerUsingSpread
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#limitpricecomputerusingvolatility" class="md-nav__link">
+    <span class="md-ellipsis">
+      LimitPriceComputerUsingVolatility
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#omschild_order_quantity_computer" class="md-nav__link">
+    <span class="md-ellipsis">
+      oms/child_order_quantity_computer
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="oms/child_order_quantity_computer">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#abstractchildorderquantitycomputer" class="md-nav__link">
+    <span class="md-ellipsis">
+      AbstractChildOrderQuantityComputer
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#dynamicschedulingchildorderquantitycomputer" class="md-nav__link">
+    <span class="md-ellipsis">
+      DynamicSchedulingChildOrderQuantityComputer
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#staticschedulingchildorderquantitycomputer" class="md-nav__link">
+    <span class="md-ellipsis">
+      StaticSchedulingChildOrderQuantityComputer
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#omsportfolio" class="md-nav__link">
+    <span class="md-ellipsis">
+      oms/portfolio
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="oms/portfolio">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#portfolio" class="md-nav__link">
+    <span class="md-ellipsis">
+      Portfolio
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#dataframeportfolio" class="md-nav__link">
+    <span class="md-ellipsis">
+      DataFramePortfolio
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#databaseportfolio" class="md-nav__link">
+    <span class="md-ellipsis">
+      DatabasePortfolio
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#implementedportfolio" class="md-nav__link">
+    <span class="md-ellipsis">
+      ImplementedPortfolio
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#omsorder_processing" class="md-nav__link">
+    <span class="md-ellipsis">
+      oms/order_processing
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="oms/order_processing">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#orderprocessor_1" class="md-nav__link">
+    <span class="md-ellipsis">
+      OrderProcessor
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#process_forecasts" class="md-nav__link">
+    <span class="md-ellipsis">
+      process_forecasts
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#targetpositionandordergenerator" class="md-nav__link">
+    <span class="md-ellipsis">
+      TargetPositionAndOrderGenerator
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#locates" class="md-nav__link">
+    <span class="md-ellipsis">
+      Locates
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#restrictions" class="md-nav__link">
+    <span class="md-ellipsis">
+      Restrictions
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#omsoptimizer" class="md-nav__link">
+    <span class="md-ellipsis">
+      oms/optimizer
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#omsdb_2" class="md-nav__link">
+    <span class="md-ellipsis">
+      oms/db
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#omsccxt" class="md-nav__link">
+    <span class="md-ellipsis">
+      oms/ccxt
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+<h1 id="software-components">Software Components</h1>
+<p><img alt="" src="../../defi/papers/sorrentum_figs/image9.png" />{width="6.5in" height="1.875in"}</p>
+<!--
+
+[[https://lucid.app/lucidchart/9ee80100-be76-42d6-ad80-531dcfee277e/edit?page=0_0&invitationId=inv_5777ae4b-d8f4-41c6-8901-cdfb93d98ca8#]{.underline}](https://lucid.app/lucidchart/9ee80100-be76-42d6-ad80-531dcfee277e/edit?page=0_0&invitationId=inv_5777ae4b-d8f4-41c6-8901-cdfb93d98ca8#)
+![](../../defi/papers/sorrentum_figs/image15.png){width="6.5in" height="4.319444444444445in"}
+-->
+
+<pre><code class="language-mermaid">C4Component
+title Something
+Container(Data, &quot;Data&quot;, &quot;&quot;, &quot;&quot;)
+Rel(Data, Forecaster, &quot;Uses&quot;, &quot;Market and alt data&quot;)
+Container(Forecaster, &quot;Forecaster&quot;, &quot;&quot;, &quot;&quot;)
+Rel(Forecaster, TargetPosAndOrderGen, &quot;&quot;, &quot;Forecasts&quot;)
+Container(TargetPosAndOrderGen, &quot;TargetPosAndOrderGen&quot;, &quot;&quot;, &quot;&quot;)
+Rel(TargetPosAndOrderGen, Broker, &quot;&quot;, &quot;OMS.Orders&quot;)
+Container(Broker, &quot;Broker&quot;, &quot;&quot;, &quot;&quot;)
+Rel(Broker, Portfolio, &quot;&quot;, &quot;OMS.Fills&quot;)
+Rel(Data, Portfolio, &quot;&quot;, &quot;Prices&quot;)
+Container(Portfolio, &quot;Portfolio&quot;, &quot;&quot;, &quot;&quot;)
+Rel(Portfolio, TargetPosAndOrderGen, &quot;&quot;, &quot;Positions&quot;)
+Container(Exchange, &quot;Exchange&quot;, &quot;&quot;, &quot;&quot;)
+Rel(Broker, Exchange, &quot;&quot;, &quot;Market specific orders&quot;)
+Rel(Exchange, Broker, &quot;&quot;, &quot;Market specific fills&quot;)
+</code></pre>
+<pre><code>Portfolio
+- Broker
+
+process_forecasts()
+  - Input:
+    - prediction_df
+    - Portfolio
+  - Instantiates:
+    - TargetPositionAndOrderGenerator
+      - Portfolio
+      - Optimizer
+
+HistoricalDataSource
+</code></pre>
+<h2 id="conventions">Conventions</h2>
+<ul>
+<li>A dir is a C4 container (level 2)</li>
+<li>A subdir is a C4 component (level 3)</li>
+<li>A class is a C4/UML class (level 4)</li>
+<li>We use the same level of header for each of these C4 levels</li>
+</ul>
+<h2 id="datapull"><code>DataPull</code></h2>
+<h3 id="extract">Extract</h3>
+<h4 id="extractor"><code>Extractor</code></h4>
+<ul>
+<li>File: im_v2/common/data/extract/extractor.py</li>
+<li>Responsibilities: abstract class for downloading raw data from vendors</li>
+<li>Interactions:</li>
+<li>Main methods:</li>
+</ul>
+<pre><code class="language-mermaid">classDiagram
+  Extractor &lt;|-- CcxtExtractor
+  CcxtExtractor &lt;|-- CcxtKrakenExtractor
+  Extractor &lt;|-- BinanceExtractor
+  Extractor &lt;|-- CryptoChassisExtractor
+</code></pre>
+<h3 id="qa">QA</h3>
+<h4 id="qacheck"><code>QaCheck</code></h4>
+<ul>
+<li>File: sorrentum_sandbox/common/validate.py</li>
+<li>Responsibilities: QA check on one or more datasets</li>
+</ul>
+<pre><code class="language-mermaid">classDiagram
+  class QaCheck{
+    +check()
+    +get_status()
+  }
+  QaCheck &lt;|-- GapsInTimeIntervalCheck
+  QaCheck &lt;|-- GapsInTimeIntervalBySymbolsCheck
+  QaCheck &lt;|-- NaNChecks
+  QaCheck &lt;|-- OhlcvLogicalValuesCheck
+  QaCheck &lt;|-- FullUniversePresentCheck
+  QaCheck &lt;|-- IdenticalDataFramesCheck
+  QaCheck &lt;|-- BidAskDataFramesSimilarityCheck
+  QaCheck &lt;|-- DuplicateDifferingOhlcvCheck
+</code></pre>
+<h4 id="datasetvalidator"><code>DataSetValidator</code></h4>
+<ul>
+<li>File: sorrentum_sandbox/common/validate.py</li>
+<li>Responsibilities: Apply a set of QA checks to validate one or more datasets</li>
+</ul>
+<p><code>mermaid
+  classDiagram
+    class DataSetValidator{
+      +List[QaCheck] qa_checks
+      +run_all_checks()
+    }
+    DataSetValidator &lt;|-- SingleDatasetValidator
+    DataSetValidator &lt;|-- DataFrameDatasetValidator</code></p>
+<h3 id="transform">Transform</h3>
+<h3 id="db">DB</h3>
+<h4 id="dbconnectionmanager"><code>DbConnectionManager</code></h4>
+<h4 id="testimdbhelper"><code>TestImDbHelper</code></h4>
+<h3 id="universe">Universe</h3>
+<h4 id="fullsymbol"><code>FullSymbol</code></h4>
+<ul>
+<li>Responsibilities: implement full symbol (e.g., <code>binance:BTC_USDT</code>)</li>
+</ul>
+<h3 id="client">Client</h3>
+<h4 id="imclient"><code>ImClient</code></h4>
+<ul>
+<li>Responsibilities: adapts the data from a vendor to the MarketData format
+  (i.e., a wide format with knowledge time)</li>
+<li>Main methods:</li>
+</ul>
+<p>```mermaid
+  classDiagram
+    ImClient &lt;|-- ImClientReadingOneSymbol
+    ImClient &lt;|-- ImClientReadingMultipleSymbols
+    ImClientReadingMultipleSymbols &lt;|-- DataFrameImClient</p>
+<pre><code>ImClientReadingMultipleSymbols &lt;|-- HistoricalPqByTileClient
+
+HistoricalPqByTileClient &lt;|-- HistoricalPqByCurrencyPairTileClient
+
+ImClientReadingMultipleSymbols &lt;|-- HistoricalPqByTileClient
+
+ImClient &lt;|-- RealTimeImClient
+RealTimeImClient &lt;|-- SqlRealTimeImClient
+</code></pre>
+<p>```</p>
+<h4 id="dataframeimclient"><code>DataFrameImClient</code></h4>
+<ul>
+<li>Responsibilities: read data from a passed dataframe</li>
+<li>This is used for synthetic data</li>
+</ul>
+<h4 id="historicalpqbytileclient"><code>HistoricalPqByTileClient</code></h4>
+<ul>
+<li>Responsibilities: read historical data stored as Parquet by-tile</li>
+</ul>
+<h4 id="historicalpqbycurrencypairtileclient"><code>HistoricalPqByCurrencyPairTileClient</code></h4>
+<ul>
+<li>Responsibilities: read historical data stored as Parquet by asset</li>
+</ul>
+<h4 id="historicalpqbydateclient"><code>HistoricalPqByDateClient</code></h4>
+<ul>
+<li>Responsibilities: read historical data stored as Parquet by tile</li>
+</ul>
+<h4 id="realtimeimclient"><code>RealTimeImClient</code></h4>
+<ul>
+<li>Responsibilities: type representing a real-time client</li>
+</ul>
+<h4 id="sqlrealtimeimclient"><code>SqlRealTimeImClient</code></h4>
+<ul>
+<li>Responsibilities: read data from a table of an SQL DB</li>
+</ul>
+<h4 id="imclienttestcase"><code>ImClientTestCase</code></h4>
+<ul>
+<li>Responsibilities: help test for classes derived from <code>ImClient</code></li>
+</ul>
+<h4 id="rawdatareaderread-data-from-a-table-of-an-sql-db"><code>RawDataReader</code>read data from a table of an SQL DB</h4>
+<ul>
+<li>Responsibilities: read data based on a dataset signature</li>
+</ul>
+<h2 id="market_data"><code>market_data</code></h2>
+<h4 id="marketdata"><code>MarketData</code></h4>
+<ul>
+<li>Responsibilities:</li>
+<li>Interactions:</li>
+<li>Main methods:</li>
+</ul>
+<h4 id="imclientmarketdata"><code>ImClientMarketData</code></h4>
+<h4 id="marketdata__testcase"><code>MarketData_*_TestCase</code></h4>
+<h4 id="realtimemarketdata"><code>RealTimeMarketData</code></h4>
+<h4 id="realtimemarketdata2"><code>RealTimeMarketData2</code></h4>
+<h4 id="replayedmarketdata"><code>ReplayedMarketData</code></h4>
+<h4 id="horizontalstitchedmarketdata"><code>HorizontalStitchedMarketData</code></h4>
+<h4 id="igstitchedmarketdata"><code>IgStitchedMarketData</code></h4>
+<h2 id="dataflow"><code>dataflow</code></h2>
+<h2 id="dataflowcore"><code>dataflow/core</code></h2>
+<h4 id="node"><code>Node</code></h4>
+<ul>
+<li>Responsibilities:</li>
+<li>Store and retrieve its output values on a per-method (e.g., "fit" and
+    "predict") basis</li>
+<li>
+<p>Each node has an identifier and names for inputs/outputs</p>
+</li>
+<li>
+<p>Interactions:</p>
+</li>
+<li><code>DAG</code>: a DAG of <code>Nodes</code></li>
+<li>
+<p>Derived <code>Nodes</code> implementing specific features</p>
+</li>
+<li>
+<p>Main methods:</p>
+</li>
+</ul>
+<h4 id="dag"><code>DAG</code></h4>
+<ul>
+<li>Responsibilities:</li>
+<li>Build a DAG of <code>Nodes</code> by adding and connecting <code>Node</code>s</li>
+<li>Query a DAG</li>
+<li>
+<p>Manage node execution storing outputs within executed nodes</p>
+</li>
+<li>
+<p>Interactions:</p>
+</li>
+<li><code>DagBuilder</code>: a class to build <code>DAG</code>s</li>
+<li>
+<p><code>Node</code>: nodes of the <code>DAG</code></p>
+</li>
+<li>
+<p>Main methods:</p>
+</li>
+</ul>
+<h4 id="dagbuilder"><code>DagBuilder</code></h4>
+<ul>
+<li>Responsibilities:</li>
+<li>Abstract class for creating DAGs</li>
+<li>Interactions:</li>
+<li>Main methods:</li>
+<li><code>get_config_template()</code>: return a <code>Config</code> with the parameters that can be
+    customized when building the <code>DAG</code></li>
+<li><code>get_dag()</code>: builds the <code>DAG</code></li>
+</ul>
+<h4 id="dagrunner"><code>DagRunner</code></h4>
+<ul>
+<li>Responsibilities:</li>
+<li>Run a <code>DAG</code> by calling a <code>Method</code> on all the nodes</li>
+<li>Interactions:</li>
+<li>Main methods:</li>
+</ul>
+<h4 id="fitpredictdagrunner"><code>FitPredictDagRunner</code></h4>
+<ul>
+<li>Responsibilities:</li>
+<li>Run a <code>DAG</code> with <code>fit</code>, <code>predict</code> methods</li>
+<li>Interactions:</li>
+<li>Main methods:</li>
+<li><code>set_fit_intervals()</code>, <code>set_predict_intervals()</code> to set the intervals to run
+    on</li>
+<li><code>fit()</code>, <code>predict()</code> to run the corresponding methods</li>
+</ul>
+<h4 id="rollingfitpredictdagrunner"><code>RollingFitPredictDagRunner</code></h4>
+<ul>
+<li>Responsibilities:</li>
+<li>Run a <code>DAG</code> by periodic fitting on previous history and evaluating on new
+    data</li>
+<li>Interactions:</li>
+<li>Main methods:</li>
+</ul>
+<h4 id="resultbundle"><code>ResultBundle</code></h4>
+<ul>
+<li>Responsibilities:</li>
+<li>Store <code>DAG</code> execution results.</li>
+<li>Interactions:</li>
+<li>Main methods:</li>
+</ul>
+<h2 id="dataflowcorenodes">dataflow/core/nodes</h2>
+<h4 id="fitpredictnode"><code>FitPredictNode</code></h4>
+<ul>
+<li>Abstract node implementing <code>fit()</code> / <code>predict()</code> function</li>
+<li>Store and load state</li>
+</ul>
+<h4 id="datasource"><code>DataSource</code></h4>
+<ul>
+<li>DataSource &lt;|-- FitPredictNode</li>
+<li>Abstract</li>
+<li>Generate train/test data from the passed data frame</li>
+</ul>
+<h4 id="transformer"><code>Transformer</code></h4>
+<ul>
+<li>FitPredictNode &lt;|-- DataSource</li>
+<li>Abstract</li>
+<li>Single-input single-output node calling a stateless transformation</li>
+</ul>
+<h4 id="yconnector"><code>YConnector</code></h4>
+<ul>
+<li>FitPredictNode &lt;|-- YConnector</li>
+<li>Create an output df from two input dataframes</li>
+</ul>
+<h4 id="groupedcoldftodfcolprocessor"><code>GroupedColDfToDfColProcessor</code></h4>
+<h4 id="crosssectionaldftodfcolprocessor"><code>CrossSectionalDfToDfColProcessor</code></h4>
+<ul>
+<li>Wrappers for cross-sectional transformations</li>
+</ul>
+<h4 id="seriestodfcolprocessor"><code>SeriesToDfColProcessor</code></h4>
+<ul>
+<li>Series-to-dataframe wrapper</li>
+</ul>
+<h4 id="seriestoseriescolprocessor"><code>SeriesToSeriesColProcessor</code></h4>
+<ul>
+<li>Series-to-series wrapper</li>
+</ul>
+<h4 id="dfstacker"><code>DfStacker</code></h4>
+<ul>
+<li>Stack and unstack dataframes with identical columns</li>
+</ul>
+<h4 id="_1"></h4>
+<h2 id="dataflowsystem">dataflow/system</h2>
+<h4 id="realtimedagrunner"><code>RealTimeDagRunner</code></h4>
+<ul>
+<li>Run a DAG in real-time</li>
+</ul>
+<h4 id="processforecastsnode"><code>ProcessForecastsNode</code></h4>
+<h4 id="historicaldatasource"><code>HistoricalDataSource</code></h4>
+<ul>
+<li>Adapt a <code>MarketData</code> object to a DAG</li>
+<li>Store and load the state of the node.</li>
+</ul>
+<h4 id="realtimedatasource"><code>RealTimeDataSource</code></h4>
+<h4 id="system"><code>System</code></h4>
+<ul>
+<li>Responsibilities: abstract class that builds a <code>System</code></li>
+<li>Interactions: there are several derived classes that allow to build various
+  types of Systems
+  <code>mermaid
+  classDiagram
+    System &lt;|-- ForecastSystem
+    System &lt;|-- Df_ForecastSystem
+    ForecastSystem &lt;|-- NonTime_ForecastSystem
+    _Time_ForecastSystem_Mixin
+    System &lt;|-- Time_ForecastSystem
+    _Time_ForecastSystem_Mixin &lt;|-- Time_ForecastSystem
+    ForecastSystem_with_DataFramePortfolio &lt;|-- _ForecastSystem_with_Portfolio
+    _Time_ForecastSystem_Mixin, ForecastSystem_with_DataFramePortfolio &lt;|-- Time_ForecastSystem_with_DataFramePortfolio</code></li>
+<li>Main methods:</li>
+</ul>
+<h4 id="forecastsystem"><code>ForecastSystem</code></h4>
+<h4 id="df_forecastsystem"><code>Df_ForecastSystem</code></h4>
+<h4 id="nontime_forecastsystem"><code>NonTime_ForecastSystem</code></h4>
+<h4 id="time_forecastsystem"><code>Time_ForecastSystem</code></h4>
+<h4 id="forecastsystem_with_dataframeportfolio"><code>ForecastSystem_with_DataFramePortfolio</code></h4>
+<h4 id="time_forecastsystem_with_dataframeportfolio"><code>Time_ForecastSystem_with_DataFramePortfolio</code></h4>
+<h4 id="time_forecastsystem_with_databaseportfolio_and_orderprocessor"><code>Time_ForecastSystem_with_DatabasePortfolio_and_OrderProcessor</code></h4>
+<h4 id="time_forecastsystem_with_databaseportfolio"><code>Time_ForecastSystem_with_DatabasePortfolio</code></h4>
+<h2 id="dataflowbacktest">dataflow/backtest</h2>
+<h4 id="forecaster">Forecaster</h4>
+<ul>
+<li>It is a DAG system that forecasts the value of the target economic quantities
+  (e.g.,</li>
+</ul>
+<p>for each asset in the target</p>
+<ul>
+<li>Responsibilities:</li>
+<li>Interactions:</li>
+<li>Main methods:</li>
+</ul>
+<h4 id="marketoms"><code>MarketOms</code></h4>
+<p>MarketOms is the interface that allows to place orders and receive back fills to
+the specific target market. This is provided as-is and it's not under control of
+the user or of the protocol</p>
+<ul>
+<li>E.g., a specific exchange API interface</li>
+</ul>
+<h4 id="orderprocessor"><code>OrderProcessor</code></h4>
+<ul>
+<li>TODO(gp): Maybe MockedMarketOms since that's the actual function?</li>
+</ul>
+<h4 id="omsdb"><code>OmsDb</code></h4>
+<p>Simulation</p>
+<h4 id="implementedbroker"><code>ImplementedBroker</code></h4>
+<ul>
+<li><code>submit_orders()</code></li>
+<li>Save files in the proper location</li>
+<li>Wait for orders to be accepted</li>
+<li><code>get_fills</code></li>
+<li>No-op since the portfolio is updated automatically</li>
+</ul>
+<p>Mocked system</p>
+<ul>
+<li>Our implementation of the implemented system where we replace DB with a mock</li>
+<li>The mocked DB should be as similar as possible to the implemented DB</li>
+</ul>
+<h4 id="databasebroker"><code>DatabaseBroker</code></h4>
+<ul>
+<li><code>submit_orders()</code></li>
+<li>Same behavior of <code>ImplementedBroker</code> but using <code>OmsDb</code></li>
+</ul>
+<h4 id="omsdb_1"><code>OmsDb</code></h4>
+<ul>
+<li><code>submitted_orders</code> table (mocks S3)</li>
+<li>Contain the submitted orders</li>
+<li><code>accepted_orders</code> table</li>
+<li><code>current_position</code> table</li>
+</ul>
+<h2 id="omsfill">oms/fill</h2>
+<h4 id="fill"><code>Fill</code></h4>
+<ul>
+<li>Responsibilities:</li>
+<li>Represent an order fill</li>
+<li>Interactions:</li>
+<li><code>Order</code></li>
+<li>Main methods:</li>
+</ul>
+<h2 id="omsorder">oms/order</h2>
+<h4 id="order"><code>Order</code></h4>
+<ul>
+<li>Responsibilities:</li>
+<li>Represent an order to be executed over a period of time</li>
+</ul>
+<h2 id="omsbroker">oms/broker</h2>
+<pre><code class="language-mermaid">classDiagram
+Broker &lt;|-- FakeFillsBroker : Inheritance
+FakeFillsBroker &lt;|-- DataFrameBroker : Inheritance
+DataFrameBroker &lt;|-- ReplayedFillsDataFrameBroker : Inheritance
+FakeFillsBroker &lt;|-- DatabaseBroker : Inheritance
+
+Broker &lt;|-- AbstractCcxtBroker : Inheritance
+AbstractCcxtBroker &lt;|-- CcxtBroker : Inheritance
+</code></pre>
+<h4 id="broker"><code>Broker</code></h4>
+<ul>
+<li>Description</li>
+<li>A <code>Broker</code> is an object to place orders to the market and to receive fills,
+    adapting <code>Order</code> and <code>Fill</code> objects to the corresponding exchange-specific
+    objects</li>
+<li>
+<p>In other words <code>Broker</code> adapts the internal representation of <code>Order</code> and
+    <code>Fill</code>s to the ones that are specific to the target exchange</p>
+</li>
+<li>
+<p>Responsibilities:</p>
+</li>
+<li>Submit orders to MarketOms</li>
+<li>Wait to ensure that orders were properly accepted by MarketOms</li>
+<li>Execute complex orders (e.g., TWAP, VWAP, pegged orders) interacting with
+    the target market</li>
+<li>
+<p>Receive fill information from the target market</p>
+</li>
+<li>
+<p>Interactions:</p>
+</li>
+<li><code>MarketData</code> to receive prices and other information necessary to execute
+    orders</li>
+<li><code>MarketOms</code> to place orders and receive fills<ul>
+<li>TODO(gp): Check this</li>
+</ul>
+</li>
+<li>
+<p><code>LimitPriceComputer</code> to compute the limit price for limit orders</p>
+</li>
+<li>
+<p>Main methods:</p>
+</li>
+<li><code>submit_orders()</code>: submit orders to the trading exchange</li>
+<li><code>get_fills()</code></li>
+</ul>
+<h4 id="fakefillsbroker"><code>FakeFillsBroker</code></h4>
+<ul>
+<li>Responsibilities:</li>
+<li>Interactions:</li>
+<li>Main methods:</li>
+</ul>
+<h4 id="dataframebroker"><code>DataFrameBroker</code></h4>
+<ul>
+<li>Responsibilities:</li>
+<li>Interactions:</li>
+<li>Main methods:</li>
+</ul>
+<h4 id="databasebroker_1"><code>DatabaseBroker</code></h4>
+<ul>
+<li>Responsibilities:</li>
+<li>Interactions:</li>
+<li>Main methods:</li>
+</ul>
+<h4 id="replayeddatareader"><code>ReplayedDataReader</code></h4>
+<ul>
+<li>Responsibilities:</li>
+<li>Replay data from an actual <code>RawDataReader</code></li>
+<li>Interactions:</li>
+<li>Derived from <code>DataFrameBroker</code></li>
+<li>Main methods:</li>
+</ul>
+<h4 id="replayedfillsdataframebroker"><code>ReplayedFillsDataFrameBroker</code></h4>
+<ul>
+<li>Responsibilities:</li>
+<li>Replay the fills from a Broker</li>
+<li>Interactions:</li>
+<li>Derived from <code>DataFrameBroker</code></li>
+<li>Main methods:</li>
+</ul>
+<h2 id="omsbrokerccxt">oms/broker/ccxt</h2>
+<pre><code class="language-mermaid">classDiagram
+    Broker &lt;|-- AbstractCcxtBroker : Inheritance
+    AbstractCcxtBroker &lt;|-- CcxtBroker : Inheritance
+</code></pre>
+<h4 id="abstractccxtbroker"><code>AbstractCcxtBroker</code></h4>
+<ul>
+<li>Responsibilities:</li>
+<li>Retrieve broker configuration, market data (including CCXT), open positions,
+    fills, and trades</li>
+<li>
+<p>Update order statistics, validate child orders, handle exceptions, and
+    calculate TWAP waves.</p>
+</li>
+<li>
+<p>Interactions:</p>
+</li>
+<li>
+<p>Derived from <code>Broker</code></p>
+</li>
+<li>
+<p>Main methods:</p>
+</li>
+<li><code>get_broker_config()</code>: Retrieve broker configuration.</li>
+<li><code>get_bid_ask_data_for_last_period()</code>: Obtain bid-ask data for the given last
+    period.</li>
+<li><code>get_market_info()</code>: Load market information from the given exchange and map
+    to asset ids.</li>
+<li><code>get_fills()</code>: Retrieves a list of completed trades (fills) from the
+    previous order execution, to allow the Portfolio component to update its
+    state accurately.</li>
+<li><code>get_ccxt_trades()</code>: Retrieves CCXT trades (completed orders/fills)
+    corresponding to a list of provided CCXT orders, grouped by trading symbol.</li>
+<li><code>get_open_positions()</code>: Retrieves and caches the open positions from the
+    exchange, with an optional sanity check against live data, to efficiently
+    provide the current open positions for the trading account.</li>
+<li><code>cancel_open_orders_for_symbols()</code>: Cancels all open orders for a given list
+    of trading pairs.</li>
+<li><code>get_total_balance()</code>: Retrieves, validates, and logs the total available
+    balance from an exchange.</li>
+</ul>
+<h4 id="ccxtbroker"><code>CcxtBroker</code></h4>
+<ul>
+<li>Responsibilities:</li>
+<li>
+<p>Manage CCXT interactions, submit orders, handle cancellations, and sync with
+    wave start times; log results, obtain fills and trades, manage TWAP child
+    orders, and get CCXT order structures.</p>
+</li>
+<li>
+<p>Interactions:</p>
+</li>
+<li>
+<p>Derived from <code>AbstractCcxtBroker</code></p>
+</li>
+<li>
+<p>Main methods:</p>
+</li>
+<li><code>get_ccxt_fills()</code>: Get fills from submitted orders in OMS and CCXT formats.</li>
+<li><code>_submit_twap_orders()</code>: Execute orders using the TWAP strategy.</li>
+<li><code>_get_ccxt_order_structure()</code>: Get the CCXT order structure corresponding to
+    the submitted order.</li>
+</ul>
+<h2 id="omslimit_computer">oms/limit_computer</h2>
+<pre><code class="language-mermaid">classDiagram
+    AbstractLimitPriceComputer &lt;|-- LimitPriceComputerUsingSpread : Inheritance
+    AbstractLimitPriceComputer &lt;|-- LimitPriceComputerUsingVolatility : Inheritance
+</code></pre>
+<h4 id="abstractlimitpricecomputer"><code>AbstractLimitPriceComputer</code></h4>
+<ul>
+<li>Responsibilities:</li>
+<li>
+<p>Provide methods to retrieve timestamp data, extract latest bid/ask sizes,
+    and validate/normalize bid/ask data.</p>
+</li>
+<li>
+<p>Interactions:</p>
+</li>
+<li>
+<p>Main methods:</p>
+</li>
+<li><code>get_latest_timestamps_from_bid_ask_data()</code>: Get timestamp data related to
+    the bid/ask price.</li>
+<li><code>get_latest_size_from_bid_ask_data()</code>: Extract latest bid/ask size data and
+    returns the size data dictionary.</li>
+<li><code>calculate_limit_price()</code>: Return limit price and price data such as
+    latest/mean bid/ask price.</li>
+<li><code>normalize_bid_ask_data()</code>: Validate and normalize the bid ask data.</li>
+</ul>
+<h4 id="limitpricecomputerusingspread"><code>LimitPriceComputerUsingSpread</code></h4>
+<ul>
+<li>Responsibilities:</li>
+<li>
+<p>Retrieve, compare latest and average bid/ask prices.</p>
+</li>
+<li>
+<p>Interactions:</p>
+</li>
+<li>
+<p>Derived from <code>AbstractLimitPriceComputer</code></p>
+</li>
+<li>
+<p>Main methods:</p>
+</li>
+<li><code>compare_latest_and_average_price()</code> : Retrieve and compare latest and
+    average bid/ask prices.</li>
+<li><code>calculate_limit_price()</code>:Calculate limit price based on recent bid / ask
+    data and uses a <code>passivity_factor</code> to adjust the limit price between the bid
+    and ask prices.</li>
+</ul>
+<h4 id="limitpricecomputerusingvolatility"><code>LimitPriceComputerUsingVolatility</code></h4>
+<ul>
+<li>Responsibilities:</li>
+<li>
+<p>Compute limit price based on volatility multiple</p>
+</li>
+<li>
+<p>Interactions:</p>
+</li>
+<li>
+<p>Derived from <code>AbstractLimitPriceComputer</code></p>
+</li>
+<li>
+<p>Main methods:</p>
+</li>
+<li><code>compute_metrics_from_price_data()</code>: Analyze bid-ask price data to compute
+    volume, sum of squares of difference, last price, and count.</li>
+<li><code>calculate_limit_price()</code>:Calculate limit price based on recent bid / ask
+    data and uses a <code>volatility_multiple</code> to adjust the limit price based on the
+    volatility of the bid and ask prices.</li>
+</ul>
+<h2 id="omschild_order_quantity_computer">oms/child_order_quantity_computer</h2>
+<pre><code class="language-mermaid">classDiagram
+    AbstractChildOrderQuantityComputer &lt;|-- DynamicSchedulingChildOrderQuantityComputer : Inheritance
+    AbstractChildOrderQuantityComputer &lt;|-- StaticSchedulingChildOrderQuantityComputer : Inheritance
+</code></pre>
+<h4 id="abstractchildorderquantitycomputer"><code>AbstractChildOrderQuantityComputer</code></h4>
+<ul>
+<li>Responsibilities:</li>
+<li>
+<p>Represent strategy to decide child order quantities within a parent order</p>
+</li>
+<li>
+<p>Interactions:</p>
+</li>
+<li>
+<p>Main methods:</p>
+</li>
+<li><code>set_instance_params()</code>: Initialize instance parameters with parent order
+    size, market data, and execution goals.</li>
+<li><code>get_wave_quantities()</code>: Return the quantity for the specified wave ID from
+    the wave quantities.</li>
+<li><code>update_current_positions()</code>: Update the current positions using data from
+    the Broker.</li>
+</ul>
+<h4 id="dynamicschedulingchildorderquantitycomputer"><code>DynamicSchedulingChildOrderQuantityComputer</code></h4>
+<ul>
+<li>Responsibilities:</li>
+<li>Place each child order wave with the remaining amount to fill.</li>
+<li>
+<p>Determine the child order quantity to be placed during each wave.</p>
+</li>
+<li>
+<p>Interactions:</p>
+</li>
+<li>
+<p>Derived from <code>AbstractChildOrderQuantityComputer</code></p>
+</li>
+<li>
+<p>Main methods:</p>
+</li>
+<li><code>get_wave_quantities()</code>: calculates the target positions for parent orders
+    and get the first child order quantity as equal to the parent order quantity
+    for the first wave and for following waves, the child order quantities are
+    computed as
+    <code>target_position - open_position</code></li>
+</ul>
+<h4 id="staticschedulingchildorderquantitycomputer"><code>StaticSchedulingChildOrderQuantityComputer</code></h4>
+<ul>
+<li>Responsibilities:</li>
+<li>Generate a TWAP-like schedule for placing child orders.</li>
+<li>
+<p>Calculate child order quantities for each provided parent order.</p>
+</li>
+<li>
+<p>Interactions:</p>
+</li>
+<li>
+<p>Derived from <code>AbstractChildOrderQuantityComputer</code></p>
+</li>
+<li>
+<p>Main methods:</p>
+</li>
+<li><code>calculate_static_child_order_quantities()</code>: Calculate child order
+    quantities for each provided parent order. The quantity is static, so it is
+    calculated only once.</li>
+</ul>
+<h2 id="omsportfolio">oms/portfolio</h2>
+<h4 id="portfolio"><code>Portfolio</code></h4>
+<ul>
+<li>
+<p>A Portfolio stores information about asset and cash holdings of a System over
+  time.</p>
+</li>
+<li>
+<p>Responsibilities:</p>
+</li>
+<li>
+<p>Hold the holdings in terms of shares of each asset id and cash available</p>
+</li>
+<li>
+<p>Interactions:</p>
+</li>
+<li>MarketData to receive current prices to estimate the value of the holdings</li>
+<li>
+<p>Accumulate statistics and</p>
+</li>
+<li>
+<p>Main methods:</p>
+</li>
+<li>
+<p>Mark_to_market(): estimate the value of the current holdings using the
+    current market prices</p>
+</li>
+<li>
+<p><code>get_holdings()</code></p>
+</li>
+<li>Abstract because IS, Mocked, Simulated have a different implementations</li>
+<li>
+<p><code>mark_to_market()</code></p>
+</li>
+<li>
+<p>Not abstract</p>
+</li>
+<li>-&gt; <code>get_holdings()</code>, <code>PriceInterface</code></li>
+<li><code>update_state()</code></li>
+<li>Abstract</li>
+<li>Use abstract but make it NotImplemented (we will get some static checks and
+  some other dynamic checks)</li>
+<li>We are trying not to mix static typing and duck typing</li>
+<li>CASH_ID, <code>_compute_statistics()</code> goes in <code>Portolio</code></li>
+</ul>
+<h4 id="dataframeportfolio"><code>DataFramePortfolio</code></h4>
+<ul>
+<li>
+<p>An implementation of a Portfolio backed by a DataFrame. This is used to
+  simulate a system on an order-by-order basis. This should be equivalent to
+  using a DatabasePortfolio but without the complexity of querying a DB.</p>
+</li>
+<li>
+<p>This is what we call <code>Portfolio</code></p>
+</li>
+<li>In RT we can run <code>DataFramePortfolio</code> and <code>ImplementedPortfolio</code> in parallel
+  to collect real and simulated behavior</li>
+<li><code>get_holdings()</code></li>
+<li>Store the holdings in a df</li>
+<li><code>update_state()</code></li>
+<li>Update the holdings with fills -&gt; <code>SimulatedBroker.get_fills()</code></li>
+<li>To make the simulated system closer to the implemented</li>
+</ul>
+<h4 id="databaseportfolio"><code>DatabasePortfolio</code></h4>
+<p>an implementation of a Portfolio backed by an SQL Database to simulate systems
+where the Portfolio state is held in a database. This allows to simulate a
+system on an order-by-order basis.</p>
+<ul>
+<li><code>get_holdings()</code></li>
+<li>Same behavior of <code>ImplementedPortfolio</code> but using <code>OmsDb</code></li>
+</ul>
+<h4 id="implementedportfolio">ImplementedPortfolio</h4>
+<ul>
+<li><code>get_holdings()</code></li>
+<li>Check self-consistency and assumptions</li>
+<li>Check that no order is in flight otherwise we should assert or log an error</li>
+<li>Query the DB and gets you the answer</li>
+<li><code>update_state()</code></li>
+<li>No-op since the portfolio is updated automatically</li>
+</ul>
+<h2 id="omsorder_processing">oms/order_processing</h2>
+<h4 id="orderprocessor_1"><code>OrderProcessor</code></h4>
+<ul>
+<li>Monitor <code>OmsDb.submitted_orders</code></li>
+<li>Update <code>OmsDb.accepted_orders</code></li>
+<li>
+<p>Update <code>OmsDb.current_position</code> using <code>Fill</code> and updating the <code>Portfolio</code></p>
+</li>
+<li>
+<p>TODO(gp): Unclear where it is used?</p>
+</li>
+</ul>
+<h4 id="process_forecasts"><code>process_forecasts</code></h4>
+<ul>
+<li>Responsibilities:</li>
+<li>Process all the forecasts from <code>prediction_df</code> using
+    <code>TargetPositionAndOrderGenerator</code> to generate orders</li>
+<li>Interactions:</li>
+<li>
+<p>Stores <code>TargetPositionAndOrderGenerator</code></p>
+</li>
+<li>
+<p>This is used as an interface to simulate the effect of given forecasts under
+  different optimization conditions, spread, and restrictions, without running
+  the Forecaster</p>
+</li>
+</ul>
+<h4 id="targetpositionandordergenerator"><code>TargetPositionAndOrderGenerator</code></h4>
+<ul>
+<li>Responsibilities:</li>
+<li>Retrieve the current holdings from <code>Portfolio</code></li>
+<li>Perform optimization using forecasts and current holdings to compute the
+    target positions</li>
+<li>Generate the orders needed to achieve the target positions</li>
+<li>Submit orders to the <code>Broker</code></li>
+<li>Interactions:</li>
+<li>Forecaster to receive the forecasts of returns for each asset</li>
+<li>Portfolio to recover the current holdings</li>
+<li>Main methods:</li>
+<li>Compute_target_positions_and_generate_orders(): compute the target positions
+    and generate the orders needed to reach</li>
+<li>
+<p><code>compute_target_holdings_shares()</code>: call the Optimizer to compute the target
+    holdings in shares</p>
+</li>
+<li>
+<p>Aka <code>place_trades()</code></p>
+</li>
+<li>Act on the forecasts by:</li>
+<li>Get the state of portfolio (by getting fills from previous clock)</li>
+<li>Updating the portfolio holdings</li>
+<li>Computing the optimal positions</li>
+<li>Submitting the corresponding orders</li>
+<li><code>optimize_positions()</code></li>
+<li>Aka <code>optimize_and_update()</code></li>
+<li>Calls the Optimizer</li>
+<li><code>compute_target_positions()</code></li>
+<li>Aka <code>compute_trades()</code></li>
+<li><code>submit_orders()</code></li>
+<li>Call <code>Broker</code></li>
+<li><code>get_fills()</code></li>
+<li>Call <code>Broker</code></li>
+<li>For IS it is different</li>
+<li><code>update_portfolio()</code></li>
+<li>Call <code>Portfolio</code></li>
+<li>For IS it is different</li>
+<li>It should not use any concrete implementation but only <code>Abstract\*</code></li>
+</ul>
+<h3 id="locates">Locates</h3>
+<h3 id="restrictions">Restrictions</h3>
+<h2 id="omsoptimizer">oms/optimizer</h2>
+<h2 id="omsdb_2">oms/db</h2>
+<h2 id="omsccxt">oms/ccxt</h2>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    <script id="__config" type="application/json">{"base": ".", "features": [], "search": "assets/javascripts/workers/search.07f07601.min.js", "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}}</script>
+    
+    
+      <script src="assets/javascripts/bundle.56dfad97.min.js"></script>
+      
+    
+  </body>
+</html>
