@@ -1,4 +1,4 @@
-
+# Workflow
 
 <!-- toc -->
 
@@ -33,7 +33,7 @@
 
 <!-- tocstop -->
 
-# KaizenFlow workflow explanation
+## KaizenFlow workflow explanation
 
 This document is a roadmap of most activities that Quants, Quant devs, and
 DevOps can perform using `KaizenFlow`.
@@ -44,7 +44,7 @@ notebooks) in the repo.
 A high-level description of KaizenFlow is
 [KaizenFlow White Paper](/papers/DataFlow_stream_computing_framework/DataFlow_stream_computing_framework.pdf)
 
-# Work organization
+## Work organization
 
 - Issues workflow explained
   [`amp/docs/work_organization/ck.issue_workflow.explanation.md`](/docs/work_organization/ck.issue_workflow.explanation.md)
@@ -52,11 +52,11 @@ A high-level description of KaizenFlow is
   [`/docs/work_organization/all.use_github_and_zenhub.how_to_guide.md`](/docs/work_organization/all.use_github_and_zenhub.how_to_guide.md)
 - TODO(Grisha): add more from `/docs/work_organization/`.
 
-# Set-up
+## Set-up
 
 - TODO(gp): Add pointers to the docs we ask to read during the on-boarding
 
-## Documentation_meta
+### Documentation_meta
 
 - The dir `docs/documentation_meta` contains documents about writing the
   documentation
@@ -79,7 +79,7 @@ A high-level description of KaizenFlow is
 
 <!-- ####################################################################### -->
 
-# Quant workflows
+## Quant workflows
 
 The life of a Quant is spent between:
 
@@ -107,7 +107,7 @@ These activities are mapped in `KaizenFlow` as follows:
 
 <!-- /////////////////////////////////////////////////////////////////////// -->
 
-## `DataPull`
+### `DataPull`
 
 - General intro to `DataPull`
   - [/docs/datapull/ck.datapull.explanation.md](/docs/datapull/ck.datapull.explanation.md)
@@ -116,7 +116,7 @@ These activities are mapped in `KaizenFlow` as follows:
   - [/docs/datapull/all.datapull_sandbox.explanation.md](/docs/datapull/all.datapull_sandbox.explanation.md)
   - [/docs/datapull/ck.ccxt_exchange_timestamp_interpretation.reference.md](/docs/datapull/ck.ccxt_exchange_timestamp_interpretation.reference.md)
 
-### Universe
+#### Universe
 
 - Universe explanation
   - [/docs/datapull/ck.universe.explanation.md](/docs/datapull/ck.universe.explanation.md)
@@ -125,7 +125,7 @@ These activities are mapped in `KaizenFlow` as follows:
   - [/im_v2/common/universe/notebooks/Master_universe_analysis.ipynb](/im_v2/common/universe/notebooks/Master_universe_analysis.ipynb)
   - [/im_v2/ccxt/notebooks/Master_universe.ipynb](/im_v2/ccxt/notebooks/Master_universe.ipynb)
 
-### Dataset signature
+#### Dataset signature
 
 - Organize and label datasets
   - Helps to uniquely identify datasets across different sources, types,
@@ -152,7 +152,7 @@ These activities are mapped in `KaizenFlow` as follows:
     generalized for more sources
 
 - Download data in real time over a given time interval
-  - [/im_v2/ccxt/data/extract/download_exchange_data_to_db_periodically.py](/im_v2/ccxt/data/extract/download_exchange_data_to_db_periodically.py)
+  - [/im_v2/common/data/extract/periodic_download_exchange_data_to_db.py](/im_v2/common/data/extract/periodic_download_exchange_data_to_db.py)
 
 - Archive data
   - Helps with optimizing data storage performance/costs by transferring older
@@ -209,9 +209,9 @@ These activities are mapped in `KaizenFlow` as follows:
 
 <!-- /////////////////////////////////////////////////////////////////////// -->
 
-## `DataFlow`
+### `DataFlow`
 
-### Meta
+#### Meta
 
 - Best practices for Quant research
   - [/docs/dataflow/ck.research_methodology.explanation.md](/docs/dataflow/ck.research_methodology.explanation.md)
@@ -222,7 +222,7 @@ These activities are mapped in `KaizenFlow` as follows:
   - TODO(Grisha): does this belong to `DataFlow`?
   - TODO(Grisha): `ck.master_notebooks...` -> `all.master_notebooks`?
 
-### DAG
+#### DAG
 
 - General concepts of `DataFlow`
   - Introduction to KaizenFlow, DAG nodes, DataFrame as unit of computation, DAG
@@ -312,7 +312,7 @@ These activities are mapped in `KaizenFlow` as follows:
   - [/docs/dataflow/ck.load_alpha_and_trades.tutorial.py](/docs/dataflow/ck.load_alpha_and_trades.tutorial.py)
   - TODO(gp): add more comments
 
-### System
+#### System
 
 - Learn how to build `System`
   - TODO(gp): @grisha what do we have for this?
@@ -368,11 +368,11 @@ These activities are mapped in `KaizenFlow` as follows:
 
 <!-- ####################################################################### -->
 
-# Quant dev workflows
+## Quant dev workflows
 
 <!-- /////////////////////////////////////////////////////////////////////// -->
 
-## DataPull
+### DataPull
 
 - Learn how to create a `DataPull` adapter for a new data source
   - [/docs/datapull/all.dataset_onboarding_checklist.reference.md](/docs/datapull/all.dataset_onboarding_checklist.reference.md)
@@ -413,39 +413,39 @@ These activities are mapped in `KaizenFlow` as follows:
 
 <!-- /////////////////////////////////////////////////////////////////////// -->
 
-## DataFlow
+### DataFlow
 
 - All software components
   - [/docs/dataflow/ck.data_pipeline_architecture.reference.md](/docs/dataflow/ck.data_pipeline_architecture.reference.md)
 
 <!-- ####################################################################### -->
 
-# TradingOps workflows
+## TradingOps workflows
 
 <!-- /////////////////////////////////////////////////////////////////////// -->
 
-## Trading execution
+### Trading execution
 
-### Intro
+#### Intro
 
 - Binance trading terms
   - [/docs/oms/broker/ck.binance_terms.reference.md](/docs/oms/broker/ck.binance_terms.reference.md)
 
-### Components
+#### Components
 
 - OMS explanation
   - [/docs/oms/ck.oms.explanation.md](/docs/oms/ck.oms.explanation.md)
 - CCXT log structure
   - [/docs/oms/broker/ck.ccxt_broker_logs_schema.reference.md](/docs/oms/broker/ck.ccxt_broker_logs_schema.reference.md)
 
-### Testing
+#### Testing
 
 - Replayed CCXT exchange explanation
   - [/docs/oms/broker/ck.replayed_ccxt_exchange.explanation.md](/docs/oms/broker/ck.replayed_ccxt_exchange.explanation.md)
 - How to generate broker test data
   - [/docs/oms/broker/ck.generate_broker_test_data.how_to_guide.md](/docs/oms/broker/ck.generate_broker_test_data.how_to_guide.md)
 
-### Procedures
+#### Procedures
 
 - Trading procedures (e.g., trading account information)
   - [/docs/trading_ops/ck.trading.how_to_guide.md](/docs/trading_ops/ck.trading.how_to_guide.md)
@@ -456,7 +456,7 @@ These activities are mapped in `KaizenFlow` as follows:
 
 <!-- ####################################################################### -->
 
-# MLOps workflows
+## MLOps workflows
 
 - Encrypt a model
   - [/docs/dataflow/ck.release_encrypted_models.explanation.md](/docs/dataflow/ck.release_encrypted_models.explanation.md)
@@ -464,7 +464,7 @@ These activities are mapped in `KaizenFlow` as follows:
 
 <!-- /////////////////////////////////////////////////////////////////////// -->
 
-## Deploying
+### Deploying
 
 - Model deployment in production
   - [/docs/deploying/all.model_deployment.how_to_guide.md](/docs/deploying/all.model_deployment.how_to_guide.md)
@@ -475,7 +475,7 @@ These activities are mapped in `KaizenFlow` as follows:
 
 <!-- /////////////////////////////////////////////////////////////////////// -->
 
-## Monitoring
+### Monitoring
 
 - Monitor system
   - [/docs/monitoring/ck.monitor_system.how_to_guide.md](/docs/monitoring/ck.monitor_system.how_to_guide.md)
@@ -486,7 +486,7 @@ These activities are mapped in `KaizenFlow` as follows:
 
 <!-- ####################################################################### -->
 
-# DevOps workflows
+## DevOps workflows
 
 The documentation outlines the architecture and deployment processes for the
 Kaizen Infrastructure, leveraging a blend of AWS services, Kubernetes for
@@ -495,7 +495,7 @@ Emphasizing Infrastructure as Code (IaC), the project employs Terraform for
 provisioning and Ansible for configuration, ensuring a maintainable and
 replicable environment.
 
-## Overview
+### Overview
 
 - Development and deployment stages
   - [/docs/infra/ck.development_stages.explanation.md](/docs/infra/ck.development_stages.explanation.md)
@@ -505,7 +505,7 @@ replicable environment.
   - This document provides an overview of the S3 buckets utilized by Kaizen
     Technologies.
 
-## Current set-up description
+### Current set-up description
 
 - Document details steps for setting up Kaizen infrastructure
   - [/docs/infra/ck.kaizen_infrastructure.reference.md](/docs/infra/ck.kaizen_infrastructure.reference.md)
@@ -513,7 +513,7 @@ replicable environment.
 - EC2 servers overview
   - [/docs/infra/ck.ec2_servers.explanation.md](/docs/infra/ck.ec2_servers.explanation.md)
 
-## Set up infra
+### Set up infra
 
 - Document the implementation of Auto Scaling in the Kubernetes setup, focusing
   on the Cluster Autoscaler (CA), Horizontal Pod Autoscaler (HPA), and Auto

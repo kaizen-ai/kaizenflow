@@ -2,15 +2,18 @@
 
 <!-- toc -->
 
-- [Airflow DAGs](#airflow-dags)
-- [Git branch names](#git-branch-names)
-- [Docker image names](#docker-image-names)
-- [Directory names](#directory-names)
-- [Notebook names](#notebook-names)
-- [Telegram channels](#telegram-channels)
-- [Invoke task definition](#invoke-task-definition)
+- [How to name objects](#how-to-name-objects)
+  * [Airflow DAGs](#airflow-dags)
+  * [Git branch names](#git-branch-names)
+  * [Docker image names](#docker-image-names)
+  * [Directory names](#directory-names)
+  * [Notebook names](#notebook-names)
+  * [Telegram channels](#telegram-channels)
+  * [Invoke task definition](#invoke-task-definition)
 
 <!-- tocstop -->
+
+# How to name objects
 
 When we have lots of accounts, experiments, production systems running at the
 same time, we need to standardize naming conventions.

@@ -10,19 +10,19 @@
 
 - `C11a.config1`:
   - DAG:
-    http://172.30.2.114:8090/dags/preprod.tokyo.shadow_trading_system_observer.C11a.config1/grid
+    http://internal-a97b7f81b909649218c285140e74f68a-1285736094.eu-north-1.elb.amazonaws.com:8080/dags/preprod.tokyo.shadow_trading_system_observer.C11a.config1/grid
   - Stable link:
     http://172.30.2.44/system_reconciliation/C11a.config1.shadow_trading.last_5minutes.html
 
 - `C11a.config3`:
   - DAG:
-    http://172.30.2.114:8090/dags/preprod.tokyo.shadow_trading_system_observer.C11a.config3/grid
+    http://internal-a97b7f81b909649218c285140e74f68a-1285736094.eu-north-1.elb.amazonaws.com:8080/dags/preprod.tokyo.shadow_trading_system_observer.C11a.config3/grid
   - Stable link:
     http://172.30.2.44/system_reconciliation/C11a.config3.shadow_trading.last_5minutes.html
 
 - `C14a.config1`:
   - DAG:
-    http://172.30.2.114:8090/dags/preprod.tokyo.shadow_trading_system_observer.C14a.config1/grid
+    http://internal-a97b7f81b909649218c285140e74f68a-1285736094.eu-north-1.elb.amazonaws.com:8080/dags/preprod.tokyo.shadow_trading_system_observer.C14a.config1/grid
   - Stable link:
     http://172.30.2.44/system_reconciliation/C14a.config1.paper_trading.last_5minutes.html
 

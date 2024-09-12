@@ -1,4 +1,4 @@
-
+# Literature Review
 
 <!-- toc -->
 
@@ -19,7 +19,7 @@
 
 <!-- tocstop -->
 
-## Meta
+### Meta
 
 - Year - Title
 - Paper authors:
@@ -46,10 +46,10 @@
     - Read the bibliography
     - Try experiments
 
-## To cut and paste
+### To cut and paste
 ```
 
-## Year - Title
+### Year - Title
 - Paper authors:
 - [Link]()
 - Review author / date:
@@ -60,9 +60,9 @@
 - Next steps:
 ```
 
-# News for commodity prediction
+## News for commodity prediction
 
-## 2015 - The role of news in commodity markets
+### 2015 - The role of news in commodity markets
 
 - Paper authors: Borovkova
 - [Link](https://drive.google.com/file/d/1p3Z6W5DPBrDyTGBK__uLE2gNkQDO6VTM/view?usp=sharing)
@@ -94,9 +94,9 @@
   - How to deliver "event study" models to customers? Should we "unroll the
     model" for them providing a stream of predictions?
 
-# Social sentiment
+## Social sentiment
 
-## 2015, Predicting global economic activity with media analytics
+### 2015, Predicting global economic activity with media analytics
 
 - Paper authors: Peterson et al.
 - Link: In `Tech/papers`
@@ -114,7 +114,7 @@
   - Consider the difference in professional news vs social news sentiment
     - What does it mean if there are large statistically significant difference?
 
-## 2018 - Twitter, Investor Sentiment and Capital Markets, what do we know?
+### 2018 - Twitter, Investor Sentiment and Capital Markets, what do we know?
 
 - Paper authors:
 - Review author: GP, 2019-08-21
@@ -130,9 +130,9 @@
   - Read all the bibliography and reproduce some of the results
 - TODO: Update this to new template
 
-# Time series
+## Time series
 
-## On-Line Learning of Linear Dynamical Systems: Exponential Forgetting in Kalman Filters
+### On-Line Learning of Linear Dynamical Systems: Exponential Forgetting in Kalman Filters
 
 - Paper authors: Mark Kozdoba, Jakub Marecek, Tigran Tchrakian, and Shie Mannor
 - Review author: Paul, 2019-12-02
@@ -177,7 +177,7 @@
     - The proofs of the results of the paper would no longer apply
     - It isn't obvious how the learning rate ought to be chosen
 
-## Predictive State Smoothing (PRESS): Scalable non-parametric regression for high-dimensional data with variable selection
+### Predictive State Smoothing (PRESS): Scalable non-parametric regression for high-dimensional data with variable selection
 
 - Paper author: Georg M. Goerg
 - Review author: Paul, 2019-12-03
@@ -210,7 +210,7 @@
   - If no implementation is available, scope out how much work a minimal
     pandas-compatible implementation would require
 
-## 2019, High-Dimensional Multivariate Forecasting with Low-Rank Gaussian Copula Processes
+### 2019, High-Dimensional Multivariate Forecasting with Low-Rank Gaussian Copula Processes
 
 - Paper authors: David Salinas, Michael Bohlke-Schneider, Laurent Callot,
   Roberto Medico, Jan Gasthaus
@@ -234,7 +234,7 @@
   - Use in cases where we have a large number of time series known to have
     meaningful correlations
 
-## 2014, The topology of macro financial flow using stochastic flow diagrams
+### 2014, The topology of macro financial flow using stochastic flow diagrams
 
 - Paper authors: Calkin, De Prado
 - [Link](https://papers.ssrn.com/sol3/papers.cfm?abstract_id=2379319)
@@ -256,9 +256,9 @@
 - Next steps:
   - None
 
-# Computer engineering
+## Computer engineering
 
-## 2015, Hidden technical debt in machine learning systems
+### 2015, Hidden technical debt in machine learning systems
 
 - Paper authors: Sculler et al.
 - [Link](http://papers.nips.cc/paper/5656-hidden-technical-debt-in-machine-learning-systems.pdf)

@@ -1,4 +1,4 @@
-
+# Ssh
 
 <!-- toc -->
 
@@ -8,7 +8,7 @@
 
 <!-- tocstop -->
 
-# What is SSH?
+## What is SSH?
 
 From the Wikipedia
 
@@ -19,14 +19,14 @@ From the Wikipedia
 
 More details [here](https://en.wikipedia.org/wiki/Secure_Shell)
 
-# How we use ssh in our company?
+## How we use ssh in our company?
 
 - We use it to connect to any of our servers.
 - Sometimes we use `scp` to copy files between hosts via `ssh`.
   - Don't know what is `scp`? read
     [here](https://haydenjames.io/linux-securely-copy-files-using-scp/)
 
-# Public key for authorization?
+## Public key for authorization?
 
 - We use `public key` authorization. This is the common way of secure
   authorization for SSH connection.

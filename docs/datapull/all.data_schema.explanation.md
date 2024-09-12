@@ -1,4 +1,4 @@
-
+# Data Schema
 
 <!-- toc -->
 
@@ -10,7 +10,7 @@
 
 <!-- tocstop -->
 
-# Data schema
+## Data schema
 
 - The `dataset_schema` is a structured representation of metadata attributes
   used to describe a dataset
@@ -23,7 +23,7 @@
 - This structured representation facilitates easy understanding and organization
   of dataset metadata, enabling efficient data management and analysis.
 
-## Dataset schema
+### Dataset schema
 
 - The data schema signature has the following schema
   ```
@@ -36,7 +36,7 @@
   - `periodic_daily.airflow.archived_200ms.postgres.bid_ask.spot.v7.ccxt.binance.v1_0_0`
   - `realtime.airflow.downloaded_200ms.postgres.bid_ask.futures.v7_4.ccxt.cryptocom.v1_0_0`
 
-## Description of fields
+### Description of fields
 
 - `download_mode`: Indicates the mode in which the dataset was downloaded.
   - E.g., `bulk`, `realtime` and `periodic_daily`
@@ -69,7 +69,7 @@
 - `version`: Denotes the version of the dataset
   - E.g., `v1_0_0`
 
-# Data signature validation
+## Data signature validation
 
 Perform syntactic and semantic validation of a specified dataset signature.
 Signature is validated by the latest dataset schema version.
@@ -84,7 +84,7 @@ Signature is validated by the latest dataset schema version.
      `{data_type}.{asset_type}` `ohlcv.futures` is a valid signature, but
      `bidask.futures` is not.
 
-# Code
+## Code
 
 - The code corresponding to parsing and validating is under `//data_schema/`
   ```

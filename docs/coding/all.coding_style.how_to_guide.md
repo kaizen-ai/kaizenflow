@@ -1,4 +1,6 @@
-# KaizenFlow - Python Style Guide
+# Coding Style
+
+## KaizenFlow - Python Style Guide
 
 <!-- toc -->
 
@@ -139,7 +141,7 @@
 
 <!-- tocstop -->
 
-# Meta
+## Meta
 
 - What we call "rules" are actually just a convention
 - The "rules"
@@ -159,7 +161,7 @@
 - Rules are not fixed in stone
   - Rules evolve based on what we discuss through the reviews
 
-# Disclaimer
+## Disclaimer
 
 - This document was forked from
   [Google Python Style Guide](https://google.github.io/styleguide/pyguide.html),
@@ -173,12 +175,12 @@
   (software developer, DevOps or data scientist) should abide. Read it on long
   commutes, during lunch, and treat yourself to a physical copy on Christmas.
   The book is summarized
-  [here](/docs/coding/all.code_like_pragmatic_programmer.how_to_guide.md),
+  [here](https://github.com/cryptokaizen/cmamp/blob/master/docs/coding/all.code_like_pragmatic_programmer.how_to_guide.md),
   but do not deprive yourself of the engaging manner in which Thomas & Hunt
   elaborate on these points -- on top of it all, it is a very, very enjoyable
   read.
 
-## References
+### References
 
 - Coding
   - [Google Python Style Guide (GPSG)](https://google.github.io/styleguide/pyguide.html)
@@ -193,7 +195,7 @@
   - [Google philosophical stuff](https://github.com/google/styleguide/blob/gh-pages/docguide/philosophy.md)
   - [Unix rules (although a bit cryptic sometimes)](https://en.wikipedia.org/wiki/Unix_philosophy#Eric_Raymond%E2%80%99s_17_Unix_Rules)
 
-# High-Level Principles
+## High-Level Principles
 
 - In this paragraph we summarize the high-level principles that we follow for
   designing and implementing code and research. We should be careful in adding
@@ -201,9 +203,9 @@
   all the other lower level principles we follow (like a basis for a vector
   space)
 
-### Follow the [DRY](https://en.wikipedia.org/wiki/Don%27t_repeat_yourself) principle
+#### Follow the [DRY](https://en.wikipedia.org/wiki/Don%27t_repeat_yourself) principle
 
-### The writer is the reader
+#### The writer is the reader
 
 - Make code easy to read even if it is more difficult to write
 - Code is written 1x and read 100x
@@ -213,20 +215,20 @@
 - So make your future-self's life easier by following the conventions and erring
   on the side of documenting for the reader.
 
-### Encapsulate what changes
+#### Encapsulate what changes
 
 - Separate what changes from what stays the same
 
-### [Least surprise principle](https://en.wikipedia.org/wiki/Principle_of_least_astonishment)
+#### [Least surprise principle](https://en.wikipedia.org/wiki/Principle_of_least_astonishment)
 
 - Try to make sure that the reader is not surprised
 
-### Pay the technical debt
+#### Pay the technical debt
 
 - Any unpaid debt is guaranteed to bite you when you don't expect it
 - Still some debt is inevitable: try to find the right trade-off
 
-### End-to-end first
+#### End-to-end first
 
 - Always focus on implementing things end-to-end, then improve each block
 - Remember the analogy of building the car through the skateboard, the bike,
@@ -234,18 +236,18 @@
   - Compare this approach to building wheels, chassis, with a big-bang
     integration at the end
 
-### Unit test everything
+#### Unit test everything
 
 - Code that matters needs to be unit tested
 - Code that doesn't matter should not be checked in the repo
 - The logical implication is: all code checked in the repo should be unit tested
 
-### Don't get attached to code
+#### Don't get attached to code
 
 - It's ok to delete, discard, retire code that is not useful any more
 - Don't take it personally when people suggest changes or simplification
 
-### Always plan before writing code
+#### Always plan before writing code
 
 - File a GitHub issue
 - Think about what to do and how to do it
@@ -253,13 +255,13 @@
 - The best code is the one that we avoid to write through a clever mental
   kung-fu move
 
-### Think hard about naming
+#### Think hard about naming
 
 - Finding a name for a code object, notebook, is extremely difficult but very
   important to build a mental map
 - Spend the needed time on it
 
-### Look for inconsistencies
+#### Look for inconsistencies
 
 - Stop for a second after you have, before sending out:
   - Implemented code or a notebook
@@ -273,7 +275,7 @@
   - Do you see inconsistencies, potential issues?
 - It will take less and less time to become good at this
 
-### No ugly hacks
+#### No ugly hacks
 
 - We don't tolerate "ugly hacks", i.e., hacks that require lots of work to be
   undone (much more than the effort to do it right in the first place)
@@ -281,11 +283,11 @@
     dependency between distant pieces of code
   - Ugly hacks spreads everywhere in the code base
 
-# Our coding suggestions
+## Our coding suggestions
 
-## Being careful with naming
+### Being careful with naming
 
-### Follow the conventions
+#### Follow the conventions
 
 - Name executable files (scripts) and library functions using verbs (e.g.,
   `download.py`, `download_data()`)
@@ -301,7 +303,7 @@
       …
   ```
 
-### Follow spelling rules
+#### Follow spelling rules
 
 - We spell commands in lower-case, and programs with initial upper case:
   - "Git" (as program), "git" (as the command)
@@ -323,9 +325,9 @@
       global
   - Profit-and-loss: PnL instead of pnl or PNL
 
-### Search good names, avoid bad names
+#### Search good names, avoid bad names
 
-#### General naming rules
+##### General naming rules
 
 - Naming things properly is one of the most difficult task of a programmer /
   data scientist
@@ -353,7 +355,7 @@
     - The name should capture what the data structure represents (its semantics)
       and not how it is implemented
 
-#### Do not be stingy
+##### Do not be stingy
 
 - Why calling an object `TimeSeriesMinStudy` instead of `TimeSeriesMinuteStudy`?
   - Saving 3 letters is not worth
@@ -362,7 +364,7 @@
 - If you don't like to type, we suggest you get a better keyboard, e.g.,
   [this](https://kinesis-ergo.com/shop/advantage2/)
 
-#### Do not abbreviate just to save characters
+##### Do not abbreviate just to save characters
 
 - Abbreviations just to save space are rarely beneficial to the reader. E.g.,
   - Fwd (forward)
@@ -370,7 +372,7 @@
   - Act (actual)
   - Exp (expected)
 
-#### When to use abbreviations
+##### When to use abbreviations
 
 - We could relax this rule for short lived functions and variables in order to
   save some visual noise.
@@ -387,7 +389,7 @@
   - Col (column)
   - Vol (volatility) while volume is always spelled out
 
-### Avoid code stutter
+#### Avoid code stutter
 
 - An example of code stutter: you want to add a function that returns `git` root
   path in a module `git`
@@ -411,9 +413,9 @@
     ```
   - This is not only aesthetic reason but a bit related to a weak form of DRY
 
-## Comments and docstrings
+### Comments and docstrings
 
-### General conventions
+#### General conventions
 
 - Code needs to be properly commented
 - We follow python standard [PEP 257](https://www.python.org/dev/peps/pep-0257/)
@@ -427,7 +429,7 @@
   - Epytext
   - Numpydoc
 
-### Descriptive vs imperative style
+#### Descriptive vs imperative style
 
 - We decided to use imperative style for our comments and docstrings
   - Pylint and other python QA tools favor an imperative style
@@ -438,7 +440,7 @@
     e.g. don't write "Returns the pathname ...".
     ```
 
-### Docstrings style
+#### Docstrings style
 
 - We follow ReST (aka re-Structured Text) style for docstrings which is:
   - The most widely supported in the python community
@@ -496,7 +498,7 @@
     ```
 - [More examples of and discussions on python docstrings](https://stackoverflow.com/questions/3898572)
 
-### Comments style
+#### Comments style
 
 - Comments follow the same style of docstrings, e.g., imperative style with
   period `.` at the end
@@ -544,7 +546,7 @@
     - If you want to separate an `if` statement from a bunch of code preceeding
       it, you can leave an empty comment before it
 
-### Replace empty lines in code with comments
+#### Replace empty lines in code with comments
 
 - The problem with empty lines is that they are visually confusing since one
   empty line is used also to separate functions. For this reason we suggest
@@ -580,7 +582,7 @@
   ...
   ```
 
-### Comment chunk of codes
+#### Comment chunk of codes
 
 - Avoid wall-of-code, by commenting chunks of code that perform a cohesive work
 
@@ -633,7 +635,7 @@
   config.save_to_file(prod_dir, config_tag)
   ```
 
-### Referring to an object in code comments
+#### Referring to an object in code comments
 
 - In general, **avoid** this whenever possible
 - Code object names (e.g., function, class, params) are often subject to change,
@@ -659,7 +661,7 @@
     # The dataframe `df_tmp` is used for ...
     ```
 
-### Avoid distracting comments
+#### Avoid distracting comments
 
 - Use comments to explain the high level logic / goal of a piece of code and not
   the details, e.g., do not comment things that are obvious
@@ -669,7 +671,7 @@
     _LOG.info("Results are %s", ...)
     ```
 
-### Commenting out code
+#### Commenting out code
 
 - When we comment out code, we should explain why it is no longer relevant
   - _Bad_
@@ -684,7 +686,7 @@
     is_alive = pd.Series(True, index=metadata.index)
     ```
 
-### Use type hints
+#### Use type hints
 
 - We expect new code to use type hints whenever possible
   - See [PEP 484](https://www.python.org/dev/peps/pep-0484/)
@@ -693,12 +695,12 @@
 - We plan to start using static analyzers (e.g., `mypy`) to check for bugs from
   type mistakes and to enforce type hints at run-time, whenever possible
 
-### Interval notation
+#### Interval notation
 
 - Intervals are represented with `[a, b), (a, b], (a, b), [a, b]`
 - We don't use the other style `[a, b[`
 
-### If you find a bug or obsolete docstring/TODO in the code
+#### If you find a bug or obsolete docstring/TODO in the code
 
 - The process is:
   - Do a `git blame` to find who wrote the code
@@ -709,14 +711,14 @@
     - How to reproduce it, ideally a unit test
     - Stacktrace
 
-## Linter
+### Linter
 
 - The linter is in charge of reformatting the code according to our conventions
   and reporting potential problems
 - You can find instructions on how to run linter at the
-  [First review process](/docs/coding/all.submit_code_for_review.how_to_guide.md) doc
+  [First review process](First_review_process.md) doc
 
-### Remove linter messages
+#### Remove linter messages
 
 - When the linter reports a problem:
   - We assume that linter messages are correct, until the linter is proven wrong
@@ -732,7 +734,7 @@
     infer, then you should question whether that behavior is really needed
   - A human reader would probably be as confused as the linter is
 
-### When to disable linter messages
+#### When to disable linter messages
 
 - If you really believe you should override the linter in this particular case,
   then use something like:
@@ -756,7 +758,7 @@
       import config.logging_settings
       ```
 
-### Prefer non-inlined linter comments
+#### Prefer non-inlined linter comments
 
 - As for the general comments, we prefer make linter comments non-inlined
 - However, sometimes there is no other choice than an inlined comment to get the
@@ -778,7 +780,7 @@
       # pylint: enable=line-too-long
     ```
 
-### Don't mix real changes with linter changes
+#### Don't mix real changes with linter changes
 
 - We don't commit changes that modify the code together with linter
   reformatting, unless the linting is applied to the changes we just made
@@ -806,13 +808,13 @@
     - You can make this change directly on `master` or do a PR if you want to be
       extra sure: your call
 
-## Logging
+### Logging
 
-### Always use logging instead of prints
+#### Always use logging instead of prints
 
 - Always use `logging` and never `print()` to monitor the execution
 
-### Our logging idiom
+#### Our logging idiom
 
 - In order to use our logging framework (e.g., `-v` from command lines, and much
   more) use:
@@ -832,7 +834,7 @@
   - E.g., when there is a bug one can run with `-v DEBUG` and see what's
     happening right before the bug
 
-### Logging level
+#### Logging level
 
 - Use `_LOG.warning` for messages to the final user related to something
   unexpected where the code is making a decision that might be controversial
@@ -852,7 +854,7 @@
     sometimes this happens silently and it is reported only from the OS return
     code
 
-### How to pick the level for a logging statement
+#### How to pick the level for a logging statement
 
 - If all the debug info was printed at `INFO` level, the output will be too slow
   by default
@@ -866,7 +868,7 @@
   - So in prod mode you need to know which part you want to debug, since
     printing everything at `INFO` level is not possible
 
-### Use positional args when logging
+#### Use positional args when logging
 
 - _Bad_
   ```python
@@ -882,7 +884,7 @@
 - The reason is that in the second case the string is not built unless the
   logging is actually performed, which limits time overhead from logging
 
-### Exceptions don't allow positional args
+#### Exceptions don't allow positional args
 
 - For some reason people tend to believe that using the `logging` / `dassert`
   approach of positional param to exceptions
@@ -904,7 +906,7 @@
   - There is little time overhead since if you get to the exception probably the
     code is going to terminate, and it's not in a hot loop
 
-### Report warnings
+#### Report warnings
 
 - If there is a something that is suspicious but you don't feel like it's
   worthwhile to assert, report a warning with:
@@ -917,9 +919,9 @@
   - Send the rest to warnings.log
   - At the end of the run, reports "there are warnings in warnings.log"
 
-## Assertions
+### Assertions
 
-### Validate values before an assignment
+#### Validate values before an assignment
 
 - We consider this as an extension of a pre-condition ("only assign values that
   are correct") rather than a postcondition
@@ -944,7 +946,7 @@
     hdbg.dassert_isinstance(col_rename_func, collections.Callable)
     ```
 
-### Encode the assumptions using assertions
+#### Encode the assumptions using assertions
 
 - If your code makes an assumption don’t just write a comment, but implement an
   assertion so the code can’t be executed if the assertion is not verified
@@ -953,7 +955,7 @@
   hdbg.dassert_lt(start_date, end_date)
   ```
 
-### Use positional args when asserting
+#### Use positional args when asserting
 
 - `dassert_*` is modeled after logging so for the same reasons one should use
   positional args
@@ -966,7 +968,7 @@
   hdbg.dassert_eq(a, 1, "No info for %s", method)
   ```
 
-### Report as much information as possible in an assertion
+#### Report as much information as possible in an assertion
 
 - When using a `dassert_*` you want to give to the user as much information as
   possible to fix the problem
@@ -987,9 +989,9 @@
       pesky spaces that make the value unclear, or to make the error as readable
       as possible
 
-## Imports
+### Imports
 
-### Don't use evil `import *`
+#### Don't use evil `import *`
 
 - Do not use in notebooks or code the evil `import *`
   - _Bad_
@@ -1007,7 +1009,7 @@
     with the namespace
   - [Is evil in many other ways](https://stackoverflow.com/questions/2386714/why-is-import-bad)
 
-### Cleaning up the evil `import *`
+#### Cleaning up the evil `import *`
 
 - To clean up the mess you can:
   - For notebooks
@@ -1019,7 +1021,7 @@
   to tweak the path of symbols exported by a library
   - This is an advanced topic and you should rarely use it
 
-### Avoid `from ... import ...`
+#### Avoid `from ... import ...`
 
 - Import should always start from `import`:
   ```python
@@ -1052,7 +1054,7 @@
     - `np.read_documents()` at least gives information of which packages is it
       coming from and enables us to track it down to the code
 
-### Exceptions to the import style
+#### Exceptions to the import style
 
 - We try to minimize the exceptions to this rule to avoid to keep this rule
   simple, rather than discussing about
@@ -1064,7 +1066,7 @@
     in order to avoid typing everywhere, since we want to use type hints as much
     as possible
 
-### Always import with a full path from the root of the repo / submodule
+#### Always import with a full path from the root of the repo / submodule
 
 - _Bad_
   ```python
@@ -1076,7 +1078,7 @@
   ```
   - In this way your code can run without depending upon your current dir
 
-### Baptizing module import
+#### Baptizing module import
 
 - Each module that can be imported should have a docstring at the very beginning
   (before any code) describing how it should be imported
@@ -1098,7 +1100,7 @@
 - The goal is to have always the same imports so it's easy to move code around,
   without collisions
 
-### Examples of imports
+#### Examples of imports
 
 - Example 1
   - _Bad_
@@ -1128,9 +1130,9 @@
     import helpers.hdbg as hdbg
     ```
 
-## Scripts
+### Scripts
 
-### Use Python and not bash for scripting
+#### Use Python and not bash for scripting
 
 - We prefer to use python instead of bash scripts with very few exceptions
   - E.g., scripts that need to modify the environment by setting env vars, like
@@ -1148,7 +1150,7 @@
 - Our approach is to make simple to create scripts in python that are equivalent
   to sequencing shell commands, so that can evolve in complex scripts
 
-### Skeleton for a script
+#### Skeleton for a script
 
 - The ingredients are:
   - `dev_scripts/script_skeleton.py`: a template to write simple scripts you can
@@ -1162,7 +1164,7 @@
   - A simple example is: `dev_scripts/git/gup.py`
   - A complex example is: `dev_scripts/replace_text.py`
 
-### Some useful patterns
+#### Some useful patterns
 
 - Some useful patterns / idioms that are supported by the framework are:
   - Incremental mode: you skip an action if its outcome is already present
@@ -1171,7 +1173,7 @@
   - Non-incremental mode: clean and execute everything from scratch
   - Dry-run mode: the commands are written to screen instead of being executed
 
-### Use scripts and not notebooks for long-running jobs
+#### Use scripts and not notebooks for long-running jobs
 
 - We prefer to use scripts to execute code that might take long time (e.g.,
   hours) to run, instead of notebooks
@@ -1187,7 +1189,7 @@
   - You can experiment with notebooks, move the code into a library, and wrap it
     in a script
 
-### Follow the same structure
+#### Follow the same structure
 
 - All python scripts that are meant to be executed directly should:
 
@@ -1209,7 +1211,7 @@
      ```
   4. Ideally use `argparse` to have a minimum of customization
 
-### Use clear names for the scripts
+#### Use clear names for the scripts
 
 - In general scripts (like functions) should have a name like "action_verb".
   - _Bad_
@@ -1228,9 +1230,9 @@
       `TaskXYZ_edgar_timestamp_dataset_extractor.py`
 - Also where the script is located should give some clue of what is related to
 
-## Functions
+### Functions
 
-### Avoid using non-exclusive `bool` arguments
+#### Avoid using non-exclusive `bool` arguments
 
 - While a simple `True`/`False` switch may suffice for today's needs, very often
   more flexibility is eventually needed
@@ -1246,7 +1248,7 @@
   parameter `None`. This is only a good route if the default operation is
   non-controversial / intuitively obvious.
 
-### Try to make functions work on multiple types
+#### Try to make functions work on multiple types
 
 - We encourage implementing functions that can work on multiple related types:
   - _Bad_: implement `demean_series()`, `demean_dataframe()`
@@ -1259,7 +1261,7 @@
 - Try to return the same type of the input, if possible
   - E.g., the function called on a `pd.Series` returns a `pd.Series`
 
-### Avoid hard-wired column name dependencies
+#### Avoid hard-wired column name dependencies
 
 - When working with dataframes, we often want need handle certain columns
   differently, or perform an operation on a strict subset of columns
@@ -1294,7 +1296,7 @@
   - This prevents hidden column name dependencies from spreading like a virus
     throughout the codebase
 
-### Single exit point from a function
+#### Single exit point from a function
 
 - Consider the following _Bad_ function
   ```python
@@ -1350,14 +1352,14 @@
       return
   ```
 
-### Order of function parameters
+#### Order of function parameters
 
-#### Problem
+##### Problem
 
 - We want to have a standard, simple, and logical order for specifying the
   arguments of a function
 
-#### Decision
+##### Decision
 
 - The preferred order is:
   - Input parameters
@@ -1365,7 +1367,7 @@
   - In-out parameters
   - Default parameters
 
-### Consistency of ordering of function parameters
+#### Consistency of ordering of function parameters
 
 - Try to:
   - Keep related variables close to each other
@@ -1376,14 +1378,14 @@
 - Use linter to check consistency of types between function definition and
   invocation
 
-### Style for default parameter
+#### Style for default parameter
 
-#### Problem
+##### Problem
 
 - How to assign default parameters in a function to make them clear and
   distinguishable?
 
-#### Decision
+##### Decision
 
 - We make all the default parameters keyword-only
   - This means that we should always specify default parameters using a keyword
@@ -1440,7 +1442,7 @@
       function1(..., dir_name=dir_name)
     ```
 
-#### Rationale
+##### Rationale
 
 - Pros of the _Good_ vs _Bad_ style
   - When you wrap multiple functions, each function needs to propagate the
@@ -1458,9 +1460,9 @@
 - Cons:
   - One needs to add `Optional` to the type hint
 
-### Calling functions with default parameters
+#### Calling functions with default parameters
 
-#### Problem
+##### Problem
 
 - You have a function
   ```python
@@ -1474,7 +1476,7 @@
   ```
 - How should it be invoked?
 
-#### Decision
+##### Decision
 
 - We prefer to
   - Assign directly the positional parameters
@@ -1493,7 +1495,7 @@
     func(task_name, dataset_dir, clobber=clobber)
     ```
 
-#### Rationale
+##### Rationale
 
 - Pros of _Good_ vs _Bad_ style
   - If a new parameter with a default value is added to the function `func`
@@ -1509,9 +1511,9 @@
 - Cons:
   - None
 
-### Don't repeat non-default parameters
+#### Don't repeat non-default parameters
 
-#### Problem
+##### Problem
 
 - Given a function with the following interface:
   ```python
@@ -1520,7 +1522,7 @@
   ```
   how to invoke it?
 
-#### Decision
+##### Decision
 
 - Positional arguments are not default, so not keyword-only for consistency
   - _Bad_
@@ -1540,7 +1542,7 @@
     mult_and_sum(a, b, c)
     ```
 
-#### Rationale
+##### Rationale
 
 - Pros of _Good_ vs _Bad_
   - Non-default parameters in Python require all the successive parameters to be
@@ -1570,9 +1572,9 @@
       mult_and_sum(mul1, mul2, sum_)
       ```
 
-## Writing clear beautiful code
+### Writing clear beautiful code
 
-### Keep related code close
+#### Keep related code close
 
 - E.g., keep code that computes data close to the code that uses it.
 - This holds also for notebooks: do not compute all the data structure and then
@@ -1581,7 +1583,7 @@
   “processes it”. In this way it’s easier to see “blocks” of code that are
   dependent from each other, and run only a cluster of cells.
 
-### Order functions in topological order
+#### Order functions in topological order
 
 - Order functions / classes in topological order so that the ones at the top of
   the files are the "innermost" and the ones at the end of the files are the
@@ -1591,7 +1593,7 @@
 - Linter reorders functions and classes in the topological order so make sure
   you run it after adding new ones
 
-### Distinguish public and private functions
+#### Distinguish public and private functions
 
 - The public functions `foo_bar()` (not starting with `_`) are the ones that
   make up the interface of a module and that are called from other modules and
@@ -1603,7 +1605,7 @@
 - Some references:
   - [StackOverflow](https://stackoverflow.com/questions/1641219/does-python-have-private-variables-in-classes?noredirect=1&lq=1)
 
-### Keep public functions organized in a logical order
+#### Keep public functions organized in a logical order
 
 - Keep the public functions in an order related to the use representing the
   typical flow of use, e.g.,
@@ -1659,7 +1661,7 @@
   - IMO the worst issue is that they don’t play super-well with Jupyter
     autoreload
 
-### Do not make tiny wrappers
+#### Do not make tiny wrappers
 
 - Examples of horrible functions:
   - How many characters do we really saved? If typing is a problem, learn to
@@ -1681,7 +1683,7 @@
         return f_name
     ```
 
-### Regex
+#### Regex
 
 - The rule of thumb is to compile a regex expression, e.g.,
   ```python
@@ -1690,7 +1692,7 @@
   only if it's called more than once, otherwise the overhead of compilation and
   creating another var is not justified
 
-### Do not introduce another “concept” unless really needed
+#### Do not introduce another “concept” unless really needed
 
 - We want to introduce degrees of freedom and indirection only when we think
   this can be useful to make the code easy to maintain, read, and expand.
@@ -1725,7 +1727,7 @@
     ```
     then the variable and its value are in contrast.
 
-### Return `None` or keep one type
+#### Return `None` or keep one type
 
 - Functions that return different types can make things complicated downstream,
   since the callers need to be aware of all of it and handle different cases.
@@ -1752,7 +1754,7 @@
         df["Name"] = df["Tags"].apply(extract_name)
     ```
 
-### Avoid wall-of-text functions
+#### Avoid wall-of-text functions
 
 - _Bad_
   ```python
@@ -1812,9 +1814,9 @@
   - You should at least split the functions in chunks using `#` or even better
     comment what each chunk of code does.
 
-## Writing robust code
+### Writing robust code
 
-### Don’t let your functions catch the default-itis
+#### Don’t let your functions catch the default-itis
 
 - Default-itis is a disease of a function that manifests itself by getting too
   many default parameters.
@@ -1826,7 +1828,7 @@
   Resist this urge! `grep` is friend. Pycharm does this refactoring
   automatically.
 
-### Explicitly bind default parameters
+#### Explicitly bind default parameters
 
 - It’s best to explicitly bind functions with the default params so that if the
   function signature changes, your functions doesn’t confuse a default param was
@@ -1846,7 +1848,7 @@
     )
     ```
 
-### Don’t hardwire params in a function call
+#### Don’t hardwire params in a function call
 
 - _Bad_
   ```python
@@ -1866,7 +1868,7 @@
     only needed params, which is as much as we can require from the called
     function.
 
-### Make `if-elif-else` complete
+#### Make `if-elif-else` complete
 
 - In general all the `if-elif-else` statements should to be complete, so that
   the code is robust.
@@ -1902,7 +1904,7 @@
     doesn't run for 1 hr and then crash because the name of the file is
     incorrect
 
-### Add TODOs when needed
+#### Add TODOs when needed
 
 - When there is something that you know you should have done, but you didn’t
   have time to do, add a TODO, possibly using your github name e.g.,
@@ -1940,9 +1942,9 @@
   # TODO(Sergey): P1 This can be implemented in pandas using a range generation.
   ```
 
-## Common Python mistakes
+### Common Python mistakes
 
-### `==` vs `is`
+#### `==` vs `is`
 
 - `is` checks whether two variables point to the same object (aka reference
   equality), while `==` checks if the two pointed objects are equivalent (value
@@ -1968,7 +1970,7 @@
 - For more info checks
   [here](https://stackoverflow.com/questions/132988/is-there-a-difference-between-and-is-in-python)
 
-### `type()` vs `isinstance()`
+#### `type()` vs `isinstance()`
 
 - `type(obj) == list` is worse since we want to test for reference equality (the
   type of object is a list) and not the type of obj is equivalent to a list.
@@ -1987,7 +1989,7 @@
 - For more info check
   [here](https://stackoverflow.com/questions/1549801/what-are-the-differences-between-type-and-isinstance)
 
-## Unit tests
+### Unit tests
 
 - Provide a minimal end-to-end unit testing (which creates a conda environment
   and then run a few unit tests)
@@ -2006,9 +2008,9 @@
 - For more information on our testing conventions and guidelines, see
   `docs/coding/all.unit_tests.how_to_guide.md`
 
-## Refactoring
+### Refactoring
 
-### When moving / refactoring code
+#### When moving / refactoring code
 
 - If you move files, refactor code, move functions around make sure that:
   - Code and notebook work (e.g., imports and caller of the functions)
@@ -2032,7 +2034,7 @@
   - Run notebooks (see
     [here](https://n-xovwktmtjsnaxyc2mwes2xu7pohqedmdm6zjw5q-0lu-script.googleusercontent.com/userCodeAppPanel#))
 
-### Write script for renamings
+#### Write script for renamings
 
 - When you need to rename any code object that is being used in many files, use
   `dev_scripts/replace_text.py` to write a script that will implement your task
@@ -2043,9 +2045,9 @@
   - Commit the created script to the mentioned folder so then your team members
     can use it to implement renaming in other libs
 
-## Architectural and design pattern
+### Architectural and design pattern
 
-### Research quality vs production quality
+#### Research quality vs production quality
 
 - Code belonging to top level libraries (e.g., `//amp/core`, `//amp/helpers`)
   and production (e.g., `//.../db`, `vendors`) needs to meet high quality
@@ -2071,7 +2073,7 @@
 - We should be able to raise the quality of a piece of research code to
   production quality when that research goes into production
 
-### Always separate what changes from what stays the same
+#### Always separate what changes from what stays the same
 
 - In both main code and unit test it's not a good idea to repeat the same code
 - _Bad_
@@ -2128,7 +2130,7 @@
       ```
     - Yes, Version A is _Bad_ and Version B is _Good_
 
-### Organize scripts as pipelines
+#### Organize scripts as pipelines
 
 - One can organize complex computations in stages of a pipeline
   - E.g., to parse EDGAR forms
@@ -2152,7 +2154,7 @@
     the pieces into a throw-away script where I hardwire the file names and so
     on
 
-### Make filename unique
+#### Make filename unique
 
 - _Problem_
   - We have a lot of structure / boilerplate in our project around RH
@@ -2185,7 +2187,7 @@
       prefixes?
       - This seems to be an infrequent case
 
-### Incremental behavior
+#### Incremental behavior
 
 - Often we need to run the same code over and over
   - E.g., because the code fails on an unexpected point and then we need to
@@ -2208,7 +2210,7 @@
     - If output file exists and param `--force`, then report a log.warn and
       rewrite output file
 
-### Run end-to-end
+#### Run end-to-end
 
 - Try to run things end-to-end (and from scratch) so we can catch these
   unexpected issues and code defensively
@@ -2218,7 +2220,7 @@
     data and we have 10 years of data is going to take 120 hours (=5 days) to
     run on the entire data set
 
-### Think about scalability
+#### Think about scalability
 
 - Do experiments to try to understand if a code solution can scale to the
   dimension of the data we have to deal with
@@ -2227,12 +2229,12 @@
 - Remember that typically we need to run the same scripts multiple times (e.g.,
   for debug and / or production)
 
-### Use command line for reproducibility
+#### Use command line for reproducibility
 
 - Try to pass params through command line options when possible
   - In this way a command line contains all the set-up to run an experiment
 
-### Structure the code in terms of filters
+#### Structure the code in terms of filters
 
 - Focus on build a set of "filters" split into different functions, rather than
   a monolithic flow
@@ -2246,18 +2248,18 @@
   6. Patch up SQL (e.g., inserting missing TR codes and reporting them to us so
      we can check with TR)
 
-## Code style for different languages
+### Code style for different languages
 
-### SQL
+#### SQL
 
 - You can use the package https://github.com/andialbrecht/sqlparse to format SQL
   queries
 - There is also an on-line version of the same formatter at
   https://sqlformat.org
 
-# Conventions (Addendum)
+## Conventions (Addendum)
 
-## Be patient
+### Be patient
 
 - For some reason talking about conventions makes people defensive and
   uncomfortable, sometimes.
@@ -2268,7 +2270,7 @@
 - If you are unsure or indifferent to a choice, be flexible and let other
   persons that seem to be less flexible decide.
 
-## Goal
+### Goal
 
 - The goal of the conventions is to simplify our job by removing ambiguity
 - There is no right or wrong: that's why it's a convention and not a law of
@@ -2286,7 +2288,7 @@
     about them, and reviewers don't have to be distracted with pointing out the
     lints
 
-## Keep the rules simple
+### Keep the rules simple
 
 - E.g., assume that we accepted the following rules:
   - Git is capitalized if it refers to the tool and it's not capitalized when it
@@ -2306,7 +2308,7 @@
   - E.g., every name of tools or library is always capitalized
   - This is simple to remember and automatically enforce
 
-## Allow turning off the automatic tools
+### Allow turning off the automatic tools
 
 - We understand that tools can't always understand the context and the
   subtleties of human thoughts, and therefore they yield inevitably to false
@@ -2318,7 +2320,7 @@
   overriding the tool becomes a slippery slope for ignoring the rules.
 - Patience and flexibility is advised here.
 
-## Make the spell-checker happy
+### Make the spell-checker happy
 
 - The spell-checker is not always right: false positives are often very annoying
 - We prefer to find a way to make the spell-checker happy rather than argue that

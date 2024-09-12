@@ -1,4 +1,4 @@
-
+# Install Helpers
 
 <!-- toc -->
 
@@ -17,7 +17,7 @@
 
 <!-- tocstop -->
 
-# Helpers Distribution Package
+## Helpers Distribution Package
 
 - This document describes how to build, distribute and install the `helpers`
   package
@@ -25,9 +25,9 @@
 - Note for dev/data science members: if you are looking for how to install
   packages for your daily work, go to **Client Configuration**.
 
-# Creating and installing the package
+## Creating and installing the package
 
-## PyPI local file
+### PyPI local file
 
 - You can create the `helpers` package with:
 
@@ -44,7 +44,7 @@
   > python -m pip install dist/helpers-1.0.0-py3-none-any.whl
   ```
 
-## PyPI workflow
+### PyPI workflow
 
 - This section describes a temporary solution while we build the CI pipeline.
 
@@ -69,9 +69,9 @@
 
 4. Run `python setup.py sdist upload -r part`
 
-# PyPI server installation
+## PyPI server installation
 
-## General Information
+### General Information
 
 - We use [pypiserver](https://github.com/pypiserver/pypiserver) as a corporate
   PyPI Index server for installing `pip`
@@ -82,7 +82,7 @@
 - Wheels, bdists, eggs can be uploaded either with `pip`, `setuptools` or simply
   copied with `scp` to the server directory
 
-## Client Configuration / Installation
+### Client Configuration / Installation
 
 You have two options:
 
@@ -125,7 +125,7 @@ You have two options:
 
 - **Note** that pip search does not currently work with the /simple/ endpoint.
 
-## Server Details
+### Server Details
 
 **Simple Index WebUI**: http://172.31.36.23:8855/simple
 
@@ -133,7 +133,7 @@ You have two options:
 
 **Runtime**: by docker (standalone container)
 
-## Server Configuration
+### Server Configuration
 
 - The corporate PyPI Index server runs with Docker as a standalone container
   with mapped volumes on the host.
@@ -152,23 +152,22 @@ You have two options:
   > docker run -d -p 8855:8080 -v ~/pypi/packages:/data/packages -v ~/pypi/.htpasswd:/data/.htpasswd --restart=always pypiserver/pypiserver:latest -v  -P .htpasswd packages
   ```
 
-## Limitation
+### Limitation
 
 - The `pypiserver` does not implement the full API as seen on
   [PyPI](https://pypi.org/). It implements just enough to make `pip install`,
   and `search` work.
 
-## Links
+### Links
 
 - [pip user guide](https://pip.pypa.io/en/stable/user_guide/#user-guide)
 - [pypiserver](https://github.com/pypiserver/pypiserver)
 - [setuptool](https://setuptools.readthedocs.io/en/latest/index.html)
 - [packaging python projects](https://packaging.python.org/tutorials/packaging-projects/)
 
-# Code organization in `helpers`
+## Code organization in `helpers`
 
 - In `helpers` the following hierarchy should be respected:
-
   - `repo_config.py`
   - `hwarnings`, `hserver`, `hlogging`
   - `hdbg`

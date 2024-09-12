@@ -1,5 +1,7 @@
 # Architecture Diagrams
 
+## Architecture Diagrams
+
 <!-- toc -->
 
 - [Summary](#summary)
@@ -37,7 +39,7 @@
 
 <!-- tocstop -->
 
-# Summary
+## Summary
 
 - We use C4 as a way to describe graphically software architecture together with
   some conventions
@@ -45,7 +47,7 @@
 - Mermaid is preferred since it can be rendered natively by GitHub
 - PlantUML can be rendered through some of our scripts in regular markdown
 
-# Brief introduction to C4
+## Brief introduction to C4
 
 - A detailed description of C4 is https://C4model.com
 
@@ -55,7 +57,7 @@
   - It maps code at various level of detail
   - It is useful for both software architects and developers
 
-## Different levels of detail
+### Different levels of detail
 
 - The 4 levels of detail are:
   1. (System) Context system
@@ -68,7 +70,7 @@
      - Show how components are implemented
      - Represented in terms of UML class diagrams
 
-### (System) Context (Level 1)
+#### (System) Context (Level 1)
 
 - A system context describes something that delivers value to its users
   - Typically a system is owned by a single software development team
@@ -87,7 +89,7 @@
 
 - A system system is made up of one or more containers
 
-### Container (Level 2)
+#### Container (Level 2)
 
 - A container represents an application
   - E.g.,
@@ -119,7 +121,7 @@
   - Technical people
   - Inside and outside of the software development team
 
-### Component (level 3)
+#### Component (level 3)
 
 - Component is a group of related functionality encapsulated behind a
   well-defined interface
@@ -131,7 +133,7 @@
 - Audience
   - Software architects and developers
 
-### Code (level 4)
+#### Code (level 4)
 
 - Code is the implementation of the software system
   - Each component can represented in terms of UML class diagrams, entity
@@ -141,13 +143,13 @@
 - Audience
   - Software architects and developers
 
-# Our conventions for C4 diagrams
+## Our conventions for C4 diagrams
 
-## Mapping C4 and code structure
+### Mapping C4 and code structure
 
 - To simplify, we map the 4 levels of C4 in the code structure
 
-### (System) Context (Level 1)
+#### (System) Context (Level 1)
 
 - = big picture of how the system interacts with users and other systems
 - Mapped onto a code repository
@@ -155,7 +157,7 @@
   - `//...` is a system providing data and analytics for commodity
   - `//pre-commit` is a system implementing a code linter
 
-### Container (Level 2)
+#### Container (Level 2)
 
 - = high-level software architecture and how responsibilities are split in the
   system
@@ -166,7 +168,7 @@
   - `etl3`: back-end db for time series with real-time and point-in-time
     semantics
 
-### Component (Level 3)
+#### Component (Level 3)
 
 - = a group of related functionality encapsulated behind a well-defined
   interface (e.g., collection of classes behind an interface)
@@ -177,7 +179,7 @@
     commodities and companies
   - `form8`: data pipeline processing form 8
 
-### Component (Level 4)
+#### Component (Level 4)
 
 - = OOP classes
 - Typically we organize multiple related classes in files
@@ -189,7 +191,7 @@
   - `match_targets.py`
   - `normalize_table.py`
 
-## Use classes!
+### Use classes!
 
 - In order to be able to describe the system with C4 it is best to use classes
   to separate responsibilities and package code
@@ -212,29 +214,29 @@
     o(some argument).f(other arguments)
     ```
 
-## Generating class diagram
+### Generating class diagram
 
 - To generate a class diagram (level 4 of C4), you can run
   ```bash
   > dev_scripts/create_class_diagram.sh
   ```
 
-# Mermaid
+## Mermaid
 
-## Class diagram
+### Class diagram
 
 - See https://mermaid.js.org/syntax/classDiagram.html
 
-## Support for C4
+### Support for C4
 
 - Mermaid supports most features of C4
   - See https://mermaid.js.org/syntax/c4.html
 
-## Render on-line
+### Render on-line
 
 - See https://mermaid.live/edit
 
-# PlantUML
+## PlantUML
 
 - Unified Modeling Language (UML) is a modeling language for software
   engineering to provide a standard way to visualize design of a system
@@ -250,7 +252,7 @@
 - The website https://structurizr.com has lots of information on using tools for
   C4 and lots of [examples](https://structurizr.com/share/52804/plantuml)
 
-## PlantUML is Markdown
+### PlantUML is Markdown
 
 - We use PlantUML for rendering diagrams in our documentation
   - For interactive use you can rely on online tools like:
@@ -274,7 +276,7 @@
   ```
   ````
 
-### `render_md.py` tool
+#### `render_md.py` tool
 
 - We have a `render_md.py` tool to embed images after `plantuml` section.
   Typical usage to insert images to the markdown file and to preview it:
@@ -282,7 +284,7 @@
   > render_md.py -i knowledge_graph/vendors/README.md
   ```
 
-#### How to use
+##### How to use
 
 1. Make sure `plantuml` is installed on your machine. The easiest way is to use
    the Docker container. All the packages typically needed for development are
@@ -302,7 +304,7 @@
 3. If you want to use `open` action, make sure that your machine is able to open
    `.html` files in the browser.
 
-### Our conventions
+#### Our conventions
 
 - Names
   - Each name in mappings should be exactly the same (maybe without some invalid
@@ -408,11 +410,11 @@
   You can find the correspondent `architecture.md` file
   [here](https://github.com/.../.../blob/master/edgar/forms8/architecture.md).
 
-## Plotting online
+### Plotting online
 
 - [Plantuml on-line](https://plantuml-editor.kkeisuke.com/)
 
-# UML - Unified Modeling Language
+## UML - Unified Modeling Language
 
 - The Unified Modeling Language (UML) serves as a versatile visual modeling
   language designed to offer a standard way to visualize the design of a system
@@ -432,7 +434,7 @@
 
   <img src="figs/architecture_diagrams/UML.png">
 
-## UML Class Diagrams
+### UML Class Diagrams
 
 - The UML Class Diagram is a graphical notation used to construct and visualize
   object-oriented systems
@@ -444,7 +446,7 @@
   - Methods
   - Relationships among objects
 
-### Class Notation
+#### Class Notation
 
 - A class represents a concept which encapsulates state (attributes) and
   behavior (methods)
@@ -488,12 +490,12 @@
   }
   ```
 
-### Class Relationships
+#### Class Relationships
 
 - Classes can engage in multiple relationships with other classes
 - Relationships in UML class diagrams can be defined in several distinct types
 
-#### Inheritance/Generalization
+##### Inheritance/Generalization
 
 - It indicates that:
   - One of the two related classes (the subclass) is considered to be a
@@ -523,7 +525,7 @@
   }
   ```
 
-#### Association
+##### Association
 
 - Associations are relationships between classes in a UML Class Diagram
 - They are represented by a solid line between classes
@@ -618,7 +620,7 @@
   Corporation ..|> Owner
   ```
 
-### Complete Example
+#### Complete Example
 
 ```mermaid
 

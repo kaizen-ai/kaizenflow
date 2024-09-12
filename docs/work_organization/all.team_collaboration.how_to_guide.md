@@ -1,4 +1,6 @@
-# General Rules of Collaboration
+# Team Collaboration
+
+## General Rules of Collaboration
 
 <!-- toc -->
 
@@ -28,7 +30,7 @@
 
 <!-- tocstop -->
 
-# Ask somebody if you have any doubts
+## Ask somebody if you have any doubts
 
 - If you have doubts on how to do something you want to do:
   - Look in the
@@ -45,7 +47,7 @@
       careful and always think for yourself
     - Don't hesitate to ask anyone, even GP & Paul
 
-# Ping Team Leaders when you are out of tasks
+## Ping Team Leaders when you are out of tasks
 
 - When you're close to being out of tasks or all your ongoing PRs are waiting
   for review and are close to being merged, feel free to ping us in the Telegram
@@ -55,18 +57,18 @@
   - The goal is for everyone to have 2 issues to work on at the same time to
     avoid getting blocked on us
 
-# Collaboration
+## Collaboration
 
-## Why do we need to follow this handbook?
+### Why do we need to follow this handbook?
 
-### Learning from each other
+#### Learning from each other
 
 - Proper research and software engineering practices allow us to:
   - Learn from each other
   - Accumulate and distill the wisdom of experts
   - Share lessons learned from our mistakes along the way
 
-### Consistency and process
+#### Consistency and process
 
 - Consistency is a crucial enabler to make teams faster
 - Productivity increases when team members "work in the same way", i.e., there
@@ -82,12 +84,12 @@
 - We are not going to discuss and debate the rationale, but instead assume the
   above as self-evident truth
 
-## Sync-ups
+### Sync-ups
 
 - We meet regularly every week and with different audiences to check on the
   progress of the many projects we work on
 
-### All-hands meetings
+#### All-hands meetings
 
 - All-hands meeting on Mondays has the following goals:
   - Summarize ongoing projects and their status
@@ -97,7 +99,7 @@
     - E.g., organization, process
   - Talk about the team, hiring, customers
 
-### Technical sync-ups
+#### Technical sync-ups
 
 - We meet one or two times per week for each of the projects (e.g., IM, WEB3)
 - Please check your calendar to make sure the times work and the invited
@@ -114,14 +116,14 @@
   there is not much to discuss
   - We don't have to fill one hour every time
 
-### Ad-hoc meetings
+#### Ad-hoc meetings
 
 - Don't hesitate to ask for a quick meeting if you are unsure about:
   - What exactly needs to be done in a GitHub Issue
   - How to set-up something (e.g., environment, docker)
 - Better safe than sorry
 
-### Org emails
+#### Org emails
 
 - GP & Paul may send emails with the subject starting with "ORG:" pointing to
   interesting docs that are of general interest and relevance
@@ -129,7 +131,7 @@
   do and, especially, the rationale of the proposed solutions
 - It's ok to acknowledge the email replying to `all@kaizen-tech.io`
 
-### Synchronization point
+#### Synchronization point
 
 - We understand that most of the time everybody is head-down making progress on
   their tasks
@@ -147,7 +149,7 @@
   - Everybody does what's asked
   - Mark on the GitHub task your name
 
-### Morning TODO email
+#### Morning TODO email
 
 The idea is to send a morning TODO email to broadcast:
 
@@ -274,9 +276,9 @@ If you are a collaborator or intern, follow the steps to join the mailing group
   request. It should look like this:
   ![alt_text](figs/team_collaboration/3_Request.png)
 
-## Communication
+### Communication
 
-### Use the right form of communication
+#### Use the right form of communication
 
 - GitHub
   - This is a major form of communication about technical details, so if you
@@ -322,26 +324,26 @@ If you are a collaborator or intern, follow the steps to join the mailing group
     https://forms.gle/KMQgobqbyxhoTR9n6
   - The question will be discussed at the all hands meeting
 
-### DRY also applies to documentation
+#### DRY also applies to documentation
 
 - [DRY](https://en.wikipedia.org/wiki/Don%27t_repeat_yourself)! Do not Repeat
   Yourself
 - E.g., it's not a good idea to cut & paste pieces of Gdocs in a GitHub bug,
   rather just point to the relevant session on Gdocs from the GitHub bug
 
-### Avoid write-once code and research
+#### Avoid write-once code and research
 
 - Code and research is:
   - Written once by a few people
   - Read many times by many people
 - Therefore it is essential to invest in the process of writing it heavily
 
-### Consistency
+#### Consistency
 
 - Coding/research across our group is done with consistent procedures, code
   layout, and naming conventions
 
-### Training period
+#### Training period
 
 - When you start working with us, you need to go through a period of training in
   following the procedures and conventions described in this handbook
@@ -361,14 +363,14 @@ If you are a collaborator or intern, follow the steps to join the mailing group
   but months if you resist or treat it as an afterthought
   - Our suggestion is to accept these rules as the existence of gravity
 
-### Go slowly to go faster
+#### Go slowly to go faster
 
 - Once you reach proficiency, you will be moving much faster and make up for the
   invested time
   - In fact, everyone will be much quicker, because everyone will be able to
     look at any part of the codebase or any notebook and get oriented quickly
 
-## Vacations/OOTO time
+### Vacations/OOTO time
 
 - We use
   [vacation calendar](https://calendar.google.com/calendar/u/0?cid=Y19kYWRlOGU0NTUwMzhiMDllMmUzNDk1OWM2YzFkYWNhYTVmMTAzYjdjZmNiODQ1MDkzOWZhMTBkZDY2NWI3ZjJhQGdyb3VwLmNhbGVuZGFyLmdvb2dsZS5jb20)
@@ -378,7 +380,7 @@ If you are a collaborator or intern, follow the steps to join the mailing group
 - Create an event in it, whenever you have planned time off in order to let your
   colleagues know in advance
 
-## Improve your English!
+### Improve your English!
 
 - Make sure you have English checker in all your tools:
   - Pycharm: you can use
@@ -393,7 +395,7 @@ If you are a collaborator or intern, follow the steps to join the mailing group
   are not sure about a word or a phrase
 - What's the point of doing an excellent job if you can't communicate it?
 
-### Study an English grammar book
+#### Study an English grammar book
 
 - I used
   [this](https://www.amazon.com/English-Grammar-Use-Self-study-Intermediate/dp/0521189063/ref=sr_1_3?ie=UTF8&qid=1536765989&sr=8-3&keywords=English+Grammar+in+Use)

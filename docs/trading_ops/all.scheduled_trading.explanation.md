@@ -48,10 +48,10 @@
   are published:
   - Latest version - Stable link which contains notebooks links of the latest
     run. E.g.,
-    http://172.30.2.44/notebooks/Master_Analysis/Master_trading_system_report.latest.html
+    http://172.30.2.44/v2/trading_ops/trading_reports/prod/C11a.config1/2024/08/Master_trading_system_report.latest.html
   - Timestamp version - It contains notebook links of that particular timestamp
     run. E.g.,
-    http://172.30.2.44/notebooks/Master_Analysis/Master_trading_system_report.0.20240418-102140.html
+    http://172.30.2.44/v2/trading_ops/trading_reports/prod/C11a.config1/2024/08/Master_trading_system_report.prod.C11a.config1.20240821_210500.20240821_220000.html
 
 - Here is an example of the directory structure for the trade execution
   experiment:

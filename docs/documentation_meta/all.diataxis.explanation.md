@@ -1,4 +1,4 @@
-
+# Diataxis
 
 <!-- toc -->
 
@@ -10,7 +10,7 @@
 
 <!-- tocstop -->
 
-# Diataxis: a framework to write documentation
+## Diataxis: a framework to write documentation
 
 For more information look [https://diataxis.fr/](https://diataxis.fr/)
 
@@ -23,7 +23,7 @@ There are 4 modes of documentation
 
 <img src="figs/diataxis/diataxis_summary.png">
 
-# Tutorial
+## Tutorial
 
 - Learning oriented
 - Is a playground for users to learn something about the product by completing a
@@ -37,7 +37,7 @@ There are 4 modes of documentation
 - Example:
   [datapull/ck.create_airflow_dag.tutorial.md](https://github.com/cryptokaizen/cmamp/blob/master/docs/datapull/ck.create_airflow_dag.tutorial.md)
 
-# How-to guide
+## How-to guide
 
 - Goal oriented
 - Is a guide to complete a real-world task
@@ -47,7 +47,7 @@ There are 4 modes of documentation
 - Example:
   [work_tools/all.pycharm.how_to_guide.md](https://github.com/cryptokaizen/cmamp/blob/master/docs/work_tools/all.pycharm.how_to_guide.md)
 
-# Reference
+## Reference
 
 - Information oriented
 - Provide a technical description of a component/piece of infra. The emphasis is
@@ -60,7 +60,7 @@ There are 4 modes of documentation
 - Example:
   [datapull/ck.ccxt_exchange_timestamp_interpretation.reference.md](https://github.com/cryptokaizen/cmamp/blob/master/docs/datapull/ck.ccxt_exchange_timestamp_interpretation.reference.md)
 
-# Explanation
+## Explanation
 
 - Understanding oriented
 - Is used in our documentation to explain design decisions and choices,

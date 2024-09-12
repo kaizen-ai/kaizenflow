@@ -1,4 +1,6 @@
-# Buildmeister process
+# Buildmeister
+
+## Buildmeister process
 
 <!-- toc -->
 
@@ -12,7 +14,7 @@
 
 <!-- tocstop -->
 
-# General
+## General
 
 - The Buildmeister rotates every 2 weeks
   - To see who is the Buildmeister now refer to
@@ -30,7 +32,7 @@
 - Additional information about the
   [tests](/docs/coding/all.unit_tests.how_to_guide.md)
 
-# Notification system
+## Notification system
 
 - `@CK_cmamp_buildbot` notifies the team about breaks via Telegram channel
   `CK build notifications`
@@ -45,7 +47,7 @@ Example:
 
 - <img src="figs/buildmeister/image1.png">
 
-# Buildmeister instructions
+## Buildmeister instructions
 
 - You receive a break notification from `@CK_cmamp_buildbot`
 - Have a look at the message
@@ -127,7 +129,7 @@ Example:
 - When your time of the Buildmeister duties is over, confirm the rotation with
   the next responsible person in the related Telegram chat.
 
-### `update_amp_submodule` fails
+#### `update_amp_submodule` fails
 
 - When this happens, the first thing to do is attempt to update the `amp`
   pointer manually
@@ -148,14 +150,14 @@ Example:
 - There is also an invoke target `git_roll_amp_forward` that does an equivalent
   operation
 
-# Buildmeister dashboard
+## Buildmeister dashboard
 
 The Buildmeister dashboard is a tool that provides a quick overview of the
 current state of the results of all GitHub Actions workflows. See
 [run and publish the buildmeister dashboard](/docs/infra/ck.gh_workflows.explanation.md#run-and-publish-the-buildmeister-dashboard)
 for detailed information.
 
-# Allure Reports Analysis
+## Allure Reports Analysis
 
 - For a background on Allure, refer to these docs
   - Detailed info can be found in the official
@@ -213,7 +215,7 @@ for detailed information.
   - The goal here is to provide more context when filing an issue so that we can
     make better decisions
 
-# Post-mortem analysis (TBD)
+## Post-mortem analysis (TBD)
 
 - We want to understand on why builds are broken so that we can improve the
   system to make it more robust

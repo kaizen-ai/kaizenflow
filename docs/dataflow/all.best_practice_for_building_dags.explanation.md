@@ -1,4 +1,4 @@
-
+# Best Practice For Building Dags
 
 <!-- toc -->
 
@@ -25,9 +25,9 @@
 
 <!-- tocstop -->
 
-# Config
+## Config
 
-## Config builders
+### Config builders
 
 `Config`s can be built through functions that can complete a "template" config
 with some parameters passed from the user
@@ -47,9 +47,9 @@ Config builders can be nested.
 You can use put `nid_prefix` in the `DagBuilder` constructor, since `nid_prefix`
 acts as a namespace to avoid `nid` collisions
 
-# DAG builders
+## DAG builders
 
-## DAG builder methods
+### DAG builder methods
 
 - DAG builders accept a Config and return a DAG
 - E.g.,
@@ -80,7 +80,7 @@ DAG builders give meaningful `nid` names to their nodes. Collisions in graphs
 built from multiple builders are avoided by the user through the judicious use
 of namespace-like nid prefixes.
 
-## DAG and Nodes
+### DAG and Nodes
 
 The DAG structure does not know about what data is exchanged between nodes.
 
@@ -97,7 +97,7 @@ The DAG `node`s are wrappers around Pandas dataframes
   instruments and multiple features per instruments), the node should, assuming
   a well-defined DAG and config, know how to melt and pivot columns
 
-## Keeping `config` and `DagBuilder` in sync
+### Keeping `config` and `DagBuilder` in sync
 
 - `Config` asserts if a `DagBuilder` tries to access a hierarchical parameter
   that doesn't exist and reports a meaningful error of what the problem is
@@ -106,19 +106,19 @@ The DAG `node`s are wrappers around Pandas dataframes
     reports a warning for all the parameters that were not used
   - This is mostly for a sanity check and debugging, so we don't assert
 
-## `DagBuilder` idiom
+### `DagBuilder` idiom
 
 When we build DAGs we use `DagBuilder` that call a constructor from `get_dag()`
 with params from the `get_config()`
 ```
 dag_builder = DagBuilder()
 template_config = dag_builder.get_template_config()
-# Complete the config.
+## Complete the config.
 config = template_config[...]
 dag = dag_builder.get_dag(config)
 ```
 
-## Invariants
+### Invariants
 
 Nodes of the DAG propagate dataframes
 
@@ -136,7 +136,7 @@ We assume that dataframes are aligned in terms of timescale
 - When data sources have different time resolutions, typically we perform outer
   merges either leaving nans or filling with forward fills
 
-## Make code easy to wrap code into `Nodes`
+### Make code easy to wrap code into `Nodes`
 
 We strive to write functions (e.g., from `signal_processing.py`) that:
 
@@ -151,7 +151,7 @@ We strive to write functions (e.g., from `signal_processing.py`) that:
 
 - E.g., refer to `process_outliers()` as an example
 
-## `ColumnTransformer`
+### `ColumnTransformer`
 
 `ColumnTransformer` is a very flexible `Node` class that can wrap a wide variety
 of functions
@@ -167,7 +167,7 @@ of functions
 - `DataframeMethodRunner` can run any `pd.DataFrame` method supported and
   forwards kwargs
 
-## One vs multiple graphs
+### One vs multiple graphs
 
 - We still don't have a final answer about this design issue
 - Pros of one graph:
@@ -180,7 +180,7 @@ of functions
   - One connected component (instead of a number depending upon the number of
     tickers)
 
-## How to handle multiple features for a single instrument
+### How to handle multiple features for a single instrument
 
 - E.g., `close` and `volume` for a single futures instrument
 - In this case we can use a dataframe with two columns `close_price` and
@@ -191,20 +191,20 @@ of functions
 - If close_price and volume are "independent", they should go in different
   branches of the graph using a "Y" split
 
-## How to handle multiple instruments?
+### How to handle multiple instruments?
 
 - E.g., `close` price for multiple futures
 - We pass a dataframe with one column per instrument
 - All the transformations are then performed on a column-basis
 - We assume that the timeseries are aligned explicitly
 
-## How to handle multiple features with multiple instruments
+### How to handle multiple features with multiple instruments
 
 - E.g., close price, high price, volume for multiple energy futures instrument
 - In this case we can use a dataframe with hierarchical columns, where the first
   dimension is the instrument, and the second dimension is the feature
 
-## Irregular DAGs
+### Irregular DAGs
 
 - E.g., if we have 10 instruments that need to use different models, we could
   build a DAG, instantiating 10 different pipelines
@@ -217,7 +217,7 @@ of functions
 - E.g,. if the computation is the same up to until a point, vectorize the common
   part, and then split the dataframe and use different pipelines
 
-## Namespace vs hierarchical config
+### Namespace vs hierarchical config
 
 - We recognize that sometimes we might want to call the same `DagBuilder`
   function multiple times (e.g., a DAG that is built with a loop)
@@ -225,7 +225,7 @@ of functions
   node with a tag to make them unique or use hierarchical DAG
 - It seems simpler to use prefix for the tags, which is supported
 
-## How to know what is configurable
+### How to know what is configurable
 
 - By design, DataFlow can loosely wrap Python functions
 
@@ -252,7 +252,7 @@ of functions
   config to configurable functions. This ability is more important than making
   it easy to expose all possible configuration parameters.
 
-## DAG extension vs copying
+### DAG extension vs copying
 
 - Currently DAG builders are chained by progressively extending an existing DAG
 
@@ -279,7 +279,7 @@ of functions
 
 - Extending DAGs node by node is in fact how they are built under the hood
 
-## Reusing parameters across nodes' configs
+### Reusing parameters across nodes' configs
 
 - The same parameter might need to be used by different objects / functions and
   DAG nodes and kept in sync somehow
@@ -291,7 +291,7 @@ of functions
 - Solution #2:
   - A "meta_parameter" Config key with all the parameters used by multiple nodes
 
-## Composing vs deriving objects
+### Composing vs deriving objects
 
 We have a lot of composition of objects to create specialized versions of
 objects E.g., there is an `HistoricalDataSource` node that allows to connect an
