@@ -98,6 +98,18 @@ def _clean_up_artifacts(md_file: str, md_file_figs: str) -> None:
     # TODO(gp): Use f-strings to avoid the linter error.
     perl_regex_replacements = [
         # # \# Running PyCharm remotely -> # Running PyCharm remotely.
+        # Remove <span> and <u> tags for "Google Authenticator".
+        r'''perl -pi -e 's/&lt;span class="underline"&gt;Google Authenticator&lt;\/span&gt;//g' {}'''.format(md_file),
+        r'''perl -pi -e 's/&lt;u&gt;Google Authenticator&lt;\/u&gt;//g' {}'''.format(md_file),
+        r'''perl -pi -e 's/<span class="underline">Google Authenticator<\/span>//g' {}'''.format(md_file),
+        r'''perl -pi -e 's/<u>Google Authenticator<\/u>//g' {}'''.format(md_file),
+        # Replace ellipsis character with three dots.
+        r'''perl -pi -e 's/…/.../g' {}'''.format(md_file),
+        # Remove empty square brackets (various forms).
+        r'''perl -pi -e 's/\[\s*\]//g' {}'''.format(md_file),
+        r'''perl -pi -e 's/\[\]//g' {}'''.format(md_file),
+        r'''perl -pi -e 's/\[\s*\]//g' {}'''.format(md_file),
+        r'''perl -pi -e 's/\[[\s\n]*\]//g' {}'''.format(md_file),
         r"perl -pi -e 's:# (\\#)+ :# :g' {}".format(md_file),
         # \#\# Docker image"  -> ## Docker image.
         r"perl -pi -e 's:\\#:#:g' {}".format(md_file),
