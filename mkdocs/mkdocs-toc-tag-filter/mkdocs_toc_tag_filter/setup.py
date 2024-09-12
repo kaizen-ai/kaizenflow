@@ -15,6 +15,6 @@ setup(
     classifiers=["Programming Language :: Python :: 3.8"],
     packages=find_packages(),
     entry_points={
-        "mkdocs.plugins": ["mkdocs-toc-tag-filter = plugin:TocFilterPlugin"]
+        "mkdocs.plugins": ["mkdocs-toc-tag-filter =  mkdocs_toc_tag_filter.plugin:TocFilterPlugin"]
     },
 )
